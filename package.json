@@ -1,0 +1,37 @@
+{
+  "name": "claude-cc",
+  "version": "0.1.0",
+  "description": "Run multiple isolated Claude Code accounts on one machine via the `cc` command.",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "cli",
+    "profile",
+    "multi-account",
+    "credentials",
+    "isolation"
+  ],
+  "license": "MIT",
+  "bin": {
+    "cc": "bin/cc.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "lib/cli.js",
+  "scripts": {
+    "start": "node bin/cc.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0"
+  }
+}
