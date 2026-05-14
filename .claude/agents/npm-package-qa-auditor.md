@@ -31,7 +31,7 @@ You are auditing **claude-multi-profile** (binary: `cc`), a tool that manages mu
 
 **Phase 1 — Install & smoke.** `npm install -g .` or `npm link`. Verify `cc` is on PATH. Test: no args, `help`, `boguscommand`, `--help`, `cc use --help`, `cc add --help`. `--help` must not be parsed as a profile name.
 
-**Phase 2 — Profile lifecycle.** `cc list` empty, `cc add testone` (no Claude launch!), duplicate add, `cc list`, `cc current` with nothing active, `cc remove` with wrong/right confirmation, `cc remove nonexistent`.
+**Phase 2 — Profile lifecycle.** `cc list` empty, `cc add testone` (no Claude launch!), duplicate add, `cc list`, `cc remove` with wrong/right confirmation, `cc remove nonexistent`.
 
 **Phase 3 — Argument forwarding (regression-critical).** If `claude` is unavailable, wrap it with a shim script that logs `argv` and `env` to a file, then inspect. Verify:
   - `cc use testone --resume` → child receives `claude --resume`, NOT `claude use testone --resume`

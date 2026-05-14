@@ -1,7 +1,7 @@
 {
-  "name": "ccmux",
+  "name": "cchost",
   "version": "0.1.0",
-  "description": "Multiplex multiple isolated Claude Code accounts on one machine via the `cc` command.",
+  "description": "Host multiple isolated Claude Code accounts on one machine via the `cc` command.",
   "keywords": [
     "claude",
     "claude-code",
@@ -12,15 +12,15 @@
     "credentials",
     "isolation"
   ],
-  "homepage": "https://github.com/allenhack638/ccmux#readme",
+  "homepage": "https://github.com/allenhack638/cchost#readme",
   "bugs": {
-    "url": "https://github.com/allenhack638/ccmux/issues"
+    "url": "https://github.com/allenhack638/cchost/issues"
   },
   "license": "MIT",
   "author": "Allen Benny",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/allenhack638/ccmux.git"
+    "url": "git+https://github.com/allenhack638/cchost.git"
   },
   "bin": {
     "cc": "bin/cc.js"

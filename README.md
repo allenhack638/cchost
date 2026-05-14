@@ -1,13 +1,13 @@
-# ccmux
+# cchost
 
-Multiplex multiple isolated Claude Code accounts on one machine via a single `cc` command. Works identically in PowerShell, cmd, bash, zsh, and fish on Windows, macOS, and Linux.
+Host multiple isolated Claude Code accounts on one machine via a single `cc` command. Works identically in PowerShell, cmd, bash, zsh, and fish on Windows, macOS, and Linux.
 
 Each profile is a complete, isolated `CLAUDE_CONFIG_DIR` — credentials, session history, project state, plugins, and settings. Create one with `cc add <name>`; launch under it with `cc use <name>`.
 
 ## Install
 
 ```
-npm install -g ccmux
+npm install -g cchost
 ```
 
 Requires Node.js 18+ and Claude Code 2.1.140+ already installed. Get Claude Code from <https://code.claude.com> (`npm install -g @anthropic-ai/claude-code`).
@@ -18,8 +18,7 @@ Requires Node.js 18+ and Claude Code 2.1.140+ already installed. Get Claude Code
 | --- | --- |
 | `cc add <profile> [--email=] [--org=] [--name=]` | Create a profile directory. Optional alias flags (EXPERIMENTAL, see below). |
 | `cc use <profile> [...args]` | Launch Claude under that profile. Profile must already exist. Args after the name are forwarded verbatim to `claude`. |
-| `cc list [--original] [--json]` | Show every profile, login state, account email, active marker, and linked/isolated status. |
-| `cc current [--json]` | Print the active profile (`CC_ACTIVE_PROFILE`) or "no profile active". |
+| `cc list [--original] [--json]` | Show every profile: login state, account email, and storage mode (`shared` / `isolated`). |
 | `cc migrate <src> <dest>` | Copy projects from `default`\|`shared` to `shared`\|`<profile>`. Skip-on-collision; credential files never copied. |
 | `cc link <profile> [<profile>...]` | Link a profile's `projects/` and `sessions/` to `~/.claude-shared`. Migrates existing content; renames on collision. |
 | `cc unlink <profile>` | Restore a profile to its own private `projects/` and `sessions/` (copies shared content back). |
@@ -34,8 +33,16 @@ cc use work                            # first launch: Claude prompts for login
 cc use work --resume                   # resume last conversation under "work"
 cc use personal -p "summarize"         # one-shot prompt under "personal"
 cc list
-cc current
 cc remove old-profile
+```
+
+`cc list` output:
+
+```
+Profile   LoggedIn  Email                 Storage
+personal  true      personal@example.com  isolated
+scratch   false     -                     isolated
+work      true      work@example.com      shared
 ```
 
 ### Migrating existing projects
@@ -57,7 +64,6 @@ If you want each profile to keep separate credentials but share project history 
 ```bash
 cc link work
 cc link personal
-cc list                        # the Linked column shows "linked" vs "isolated"
 ```
 
 `work/projects` and `personal/projects` become links to `~/.claude-shared/projects`. Same for `sessions/`. On Windows this uses directory junctions (no admin/Developer Mode required); on macOS/Linux, regular symlinks.
@@ -80,11 +86,11 @@ If two profiles share history and you launch them against the same project at th
 
 1. Resolves the profile directory under `~/.claude-profiles/<name>/`
 2. Applies any stored alias to `.claude.json` `oauthAccount` (best-effort)
-3. Sets `CLAUDE_CONFIG_DIR` and `CC_ACTIVE_PROFILE` in its **own** spawn environment
+3. Sets `CLAUDE_CONFIG_DIR` in its **own** spawn environment
 4. Spawns `claude` with `stdio: 'inherit'` so the TUI works correctly
 5. Forwards the child's exit code
 
-The env vars are set on the child process only — that's all `claude` needs.
+The env var is set on the child process only — that's all `claude` needs.
 
 ## Sensitive data
 
@@ -103,9 +109,6 @@ Earlier versions had bugs where Windows read `.claude.json` from `%USERPROFILE%`
 
 **Profile name rejected**
 Names must be free of path separators, whitespace, `..`, leading dots, and reserved DOS names (CON, PRN, COM1…). Stick to letters, digits, dashes, underscores.
-
-**`cc current` says no profile is active inside a Claude session**
-That means `CC_ACTIVE_PROFILE` isn't set in your shell — `cc use` sets it on the spawned `claude`, so it's visible to nested `cc current` invocations but not in unrelated shells.
 
 **Old shell-script version was leaking keystrokes / leaking `use work` into the prompt**
 That was a known bug in the cmd-based predecessor (`%*` ignored `shift`). This package forwards only the argv after `<profile>` to `claude`; the action and profile name themselves are consumed by `cc`.

@@ -20,7 +20,6 @@ function runCc(args, { home, extraEnv = {} }) {
     HOME: home,
     // Strip any inherited override so we don't pick up the dev's real one.
     CLAUDE_CONFIG_DIR: undefined,
-    CC_ACTIVE_PROFILE: undefined,
     NO_COLOR: '1',
   };
   // node strips undefined values from env
@@ -44,7 +43,7 @@ runE2E('cc use — end-to-end argv + env forwarding through fake-claude', () => 
     fs.rmSync(tmpHome, { recursive: true, force: true });
   });
 
-  it('forwards args verbatim and sets CLAUDE_CONFIG_DIR + CC_ACTIVE_PROFILE', () => {
+  it('forwards args verbatim and sets CLAUDE_CONFIG_DIR', () => {
     // Pre-create the profile so 'cc use' doesn't error
     const profileDir = path.join(tmpHome, '.claude-profiles', 'e2e');
     fs.mkdirSync(profileDir, { recursive: true });
@@ -54,7 +53,6 @@ runE2E('cc use — end-to-end argv + env forwarding through fake-claude', () => 
     expect(res.status).toBe(0);
     expect(res.stdout).toContain('ARGS:["--resume","-p","two words"]');
     expect(res.stdout).toContain(`CLAUDE_CONFIG_DIR:${profileDir}`);
-    expect(res.stdout).toContain('CC_ACTIVE_PROFILE:e2e');
     // Crucially: the action ('use') and profile name ('e2e') must NOT appear in ARGS.
     expect(res.stdout).not.toMatch(/ARGS:\[[^\]]*"use"/);
     expect(res.stdout).not.toMatch(/ARGS:\[[^\]]*"e2e"/);

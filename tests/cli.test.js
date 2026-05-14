@@ -41,16 +41,8 @@ describe('cc list — strict flag parsing', () => {
     await expect(cli.run(['list', '--json', '--original'])).resolves.toBe(0);
   });
 
-  it('rejects unknown flags on cc current', async () => {
-    await expect(cli.run(['current', '--foo'])).rejects.toThrow(/Unknown flag: --foo/);
-  });
-
-  it('rejects positional on cc current', async () => {
-    await expect(cli.run(['current', 'extra'])).rejects.toThrow(/Unexpected argument: extra/);
-  });
-
-  it('accepts --json on cc current', async () => {
-    await expect(cli.run(['current', '--json'])).resolves.toBe(0);
+  it('cc current is no longer a known command — returns 2 with help', async () => {
+    await expect(cli.run(['current'])).resolves.toBe(2);
   });
 });
 

@@ -8,9 +8,7 @@ The command interface:
 
 ```
 cc use <profile> [...args]   Launch Claude under a named profile, passing extra args through to claude
-cc list                      Show all profiles, login state, account email, which is active
-cc current                   Show the active profile (from env)
-cc default [...args]         Launch Claude with default (non-profiled) credentials
+cc list                      Show all profiles, login state, and account email
 cc remove <profile>          Delete a profile and all its data (with confirmation)
 cc help                      Usage
 ```
@@ -37,29 +35,21 @@ Default base directory for profiles: `~/.claude-profiles/` (use `os.homedir()`).
 
 ### `cc use <profile> [...args]`
 - If `~/.claude-profiles/<profile>/` does not exist, create it and print a notice that Claude will prompt for login on first launch
-- Set `CLAUDE_CONFIG_DIR` to that directory, set `CC_ACTIVE_PROFILE` to the profile name (so a nested `cc current` works)
+- Set `CLAUDE_CONFIG_DIR` to that directory
 - Spawn `claude` with all pass-through args (`--resume`, `-p "..."`, `--continue`, etc.) — args after the profile name must be forwarded verbatim
 - Pass-through arg forwarding is critical: `cc use work --resume` must run `claude --resume`, NOT `claude use work --resume` or `claude work --resume`. (A previous cmd-based implementation had exactly this bug — `%*` in a batch file does not respect `shift`, so the action and profile name leaked into Claude as a prompt. Parse argv carefully: argv[0]=action, argv[1]=profile, argv[2..]=passthrough.)
 
 ### `cc list`
 - If base dir doesn't exist, print a friendly "no profiles yet" message
-- For each subdirectory: show profile name, whether `.credentials.json` exists (LoggedIn true/false), the account email, and whether it's the active profile
+- For each subdirectory: show profile name, whether `.credentials.json` exists (LoggedIn true/false), and the account email
 - Get the email by reading `<profile>/.claude.json` and parsing `.oauthAccount.emailAddress`. Wrap in try/catch — the file may not exist yet, may be malformed, may be mid-write. Blank email on failure, never crash.
 - Render as an aligned table
-
-### `cc current`
-- Read `CC_ACTIVE_PROFILE` from env; print it or "no profile active"
-
-### `cc default [...args]`
-- Explicitly does NOT set `CLAUDE_CONFIG_DIR` (delete it from the spawn env if present), spawn `claude` with pass-through args
-- This uses the user's original, non-profiled credentials
 
 ### `cc remove <profile>`
 - Verify the profile exists; error clearly if not
 - Print exactly what will be deleted (full path, and note it includes credentials/sessions/projects/plugins/history)
 - Require the user to **type the profile name** to confirm (not y/n — too easy to fat-finger when destroying credentials)
 - Delete the directory recursively
-- If the removed profile was the active one, note it
 - Handle the case where the profile dir contains junctions/symlinks (see "shared history" below) — deleting the profile must NOT follow links and delete shared data. Delete only the link, not its target.
 
 ## Edge cases that MUST be handled
@@ -136,22 +126,13 @@ cc use <profile>:
   dir  = base/<profile>
   if not exists dir: mkdir, notify "will prompt for login"
   set env CLAUDE_CONFIG_DIR = dir
-  set env CC_ACTIVE_PROFILE = <profile>
   spawn claude with passthrough args, stdio inherit
 
 cc list:
   for each dir in base:
     loggedIn = exists dir/.credentials.json
     email    = try parse dir/.claude.json -> oauthAccount.emailAddress, else ""
-    active   = (dir name == env CC_ACTIVE_PROFILE)
-  print aligned table: Profile | LoggedIn | Email | Active
-
-cc current:
-  print env CC_ACTIVE_PROFILE or "no profile active"
-
-cc default:
-  unset CLAUDE_CONFIG_DIR, unset CC_ACTIVE_PROFILE in spawn env
-  spawn claude with passthrough args
+  print aligned table: Profile | LoggedIn | Email
 
 cc remove <profile>:
   validate exists
