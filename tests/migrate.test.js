@@ -109,13 +109,20 @@ describe('cc migrate', () => {
     expect(fs.existsSync(path.join(personalProjects, 'ProjectA', 'sess1.jsonl'))).toBe(true);
   });
 
-  it('copies sessions/ when present at the source', () => {
+  it('never copies sessions/ even when present at the source (transient per-process state)', () => {
     const d = path.join(tmpHome, '.claude');
+    fs.mkdirSync(path.join(d, 'projects', 'ProjectX'), { recursive: true });
+    fs.writeFileSync(path.join(d, 'projects', 'ProjectX', 'log.jsonl'), 'p-data');
     fs.mkdirSync(path.join(d, 'sessions'), { recursive: true });
-    fs.writeFileSync(path.join(d, 'sessions', 's.jsonl'), 's-data');
+    fs.writeFileSync(path.join(d, 'sessions', 'pid.json'), '{"pid":1}');
+
     migrateLib.migrate('default', 'work');
-    const dst = path.join(tmpHome, '.claude-profiles', 'work', 'sessions', 's.jsonl');
-    expect(fs.existsSync(dst)).toBe(true);
+
+    const profileDir = path.join(tmpHome, '.claude-profiles', 'work');
+    // projects/ migrated as usual
+    expect(fs.existsSync(path.join(profileDir, 'projects', 'ProjectX', 'log.jsonl'))).toBe(true);
+    // sessions/ was deliberately not copied
+    expect(fs.existsSync(path.join(profileDir, 'sessions'))).toBe(false);
   });
 
   it('rejects path-traversal profile names as destination', () => {

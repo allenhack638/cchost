@@ -23,30 +23,42 @@ describe('share link migration with collisions', () => {
     fs.rmSync(tmpHome, { recursive: true, force: true });
   });
 
-  it('migrates existing content into shared and links the profile dir', () => {
+  it('migrates existing projects/ into shared and links it; leaves sessions/ alone', () => {
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(path.join(pdir, 'projects', 'MyProject'), { recursive: true });
     fs.writeFileSync(path.join(pdir, 'projects', 'MyProject', 'note.txt'), 'work-note');
     fs.mkdirSync(path.join(pdir, 'sessions'), { recursive: true });
+    fs.writeFileSync(path.join(pdir, 'sessions', 'pid.json'), '{"pid":1}');
 
     share.shareLink('work');
 
     const shared = path.join(tmpHome, '.claude-shared');
     expect(fs.existsSync(path.join(shared, 'projects', 'MyProject', 'note.txt'))).toBe(true);
     expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(true);
-    expect(fs.lstatSync(path.join(pdir, 'sessions')).isSymbolicLink()).toBe(true);
+    // sessions/ stays per-profile, never linked, content preserved
+    expect(fs.lstatSync(path.join(pdir, 'sessions')).isSymbolicLink()).toBe(false);
+    expect(fs.readFileSync(path.join(pdir, 'sessions', 'pid.json'), 'utf8')).toBe('{"pid":1}');
+    // shared dir should not contain a sessions/ tree either
+    expect(fs.existsSync(path.join(shared, 'sessions'))).toBe(false);
+  });
+
+  it('shareLink works on a profile that has no sessions/ folder at all', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(path.join(pdir, 'projects'), { recursive: true });
+    // deliberately no sessions/
+    expect(() => share.shareLink('work')).not.toThrow();
+    expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(true);
+    expect(fs.existsSync(path.join(pdir, 'sessions'))).toBe(false);
   });
 
   it('renames the second profile\'s colliding project with __<profile> suffix', () => {
     const p1 = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(path.join(p1, 'projects', 'shared-name'), { recursive: true });
     fs.writeFileSync(path.join(p1, 'projects', 'shared-name', 'a.txt'), 'from-work');
-    fs.mkdirSync(path.join(p1, 'sessions'), { recursive: true });
 
     const p2 = path.join(tmpHome, '.claude-profiles', 'personal');
     fs.mkdirSync(path.join(p2, 'projects', 'shared-name'), { recursive: true });
     fs.writeFileSync(path.join(p2, 'projects', 'shared-name', 'b.txt'), 'from-personal');
-    fs.mkdirSync(path.join(p2, 'sessions'), { recursive: true });
 
     share.shareLink('work');
     share.shareLink('personal');
@@ -59,17 +71,15 @@ describe('share link migration with collisions', () => {
   it('is idempotent: linking an already-linked profile does nothing', () => {
     const pdir = path.join(tmpHome, '.claude-profiles', 'p');
     fs.mkdirSync(path.join(pdir, 'projects'), { recursive: true });
-    fs.mkdirSync(path.join(pdir, 'sessions'), { recursive: true });
     share.shareLink('p');
     expect(() => share.shareLink('p')).not.toThrow();
     expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(true);
   });
 
-  it('shareUnlink restores private dirs with content copied back', () => {
+  it('shareUnlink restores private projects/ with content copied back', () => {
     const pdir = path.join(tmpHome, '.claude-profiles', 'p');
     fs.mkdirSync(path.join(pdir, 'projects'), { recursive: true });
     fs.writeFileSync(path.join(pdir, 'projects', 'hello.txt'), 'hi');
-    fs.mkdirSync(path.join(pdir, 'sessions'), { recursive: true });
     share.shareLink('p');
     share.shareUnlink('p');
     expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(false);
@@ -92,7 +102,6 @@ describe('share link migration with collisions', () => {
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(path.join(pdir, 'projects', 'dup'), { recursive: true });
     fs.writeFileSync(path.join(pdir, 'projects', 'dup', 'mine.txt'), 'from-work');
-    fs.mkdirSync(path.join(pdir, 'sessions'), { recursive: true });
 
     share.shareLink('work');
 

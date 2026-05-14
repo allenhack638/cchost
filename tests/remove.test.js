@@ -29,7 +29,6 @@ describe('removeRecursivelyPreservingLinks — junction safety', () => {
     // the same junction/symlink code path 'cc remove' has to undo.
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(path.join(pdir, 'projects'), { recursive: true });
-    fs.mkdirSync(path.join(pdir, 'sessions'), { recursive: true });
 
     // Pre-populate shared with a sentinel file BEFORE linking.
     const sharedProjects = path.join(tmpHome, '.claude-shared', 'projects');

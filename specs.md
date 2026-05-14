@@ -91,19 +91,19 @@ Creating `~/.claude-profiles/` or a profile subdir may fail (locked-down home, c
 `os.homedir()` is the source of truth — use it consistently. Do not rely on `%USERPROFILE%` vs Documents-folder assumptions. (The old shell version broke because PowerShell's `$PROFILE` was empty due to OneDrive redirection of the Documents folder; an npm bin on PATH sidesteps this entirely, but still: always use `os.homedir()`.)
 
 ### 11. Shared conversation/project history across profiles (important feature)
-Some users want each profile to have isolated *credentials* but **shared** project and conversation history — e.g. so they can rotate accounts on the same project when one account's usage limit is hit. Support an optional setup where `<profile>/projects/` and `<profile>/sessions/` are symlinks/junctions to a shared directory (`~/.claude-shared/projects`, `~/.claude-shared/sessions`).
+Some users want each profile to have isolated *credentials* but **shared** project history — e.g. so they can rotate accounts on the same project when one account's usage limit is hit. Support an optional setup where `<profile>/projects/` is a symlink/junction to `~/.claude-shared/projects/`.
+
+**Only `projects/` is shared.** That's where Claude stores resumable conversation transcripts (`projects/<project>/<session>.jsonl`). The sibling `sessions/` folder holds transient per-process registry state (PID, cwd, status, timestamps) and must stay per-profile — sharing it would corrupt Claude's running-process bookkeeping. `cc link`/`cc unlink`/`cc migrate` never touch `sessions/`.
 
 Add commands:
 ```
-cc share init                 Create ~/.claude-shared/{projects,sessions}
-cc share link <profile>       Replace a profile's projects/ and sessions/ with links to the shared dirs (migrating any existing content into shared first, renaming on name collision rather than overwriting)
-cc share status               Show which profiles are currently sharing
-cc share unlink <profile>     Restore a profile to its own private projects/sessions (copy shared content back)
+cc link <profile> [...]   Replace a profile's projects/ with a link to ~/.claude-shared/projects/ (migrating any existing content into shared first, renaming on name collision rather than overwriting)
+cc unlink <profile>       Restore a profile to its own private projects/ (copy shared content back)
 ```
 
-Implementation notes for `share link`:
+Implementation notes for `cc link`:
 - On Windows, symlink creation often requires admin or Developer Mode. **Use directory junctions** (`fs` symlink with `'junction'` type, or the platform equivalent) which need no elevation. On macOS/Linux use normal symlinks.
-- Before linking, if the profile already has a real `projects/` or `sessions/` folder with content, move that content into the shared dir. On filename collision (same project dir name, different content — common for the `C--Users-...`-style home-directory project that every profile touches), rename the incoming one with a `__<profile>` suffix instead of overwriting. Never silently lose data.
+- Before linking, if the profile already has a real `projects/` folder with content, move that content into the shared dir. On filename collision (same project dir name, different content — common for the `C--Users-...`-style home-directory project that every profile touches), rename the incoming one with a `__<profile>` suffix instead of overwriting. Never silently lose data.
 - If the folder is already a junction/symlink, skip it (idempotent).
 - `cc remove` must delete only the link, never recurse into and destroy the shared target.
 

@@ -20,8 +20,8 @@ Requires Node.js 18+ and Claude Code 2.1.140+ already installed. Get Claude Code
 | `cc use <profile> [...args]` | Launch Claude under that profile. Profile must already exist. Args after the name are forwarded verbatim to `claude`. |
 | `cc list [--original] [--json]` | Show every profile: login state, account email, and storage mode (`shared` / `isolated`). |
 | `cc migrate <src> <dest>` | Copy projects from `default`\|`shared` to `shared`\|`<profile>`. Skip-on-collision; credential files never copied. |
-| `cc link <profile> [<profile>...]` | Link a profile's `projects/` and `sessions/` to `~/.claude-shared`. Migrates existing content; renames on collision. |
-| `cc unlink <profile>` | Restore a profile to its own private `projects/` and `sessions/` (copies shared content back). |
+| `cc link <profile> [<profile>...]` | Link a profile's `projects/` to `~/.claude-shared/projects`. Migrates existing content; renames on collision. |
+| `cc unlink <profile>` | Restore a profile to its own private `projects/` (copies shared content back). |
 | `cc remove <profile>` | Delete a profile. Requires typing the profile name to confirm. |
 | `cc help [command]` | Print usage (top-level, or for a single command). |
 
@@ -66,7 +66,9 @@ cc link work
 cc link personal
 ```
 
-`work/projects` and `personal/projects` become links to `~/.claude-shared/projects`. Same for `sessions/`. On Windows this uses directory junctions (no admin/Developer Mode required); on macOS/Linux, regular symlinks.
+`work/projects` and `personal/projects` become links to `~/.claude-shared/projects`. On Windows this uses directory junctions (no admin/Developer Mode required); on macOS/Linux, regular symlinks.
+
+**Only `projects/` is shared.** That's the directory Claude Code uses for resumable conversation transcripts (`projects/<project>/<session>.jsonl`). The sibling `sessions/` folder holds transient per-process registry state — PID, working directory, status, timestamps — and is **never** linked, migrated, or copied across profiles. Sharing it would corrupt Claude's running-process bookkeeping. `sessions/` stays per-profile under `~/.claude-profiles/<name>/sessions/`.
 
 `cc link a b c` links several profiles at once; per-profile failures are reported but don't abort the rest of the batch.
 
