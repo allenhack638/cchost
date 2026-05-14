@@ -1,13 +1,13 @@
-# claude-cc
+# ccmux
 
-Run multiple isolated Claude Code accounts on one machine via a single `cc` command. Works identically in PowerShell, cmd, bash, zsh, and fish on Windows, macOS, and Linux.
+Multiplex multiple isolated Claude Code accounts on one machine via a single `cc` command. Works identically in PowerShell, cmd, bash, zsh, and fish on Windows, macOS, and Linux.
 
 Each profile is a complete, isolated `CLAUDE_CONFIG_DIR` — credentials, session history, project state, plugins, and settings. Create one with `cc add <name>`; launch under it with `cc use <name>`.
 
 ## Install
 
 ```
-npm install -g claude-cc
+npm install -g ccmux
 ```
 
 Requires Node.js 18+ and Claude Code 2.1.140+ already installed. Get Claude Code from <https://code.claude.com> (`npm install -g @anthropic-ai/claude-code`).
