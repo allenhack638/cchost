@@ -1,6 +1,6 @@
 # cchost
 
-Host multiple isolated Claude Code accounts on one machine via a single `cc` command. Works identically in PowerShell, cmd, bash, zsh, and fish on Windows, macOS, and Linux.
+Host multiple isolated Claude Code accounts on one machine via a single `cc` command. `cc` is a plain Node CLI on your PATH, so it runs the same from PowerShell, cmd, bash, zsh, or fish — there are no shell scripts or rc-file edits involved. Tested on Windows and Linux; macOS is expected to work but is not yet verified.
 
 Each profile is a complete, isolated `CLAUDE_CONFIG_DIR` — credentials, session history, project state, plugins, and settings. Create one with `cc add <name>`; launch under it with `cc use <name>`.
 
