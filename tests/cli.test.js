@@ -135,3 +135,41 @@ describe('cc unknown action', () => {
     await expect(cli.run(['bogus-command'])).resolves.toBe(2);
   });
 });
+
+describe('cc --version', () => {
+  let originalWrite;
+  let captured;
+
+  beforeEach(() => {
+    captured = '';
+    originalWrite = process.stdout.write;
+    process.stdout.write = (s) => {
+      captured += s;
+      return true;
+    };
+  });
+
+  afterEach(() => {
+    process.stdout.write = originalWrite;
+  });
+
+  it('prints the package version for --version', async () => {
+    const code = await cli.run(['--version']);
+    expect(code).toBe(0);
+    expect(captured.trim()).toMatch(/^\d+\.\d+\.\d+/);
+  });
+
+  it('prints the package version for -v', async () => {
+    const code = await cli.run(['-v']);
+    expect(code).toBe(0);
+    expect(captured.trim()).toMatch(/^\d+\.\d+\.\d+/);
+  });
+
+  it('reports the same version as package.json', async () => {
+    const pkg = JSON.parse(
+      fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+    );
+    await cli.run(['--version']);
+    expect(captured.trim()).toBe(pkg.version);
+  });
+});
