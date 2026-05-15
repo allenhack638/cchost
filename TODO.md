@@ -3,15 +3,6 @@
 Deferred work for cchost. Ordered by priority. Feature ideas are gated on real
 usage — do not build them on spec alone.
 
-## Operational — verify soon
-
-- [ ] Confirm the `v0.1.2` npm publish succeeded. The CI publish job EOTP-fails
-      unless `NPM_TOKEN` is an **Automation** token. Check the Actions tab; if
-      red, swap the token and re-run the publish job.
-- [ ] Confirm GitHub dropped "Claude Code" from the contributors list after the
-      history rewrite. The contributors graph is cached — it should clear within
-      ~24h, or on the next push to `master`.
-
 ## v0.1.x polish — small, not features
 
 - [ ] Add macOS to the CI test matrix in `.github/workflows/ci.yml`. The README
