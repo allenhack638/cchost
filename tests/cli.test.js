@@ -35,10 +35,12 @@ describe('cc list — strict flag parsing', () => {
     await expect(cli.run(['list', 'extra'])).rejects.toThrow(/Unexpected argument: extra/);
   });
 
-  it('accepts the known flags on cc list', async () => {
+  it('accepts --json on cc list', async () => {
     await expect(cli.run(['list', '--json'])).resolves.toBe(0);
-    await expect(cli.run(['list', '--original'])).resolves.toBe(0);
-    await expect(cli.run(['list', '--json', '--original'])).resolves.toBe(0);
+  });
+
+  it('rejects --original (removed with alias feature)', async () => {
+    await expect(cli.run(['list', '--original'])).rejects.toThrow(/Unknown flag: --original/);
   });
 
   it('cc current is no longer a known command — returns 2 with help', async () => {
@@ -74,11 +76,10 @@ describe('cc use — refuses to launch missing profile', () => {
   });
 });
 
-describe('cc add — flag-like profile names are caught', () => {
+describe('cc add — input validation', () => {
   let tmpHome;
   let originalHomedir;
   let originalLog;
-  let originalErr;
 
   beforeEach(() => {
     tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-add-flag-'));
@@ -86,14 +87,11 @@ describe('cc add — flag-like profile names are caught', () => {
     os.homedir = () => tmpHome;
     originalLog = console.log;
     console.log = () => {};
-    originalErr = process.stderr.write;
-    process.stderr.write = () => true;
   });
 
   afterEach(() => {
     os.homedir = originalHomedir;
     console.log = originalLog;
-    process.stderr.write = originalErr;
     fs.rmSync(tmpHome, { recursive: true, force: true });
   });
 
@@ -102,16 +100,8 @@ describe('cc add — flag-like profile names are caught', () => {
     expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', '--resume'))).toBe(false);
   });
 
-  it('rejects --bogus alias flag', async () => {
-    await expect(cli.run(['add', 'work', '--bogus=x'])).rejects.toThrow(/Unknown flag: --bogus/);
-  });
-
-  it('rejects empty alias values', async () => {
-    await expect(cli.run(['add', 'work', '--email='])).rejects.toThrow(/non-empty/);
-  });
-
-  it('rejects non --key=value form', async () => {
-    await expect(cli.run(['add', 'work', '--email'])).rejects.toThrow(/--key=value form/);
+  it('rejects any extra argument after the profile name', async () => {
+    await expect(cli.run(['add', 'work', '--bogus=x'])).rejects.toThrow(/no extra arguments/);
   });
 });
 

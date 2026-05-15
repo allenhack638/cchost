@@ -16,13 +16,14 @@ Requires Node.js 18+ and Claude Code 2.1.140+ already installed. Get Claude Code
 
 | Command | What it does |
 | --- | --- |
-| `cc add <profile> [--email=] [--org=] [--name=]` | Create a profile directory. Optional alias flags (EXPERIMENTAL, see below). |
+| `cc add <profile>` | Create a profile directory. |
 | `cc use <profile> [...args]` | Launch Claude under that profile. Profile must already exist. Args after the name are forwarded verbatim to `claude`. |
-| `cc list [--original] [--json]` | Show every profile: login state, account email, and storage mode (`shared` / `isolated`). |
+| `cc list [--json]` | Show every profile: login state, account email, and storage mode (`shared` / `isolated`). |
 | `cc migrate <src> <dest>` | Copy projects from `default`\|`shared` to `shared`\|`<profile>`. Skip-on-collision; credential files never copied. |
 | `cc link <profile> [<profile>...]` | Link a profile's `projects/` to `~/.claude-shared/projects`. Migrates existing content; renames on collision. |
 | `cc unlink <profile>` | Restore a profile to its own private `projects/` (copies shared content back). |
 | `cc remove <profile>` | Delete a profile. Requires typing the profile name to confirm. |
+| `cc doctor [--fix [--force]] [--json]` | Diagnose environment, storage, and platform issues. |
 | `cc help [command]` | Print usage (top-level, or for a single command). |
 
 ### Examples
@@ -76,21 +77,14 @@ If two profiles share history and you launch them against the same project at th
 
 `cc remove` is safe with shared profiles — it deletes only the link, never recursing into the shared target.
 
-### Aliases (`cc add` flags) — EXPERIMENTAL
-
-`cc add work --email=work@example.com --org=Acme --name="Work Account"` stores those values in `~/.claude-profiles/work/.cc-alias.json`. On every `cc use`, they're written into the profile's `.claude.json` `oauthAccount` so `cc list` and Claude's own UI display them instead of the real underlying account.
-
-**EXPERIMENTAL.** Claude Code may overwrite `oauthAccount` on server re-sync; we re-apply on the next `cc use`, but masking across all of Claude's UI surfaces has not been verified. Use `cc list --original` to see the real values from `.claude.json`.
-
 ## How it works
 
 `cc` is a Node CLI with **zero runtime dependencies**. For `cc use` it:
 
 1. Resolves the profile directory under `~/.claude-profiles/<name>/`
-2. Applies any stored alias to `.claude.json` `oauthAccount` (best-effort)
-3. Sets `CLAUDE_CONFIG_DIR` in its **own** spawn environment
-4. Spawns `claude` with `stdio: 'inherit'` so the TUI works correctly
-5. Forwards the child's exit code
+2. Sets `CLAUDE_CONFIG_DIR` in its **own** spawn environment
+3. Spawns `claude` with `stdio: 'inherit'` so the TUI works correctly
+4. Forwards the child's exit code
 
 The env var is set on the child process only — that's all `claude` needs.
 
