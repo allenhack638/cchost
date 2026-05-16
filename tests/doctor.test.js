@@ -119,12 +119,19 @@ describe('cc doctor — exit codes', () => {
   beforeEach(() => { originalWrite = process.stdout.write; process.stdout.write = () => true; });
   afterEach(() => { process.stdout.write = originalWrite; });
 
-  it('returns 0 or 1 (not 2) in a clean environment', async () => {
-    const code = await withTmpHome(async (home) => {
+  it('exit code reflects the worst check status', async () => {
+    // Deterministic regardless of host: derive the expected code from the
+    // checks doctor actually runs, then confirm the exit code matches.
+    // (CI has no `claude` installed, so the real environment is not "clean".)
+    await withTmpHome(async (home) => {
       fs.mkdirSync(path.join(home, '.claude-profiles'));
-      return cli.run(['doctor']);
+      const results = doctor.runChecks();
+      const hasError = results.some(r => r.status === 'error');
+      const hasWarn = results.some(r => r.status === 'warn');
+      const expected = hasError ? 2 : hasWarn ? 1 : 0;
+      const code = await cli.run(['doctor']);
+      expect(code).toBe(expected);
     });
-    expect(code).toBeLessThan(2);
   });
 
   it('returns 2 when there is an error check', async () => {
