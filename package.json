@@ -32,6 +32,7 @@
     "bin",
     "lib",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "main": "lib/cli.js",
