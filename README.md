@@ -49,6 +49,29 @@ scratch   false     -                     0/4     subscription
 work      true      work@example.com      0/4     subscription
 ```
 
+The **Shared** column is a count: how many of the 4 shareable directories
+(`projects`, `skills`, `agents`, `commands`) are linked to `~/.claude-shared/`.
+
+- `0/4` — fully isolated; the profile keeps its own private copies.
+- `4/4` — fully shared; all four point at the common pool.
+- `1/4`, `2/4`, `3/4` — **partial**, and not a normal state. `cc link` links
+  all four at once and `cc unlink` unlinks all four at once, so you should
+  normally see only `0/4` or `4/4`.
+
+A partial count has two causes:
+
+1. **A link partially failed** — one directory could not be linked (a
+   permission issue, or it was locked) while the others succeeded. `cc link`
+   reports per-directory failures so this is never silent.
+2. **An upgrade from an older cchost.** Versions before `0.2.1` linked only
+   `projects/` — the other three shareable directories did not exist yet. A
+   profile linked under an older version therefore shows `1/4` after you
+   upgrade.
+
+In both cases the fix is the same — re-run `cc link <profile>`. Already-linked
+directories are skipped and the missing ones are linked, bringing the profile
+to `4/4`.
+
 ### What migrate copies and what link shares
 
 | Artifact | `cc migrate` copies it | `cc link` shares it | Notes |
