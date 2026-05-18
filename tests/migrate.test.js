@@ -54,6 +54,92 @@ describe('cc migrate', () => {
     expect(fs.existsSync(path.join(sharedProjects, 'ProjectB', 'sess2.jsonl'))).toBe(true);
   });
 
+  it('copies skills/, agents/, commands/ when present', () => {
+    const d = path.join(tmpHome, '.claude');
+    for (const sub of ['skills', 'agents', 'commands']) {
+      fs.mkdirSync(path.join(d, sub, 'item'), { recursive: true });
+      fs.writeFileSync(path.join(d, sub, 'item', 'def.json'), `{"sub":"${sub}"}`);
+    }
+    migrateLib.migrate('default', 'work');
+    for (const sub of ['skills', 'agents', 'commands']) {
+      const p = path.join(tmpHome, '.claude-profiles', 'work', sub, 'item', 'def.json');
+      expect(fs.existsSync(p)).toBe(true);
+    }
+  });
+
+  it('default → <profile>: copies mcp.json, settings.json, CLAUDE.md if present', () => {
+    const d = path.join(tmpHome, '.claude');
+    fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, 'mcp.json'), '{"servers":{}}');
+    fs.writeFileSync(path.join(d, 'settings.json'), '{"theme":"dark"}');
+    fs.writeFileSync(path.join(d, 'CLAUDE.md'), '# project guide');
+
+    migrateLib.migrate('default', 'work');
+
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    expect(fs.readFileSync(path.join(pdir, 'mcp.json'), 'utf8')).toBe('{"servers":{}}');
+    expect(fs.readFileSync(path.join(pdir, 'settings.json'), 'utf8')).toBe('{"theme":"dark"}');
+    expect(fs.readFileSync(path.join(pdir, 'CLAUDE.md'), 'utf8')).toBe('# project guide');
+  });
+
+  it('default → shared: does NOT copy mcp.json, settings.json, CLAUDE.md', () => {
+    const d = path.join(tmpHome, '.claude');
+    fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, 'mcp.json'), '{"servers":{}}');
+    fs.writeFileSync(path.join(d, 'settings.json'), '{}');
+    fs.writeFileSync(path.join(d, 'CLAUDE.md'), '# notes');
+
+    migrateLib.migrate('default', 'shared');
+
+    const sharedDir = path.join(tmpHome, '.claude-shared');
+    expect(fs.existsSync(path.join(sharedDir, 'mcp.json'))).toBe(false);
+    expect(fs.existsSync(path.join(sharedDir, 'settings.json'))).toBe(false);
+    expect(fs.existsSync(path.join(sharedDir, 'CLAUDE.md'))).toBe(false);
+  });
+
+  it('default → <profile>: skips single files already present (no --force)', () => {
+    const d = path.join(tmpHome, '.claude');
+    fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, 'mcp.json'), '{"src":1}');
+
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    fs.writeFileSync(path.join(pdir, 'mcp.json'), '{"existing":1}');
+
+    const result = migrateLib.migrate('default', 'work');
+    expect(result.files['mcp.json']).toBe('skipped');
+    expect(fs.readFileSync(path.join(pdir, 'mcp.json'), 'utf8')).toBe('{"existing":1}');
+  });
+
+  it('default → <profile> with --force overwrites existing single file', () => {
+    const d = path.join(tmpHome, '.claude');
+    fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, 'mcp.json'), '{"new":1}');
+
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    fs.writeFileSync(path.join(pdir, 'mcp.json'), '{"old":1}');
+
+    const result = migrateLib.migrate('default', 'work', { force: true });
+    expect(result.files['mcp.json']).toBe('copied');
+    expect(fs.readFileSync(path.join(pdir, 'mcp.json'), 'utf8')).toBe('{"new":1}');
+  });
+
+  it('--force overwrites existing dir entries in projects/', () => {
+    const d = path.join(tmpHome, '.claude');
+    fs.mkdirSync(path.join(d, 'projects', 'ProjectA'), { recursive: true });
+    fs.writeFileSync(path.join(d, 'projects', 'ProjectA', 'new.jsonl'), 'new-data');
+
+    const workProjects = path.join(tmpHome, '.claude-profiles', 'work', 'projects');
+    fs.mkdirSync(path.join(workProjects, 'ProjectA'), { recursive: true });
+    fs.writeFileSync(path.join(workProjects, 'ProjectA', 'old.jsonl'), 'old-data');
+
+    migrateLib.migrate('default', 'work', { force: true });
+
+    expect(fs.existsSync(path.join(workProjects, 'ProjectA', 'new.jsonl'))).toBe(true);
+    expect(fs.existsSync(path.join(workProjects, 'ProjectA', 'old.jsonl'))).toBe(false);
+  });
+
   it('skip-on-collision: existing entries at destination are left untouched', () => {
     seedDefault();
     // Pre-create work/ with one project already present

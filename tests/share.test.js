@@ -42,6 +42,22 @@ describe('share link migration with collisions', () => {
     expect(fs.existsSync(path.join(shared, 'sessions'))).toBe(false);
   });
 
+  it('links all four artifact dirs (projects, skills, agents, commands)', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'multi');
+    for (const sub of ['projects', 'skills', 'agents', 'commands']) {
+      fs.mkdirSync(path.join(pdir, sub, 'item'), { recursive: true });
+      fs.writeFileSync(path.join(pdir, sub, 'item', 'f.txt'), sub);
+    }
+
+    share.shareLink('multi');
+
+    const shared = path.join(tmpHome, '.claude-shared');
+    for (const sub of ['projects', 'skills', 'agents', 'commands']) {
+      expect(fs.lstatSync(path.join(pdir, sub)).isSymbolicLink()).toBe(true);
+      expect(fs.existsSync(path.join(shared, sub, 'item', 'f.txt'))).toBe(true);
+    }
+  });
+
   it('shareLink works on a profile that has no sessions/ folder at all', () => {
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(path.join(pdir, 'projects'), { recursive: true });
@@ -76,18 +92,43 @@ describe('share link migration with collisions', () => {
     expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(true);
   });
 
-  it('shareUnlink restores private projects/ with content copied back', () => {
+  it('shareUnlink restores all four private dirs with content copied back', () => {
     const pdir = path.join(tmpHome, '.claude-profiles', 'p');
-    fs.mkdirSync(path.join(pdir, 'projects'), { recursive: true });
-    fs.writeFileSync(path.join(pdir, 'projects', 'hello.txt'), 'hi');
+    for (const sub of ['projects', 'skills', 'agents', 'commands']) {
+      fs.mkdirSync(path.join(pdir, sub), { recursive: true });
+      fs.writeFileSync(path.join(pdir, sub, 'hello.txt'), sub);
+    }
     share.shareLink('p');
     share.shareUnlink('p');
-    expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(false);
-    expect(fs.readFileSync(path.join(pdir, 'projects', 'hello.txt'), 'utf8')).toBe('hi');
+    for (const sub of ['projects', 'skills', 'agents', 'commands']) {
+      expect(fs.lstatSync(path.join(pdir, sub)).isSymbolicLink()).toBe(false);
+      expect(fs.readFileSync(path.join(pdir, sub, 'hello.txt'), 'utf8')).toBe(sub);
+    }
   });
 
   it('rejects shareLink on non-existent profile', () => {
     expect(() => share.shareLink('ghost')).toThrow(/does not exist/);
+  });
+
+  it('shareLink does not abort on a per-directory failure; remaining dirs still linked', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'partial');
+    for (const sub of ['projects', 'skills', 'commands']) {
+      fs.mkdirSync(path.join(pdir, sub, 'x'), { recursive: true });
+    }
+    // agents is a regular file where a directory is expected — forces a failure.
+    fs.mkdirSync(pdir, { recursive: true });
+    fs.writeFileSync(path.join(pdir, 'agents'), 'not-a-dir');
+
+    let results;
+    expect(() => { results = share.shareLink('partial'); }).not.toThrow();
+
+    const byName = Object.fromEntries(results.map((r) => [r.sub, r.status]));
+    expect(byName.agents).toBe('failed');
+    expect(byName.projects).toBe('linked');
+    expect(byName.skills).toBe('linked');
+    // commands is attempted even though agents (earlier in the list) failed.
+    expect(byName.commands).toBe('linked');
+    expect(fs.lstatSync(path.join(pdir, 'commands')).isSymbolicLink()).toBe(true);
   });
 
   it('collision counter falls back to __<profile>_2 when first rename also collides', () => {
