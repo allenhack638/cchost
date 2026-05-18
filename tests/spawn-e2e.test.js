@@ -78,4 +78,69 @@ runE2E('cc use — end-to-end argv + env forwarding through fake-claude', () => 
     expect(res.status).not.toBe(0);
     expect(res.stderr).toMatch(/does not exist/);
   });
+
+  it('injects ANTHROPIC_* env vars and prints the endpoint banner for an endpoint profile', () => {
+    const profileDir = path.join(tmpHome, '.claude-profiles', 'kimi');
+    fs.mkdirSync(profileDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(profileDir, '.cc-env.json'),
+      JSON.stringify({
+        base_url: 'https://api.moonshot.ai/anthropic',
+        auth_token: 'sk-endpoint-secret',
+        model: 'kimi-k2.5',
+      }),
+    );
+
+    const res = runCc(['use', 'kimi'], { home: tmpHome });
+    expect(res.status).toBe(0);
+    // Banner goes to stderr.
+    expect(res.stderr).toContain("[cchost] Profile 'kimi' → api.moonshot.ai (custom endpoint billing applies)");
+    // Both token vars set; all five model vars fall back to `model`.
+    expect(res.stdout).toContain('ENV:ANTHROPIC_BASE_URL=https://api.moonshot.ai/anthropic');
+    expect(res.stdout).toContain('ENV:ANTHROPIC_AUTH_TOKEN=sk-endpoint-secret');
+    expect(res.stdout).toContain('ENV:ANTHROPIC_API_KEY=sk-endpoint-secret');
+    expect(res.stdout).toContain('ENV:ANTHROPIC_MODEL=kimi-k2.5');
+    expect(res.stdout).toContain('ENV:ANTHROPIC_DEFAULT_OPUS_MODEL=kimi-k2.5');
+    expect(res.stdout).toContain('ENV:CLAUDE_CODE_SUBAGENT_MODEL=kimi-k2.5');
+  });
+
+  it('does not inject endpoint vars or print a banner for a subscription profile', () => {
+    const profileDir = path.join(tmpHome, '.claude-profiles', 'sub');
+    fs.mkdirSync(profileDir, { recursive: true });
+
+    const res = runCc(['use', 'sub'], { home: tmpHome });
+    expect(res.status).toBe(0);
+    expect(res.stderr).not.toContain('[cchost]');
+    expect(res.stdout).toContain('ENV:ANTHROPIC_BASE_URL=');
+    expect(res.stdout).not.toMatch(/ENV:ANTHROPIC_BASE_URL=\S/);
+  });
+
+  it('forwards --resume verbatim for an endpoint profile (no profile name leaked)', () => {
+    const profileDir = path.join(tmpHome, '.claude-profiles', 'kimi2');
+    fs.mkdirSync(profileDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(profileDir, '.cc-env.json'),
+      JSON.stringify({ base_url: 'https://api.moonshot.ai/anthropic', auth_token: 'sk-x' }),
+    );
+
+    const res = runCc(['use', 'kimi2', '--resume'], { home: tmpHome });
+    expect(res.status).toBe(0);
+    expect(res.stdout).toContain('ARGS:["--resume"]');
+  });
+
+  it('omits model env vars when the endpoint config has only base_url and token', () => {
+    const profileDir = path.join(tmpHome, '.claude-profiles', 'bare');
+    fs.mkdirSync(profileDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(profileDir, '.cc-env.json'),
+      JSON.stringify({ base_url: 'https://api.moonshot.ai/anthropic', auth_token: 'sk-x' }),
+    );
+
+    const res = runCc(['use', 'bare'], { home: tmpHome });
+    expect(res.status).toBe(0);
+    expect(res.stdout).toContain('ENV:ANTHROPIC_BASE_URL=https://api.moonshot.ai/anthropic');
+    expect(res.stdout).toContain('ENV:ANTHROPIC_MODEL=');
+    expect(res.stdout).not.toMatch(/ENV:ANTHROPIC_MODEL=\S/);
+    expect(res.stdout).not.toMatch(/ENV:ANTHROPIC_DEFAULT_OPUS_MODEL=\S/);
+  });
 });

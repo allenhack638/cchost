@@ -12,7 +12,7 @@ usage — do not build them on spec alone.
       `win32` (the `claude` shim needs an exec bit on POSIX), so it is skipped on
       the Ubuntu runner and would be skipped on macOS.
 
-## v0.3 feature candidates — gated on real usage
+## v0.4 feature candidates — gated on real usage
 
 - [ ] Plugin sharing via `cc link --include-plugins` — `plugins/` was
       deliberately excluded from v0.2 sharing because it carries auth tokens.
@@ -48,6 +48,36 @@ usage — do not build them on spec alone.
 - [x] Removed the `cc add` alias masking feature — Claude Code re-syncs
       `emailAddress` / `organizationName` / `organizationType` from the server on
       every launch, so masking only `displayName` was not worth shipping.
+
+## v0.3 — shipped 2026-05-19
+
+Per-profile custom API endpoints: a profile can route through any
+Anthropic-compatible third-party provider (Moonshot/Kimi, OpenRouter, vLLM,
+corporate proxy) instead of Anthropic's subscription OAuth.
+
+- [x] `cc env <profile>` — interactive wizard (token entry is not echoed;
+      edit mode prefills current values).
+- [x] `cc env <profile> --base-url=… --token=… [--model/--opus/--sonnet/
+      --haiku/--subagent=…]` — non-interactive create / partial update.
+- [x] `cc env <profile> show [--reveal]` — masked by default; `--reveal`
+      prints the full key with a warning.
+- [x] `cc use` injects `ANTHROPIC_*` / `CLAUDE_CODE_*` env vars from
+      `.cc-env.json` and prints a one-line endpoint/billing banner to stderr.
+- [x] `cc list` gained an `Endpoint` column (host, or `subscription`).
+- [x] `.cc-env.json` is never migrated and never linked — same security
+      category as `.credentials.json`; written with user-only permissions.
+- [x] Rule: a profile is born OAuth or endpoint and stays that way —
+      `cc env` refuses to run on a profile with prior OAuth state.
+
+### v0.3 scope decisions
+
+- No `cc env clear` and no `--force` override — removing endpoint config
+  means `cc remove` + recreate. The OAuth-state block is absolute.
+- Windows file lock-down uses `icacls /grant DOMAIN\user` (qualified). A bare
+  username can collide with the computer name and resolve to a broken
+  principal that locks out the file's own owner — verified during testing.
+- Endpoint URLs are not pinged for validation; the user discovers a bad
+  endpoint at first message.
 
 ## v0.2 — shipped 2026-05-18
 

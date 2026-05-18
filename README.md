@@ -18,7 +18,9 @@ Requires Node.js 18+ and Claude Code 2.1.140+ already installed. Get Claude Code
 | --- | --- |
 | `cc add <profile>` | Create a profile directory. |
 | `cc use <profile> [...args]` | Launch Claude under that profile. Profile must already exist. Args after the name are forwarded verbatim to `claude`. |
-| `cc list [--json]` | Show every profile: login state, account email, and how many artifact dirs are linked to shared (N/4). |
+| `cc list [--json]` | Show every profile: login state, account email, shared dirs (N/4), and endpoint. |
+| `cc env <profile> [...]` | Configure a custom API endpoint for a profile (interactive wizard or flags). See [Custom endpoints](#custom-endpoints-kimi-openrouter-etc). |
+| `cc env <profile> show [--reveal]` | Print a profile's endpoint config. Token masked by default; `--reveal` prints it in full. |
 | `cc migrate <src> <dest> [--force]` | Copy artifacts from `default`\|`shared` to `shared`\|`<profile>`. Skip-on-collision by default; `--force` overwrites. |
 | `cc link <profile> [<profile>...]` | Link a profile's artifact dirs to `~/.claude-shared/`. Migrates existing content; renames on collision. |
 | `cc unlink <profile>` | Restore a profile to its own private artifact dirs (copies shared content back). |
@@ -40,10 +42,11 @@ cc remove old-profile
 `cc list` output:
 
 ```
-Profile   LoggedIn  Email                 Shared
-personal  true      personal@example.com  4/4
-scratch   false     -                     0/4
-work      true      work@example.com      0/4
+Profile   LoggedIn  Email                 Shared  Endpoint
+kimi      false     -                     0/4     api.moonshot.ai
+personal  true      personal@example.com  4/4     subscription
+scratch   false     -                     0/4     subscription
+work      true      work@example.com      0/4     subscription
 ```
 
 ### What migrate copies and what link shares
@@ -61,6 +64,7 @@ work      true      work@example.com      0/4
 | `plugins/` | — | — | Carries auth tokens; deferred to a future opt-in flag |
 | `.credentials.json` | — | — | Never touched — each profile keeps its own auth |
 | `.claude.json` | — | — | Never touched — re-synced from server on every launch |
+| `.cc-env.json` | — | — | Per-profile custom-endpoint config; holds an API key. Never migrated, never linked. |
 
 `mcp.json`, `settings.json`, and `CLAUDE.md` are **not** copied to `shared` and are **not** linked because they typically carry auth tokens or per-profile configuration that should not leak across accounts.
 
@@ -98,6 +102,40 @@ If two profiles share history and you launch them against the same project at th
 
 `cc remove` is safe with shared profiles — it deletes only the links, never recursing into the shared target.
 
+## Custom endpoints (Kimi, OpenRouter, etc.)
+
+A profile can route through any Anthropic-compatible API endpoint instead of Anthropic's subscription OAuth — Moonshot/Kimi, OpenRouter, Requesty, a self-hosted vLLM, or a corporate proxy. This is configured per profile with `cc env`.
+
+> **Billing:** an endpoint profile bills through the **third-party provider**, using the API key you supply — **not** your Anthropic subscription. You are responsible for that provider's usage charges. A subscription profile is unaffected.
+
+An endpoint profile and a subscription profile are mutually exclusive: a profile is born one or the other and stays that way. `cc env` refuses to run on a profile that already has Anthropic OAuth credentials — create endpoint profiles fresh.
+
+### Worked example — Moonshot / Kimi
+
+```bash
+cc add kimi
+cc env kimi --base-url=https://api.moonshot.ai/anthropic \
+            --token=sk-your-moonshot-key \
+            --model=kimi-k2.5
+cc use kimi
+```
+
+Moonshot's endpoint URL ends in `/anthropic` — Claude Code appends `/v1/messages` itself, so do **not** add `/v1`. Most third-party providers serve a single model name; pass it as `--model` and it is applied to every tier (opus/sonnet/haiku/subagent). To override a tier, pass `--opus=`, `--sonnet=`, `--haiku=`, or `--subagent=`.
+
+Run `cc env <profile>` with no flags for an interactive wizard instead — it prompts for every field and never echoes the token. On an existing endpoint profile the wizard runs in edit mode with current values prefilled; non-interactively, only the flags you pass are changed.
+
+Inspect a config with `cc env <profile> show` (token masked). `cc env <profile> show --reveal` prints the full API key — do not paste that output anywhere.
+
+There is no `cc env clear`. To stop using an endpoint, `cc remove` the profile and recreate it.
+
+When you launch an endpoint profile, `cc use` prints a one-line reminder to stderr:
+
+```
+[cchost] Profile 'kimi' → api.moonshot.ai (custom endpoint billing applies)
+```
+
+The config lives at `~/.claude-profiles/<profile>/.cc-env.json` with user-only file permissions. It contains your API key — see [Sensitive data](#sensitive-data).
+
 ## How it works
 
 `cc` is a Node CLI with **zero runtime dependencies**. For `cc use` it:
@@ -112,6 +150,8 @@ The env var is set on the child process only — that's all `claude` needs.
 ## Sensitive data
 
 `~/.claude-profiles/<profile>/` holds real OAuth credentials. Treat it like SSH keys: don't commit it, don't share it, don't sync it to public cloud storage. The `.gitignore` shipped with this project excludes profile directories from anywhere they might land. `cc migrate` and `cc link` never copy `.credentials.json` or `.claude.json` across profiles.
+
+`.cc-env.json` (custom-endpoint config) contains a third-party **API key** — treat it exactly like `.credentials.json`. It is written with user-only file permissions, and `cc migrate`/`cc link` never copy or link it across profiles. `cc env show` masks the token; only `cc env show --reveal` prints it in full.
 
 ## Troubleshooting
 
