@@ -258,6 +258,34 @@ describe('env config — library', () => {
       expect(after.equals(before)).toBe(true);
     });
 
+    it('edit mode: wizard prefills, "e 3" re-prompts one field, submit saves', async () => {
+      const d = profileDir('endp');
+      envLib.writeEnvConfig(d, { base_url: 'https://x', auth_token: 'sk-keep', model: 'old-model' });
+      const io = scriptIo([
+        '', '', '', '', '', '', '', // accept every prefilled value
+        'e 3',                      // edit field 3 (Main model)
+        'new-model',                // new value for the model
+        's',                        // submit
+      ]);
+      await envLib.runConfigure('endp', d, {}, { io });
+      const raw = JSON.parse(fs.readFileSync(path.join(d, '.cc-env.json'), 'utf8'));
+      // Only the model changed; base_url and the token were kept.
+      expect(raw).toEqual({ base_url: 'https://x', auth_token: 'sk-keep', model: 'new-model' });
+    });
+
+    it('review screen ignores invalid input instead of exiting', async () => {
+      const d = profileDir('endp');
+      envLib.writeEnvConfig(d, { base_url: 'https://x', auth_token: 'sk', model: 'm' });
+      const io = scriptIo([
+        '', '', '', '', '', '', '', // accept prefilled
+        'e',                        // invalid (no number) — re-display
+        'x',                        // invalid — re-display
+        's',                        // finally submit
+      ]);
+      const code = await envLib.runConfigure('endp', d, {}, { io });
+      expect(code).toBe(0);
+    });
+
     it('errors in a non-TTY context with no flags', async () => {
       const d = profileDir('endp');
       await expect(
