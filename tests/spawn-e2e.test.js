@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import url from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -30,10 +30,17 @@ function runCc(args, { home, extraEnv = {} }) {
   });
 }
 
-const runE2E = process.platform === 'win32' ? describe : describe.skip;
-
-runE2E('cc use — end-to-end argv + env forwarding through fake-claude', () => {
+describe('cc use — end-to-end argv + env forwarding through fake-claude', () => {
   let tmpHome;
+
+  beforeAll(() => {
+    // `cc` spawns the fake `claude` by path; on POSIX the shim must carry the
+    // exec bit. Git records mode 100755, but a Windows clone or a zip download
+    // can drop it — set it explicitly so the suite runs on Linux/macOS too.
+    if (process.platform !== 'win32') {
+      fs.chmodSync(path.join(fixturesDir, 'claude'), 0o755);
+    }
+  });
 
   beforeEach(() => {
     tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-e2e-'));
