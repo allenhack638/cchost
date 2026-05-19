@@ -11,9 +11,11 @@
      docs/demo.gif, and uncomment the line below. -->
 <!-- ![cchost in action](docs/demo.gif) -->
 
-Each profile is a complete, isolated `CLAUDE_CONFIG_DIR` — credentials, session history, project state, plugins, and settings. Create one with `cc add <name>`, launch under it with `cc use <name>`.
+Claude Code keeps one account's login, history, and settings in a single config directory. To use a second account you normally have to log out and back in, which loses your place. cchost gives each account its own directory so you can keep several side by side and pick one when you launch.
 
-`cc` is a plain Node CLI on your PATH, so it behaves identically from PowerShell, cmd, bash, zsh, or fish — no shell scripts, no rc-file edits. Tested on Windows and Linux; macOS is expected to work but is not yet verified.
+Each profile is a complete, isolated `CLAUDE_CONFIG_DIR`: credentials, session history, project state, plugins, and settings. Create one with `cc add <name>`, launch under it with `cc use <name>`. Nothing is shared between profiles unless you ask for it.
+
+`cc` is a plain Node CLI on your PATH, so it works the same from PowerShell, cmd, bash, zsh, or fish. No shell scripts, no rc-file edits. Tested on Windows and Linux; macOS should work but is not verified yet.
 
 ## Install
 
