@@ -1,6 +1,6 @@
 {
   "name": "cchost",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Host multiple isolated Claude Code accounts on one machine via the `cc` command.",
   "keywords": [
     "claude",

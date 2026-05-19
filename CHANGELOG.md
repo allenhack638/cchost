@@ -5,6 +5,39 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2026-05-19
+
+### Changed
+
+- **Custom API endpoints are now configured through `cc add`, not `cc env`.**
+  The standalone `cc env` command (shipped in 0.3.0) is removed; endpoint
+  configuration is folded into the profile-creation command:
+  - `cc add <profile> --custom` — create a custom-endpoint profile via an
+    interactive wizard; the token is never echoed.
+  - `cc add <profile> --custom --base-url=URL --token=TOKEN [--model/--opus/--sonnet/--haiku/--subagent=NAME]`
+    — non-interactive create.
+  - Re-running `cc add <profile> --custom` on an existing endpoint profile
+    edits it in place (wizard prefills current values; with flags, only the
+    flags you pass are changed).
+  - `cc add --custom` is atomic — cancelling the wizard leaves no profile
+    behind.
+- **Endpoint inspection moved to `cc list`.** `cc env show` is replaced by
+  `cc list <profile>` — a per-profile detail view. `cc list <profile> --reveal`
+  unmasks the API token; `cc list <profile> --json` emits it as an object
+  (token always masked in JSON).
+
+### Removed
+
+- `cc env` and `cc env show` — superseded by `cc add --custom` and
+  `cc list <profile>`.
+
+### Notes
+
+- A profile is still born subscription or endpoint and stays that way:
+  `cc add --custom` refuses a profile that already has Anthropic OAuth
+  credentials. `.cc-env.json` is still never migrated and never linked, and is
+  still written with user-only file permissions.
+
 ## [0.3.0] - 2026-05-19
 
 ### Added
@@ -71,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   per-process state and must stay per-profile.
 - Cross-platform claim narrowed to the verified scope (Windows and Linux).
 
+[0.3.1]: https://github.com/allenhack638/cchost/releases/tag/v0.3.1
 [0.3.0]: https://github.com/allenhack638/cchost/releases/tag/v0.3.0
 [0.2.1]: https://github.com/allenhack638/cchost/releases/tag/v0.2.1
 [0.2.0]: https://github.com/allenhack638/cchost/releases/tag/v0.2.0
