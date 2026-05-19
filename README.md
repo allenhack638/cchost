@@ -16,11 +16,10 @@ Requires Node.js 18+ and Claude Code 2.1.140+ already installed. Get Claude Code
 
 | Command | What it does |
 | --- | --- |
-| `cc add <profile>` | Create a profile directory. |
+| `cc add <profile>` | Create a subscription profile (logs in with Anthropic OAuth on first use). |
+| `cc add <profile> --custom [...]` | Create — or, if it already exists, edit — a profile routed through a custom API endpoint. Opens a wizard, or takes `--base-url=URL --token=TOKEN [--model=…]`. See [Custom endpoints](#custom-endpoints-kimi-openrouter-etc). |
 | `cc use <profile> [...args]` | Launch Claude under that profile. Profile must already exist. Args after the name are forwarded verbatim to `claude`. |
-| `cc list [--json]` | Show every profile: login state, account email, shared dirs (N/4), and endpoint. |
-| `cc env <profile> [...]` | Configure a custom API endpoint for a profile (interactive wizard or flags). See [Custom endpoints](#custom-endpoints-kimi-openrouter-etc). |
-| `cc env <profile> show [--reveal]` | Print a profile's endpoint config. Token masked by default; `--reveal` prints it in full. |
+| `cc list [<profile>] [--json] [--reveal]` | List every profile (login state, email, shared dirs N/4, endpoint), or show one profile in detail. `--reveal` unmasks a custom endpoint's API token. |
 | `cc migrate <src> <dest> [--force]` | Copy artifacts from `default`\|`shared` to `shared`\|`<profile>`. Skip-on-collision by default; `--force` overwrites. |
 | `cc link <profile> [<profile>...]` | Link a profile's artifact dirs to `~/.claude-shared/`. Migrates existing content; renames on collision. |
 | `cc unlink <profile>` | Restore a profile to its own private artifact dirs (copies shared content back). |
@@ -127,31 +126,57 @@ If two profiles share history and you launch them against the same project at th
 
 ## Custom endpoints (Kimi, OpenRouter, etc.)
 
-A profile can route through any Anthropic-compatible API endpoint instead of Anthropic's subscription OAuth — Moonshot/Kimi, OpenRouter, Requesty, a self-hosted vLLM, or a corporate proxy. This is configured per profile with `cc env`.
+A profile can route through any Anthropic-compatible API endpoint instead of Anthropic's subscription OAuth — Moonshot/Kimi, OpenRouter, Requesty, a self-hosted vLLM, or a corporate proxy. You declare this when you create the profile, with `cc add <profile> --custom`.
 
-> **Billing:** an endpoint profile bills through the **third-party provider**, using the API key you supply — **not** your Anthropic subscription. You are responsible for that provider's usage charges. A subscription profile is unaffected.
+> **Billing:** a custom-endpoint profile bills through the **third-party provider**, using the API key you supply — **not** your Anthropic subscription. You are responsible for that provider's usage charges. A subscription profile is unaffected.
 
-An endpoint profile and a subscription profile are mutually exclusive: a profile is born one or the other and stays that way. `cc env` refuses to run on a profile that already has Anthropic OAuth credentials — create endpoint profiles fresh.
+A custom-endpoint profile and a subscription profile are mutually exclusive: a profile is born one or the other and stays that way. `cc add --custom` refuses to run on a profile that already has Anthropic OAuth credentials — create custom-endpoint profiles fresh.
 
 ### Worked example — Moonshot / Kimi
 
 ```bash
-cc add kimi
-cc env kimi --base-url=https://api.moonshot.ai/anthropic \
-            --token=sk-your-moonshot-key \
-            --model=kimi-k2.5
+cc add kimi --custom --base-url=https://api.moonshot.ai/anthropic \
+                     --token=sk-your-moonshot-key \
+                     --model=kimi-k2.5
 cc use kimi
 ```
 
 Moonshot's endpoint URL ends in `/anthropic` — Claude Code appends `/v1/messages` itself, so do **not** add `/v1`. Most third-party providers serve a single model name; pass it as `--model` and it is applied to every tier (opus/sonnet/haiku/subagent). To override a tier, pass `--opus=`, `--sonnet=`, `--haiku=`, or `--subagent=`.
 
-Run `cc env <profile>` with no flags for an interactive wizard instead — it prompts for every field and never echoes the token. On an existing endpoint profile the wizard runs in edit mode with current values prefilled; non-interactively, only the flags you pass are changed.
+Run `cc add <profile> --custom` with no value flags for an interactive wizard instead — it prompts for every field and never echoes the token. `cc add --custom` is atomic: if you cancel the wizard, no profile is left behind.
 
-Inspect a config with `cc env <profile> show` (token masked). `cc env <profile> show --reveal` prints the full API key — do not paste that output anywhere.
+### Editing a custom-endpoint profile
 
-There is no `cc env clear`. To stop using an endpoint, `cc remove` the profile and recreate it.
+Re-run `cc add <profile> --custom` on a profile that already has a custom endpoint and it switches to **edit mode**: the wizard prefills current values, and with flags only the flags you pass are changed.
 
-When you launch an endpoint profile, `cc use` prints a one-line reminder to stderr:
+```bash
+cc add kimi --custom --model=kimi-k3      # change just the model
+cc add kimi --custom --token=sk-rotated   # rotate the API key
+```
+
+Inspect a config with `cc list <profile>` — the API token is masked:
+
+```
+Profile:   kimi
+Directory: /home/you/.claude-profiles/kimi
+LoggedIn:  false
+Email:     -
+Shared:    0/4
+Endpoint:  api.moonshot.ai
+  Base URL:  https://api.moonshot.ai/anthropic
+  Token:     sk-you...key9 (32 chars)
+  Model:     kimi-k2.5
+  Opus:      kimi-k2.5
+  Sonnet:    kimi-k2.5
+  Haiku:     kimi-k2.5
+  Subagent:  kimi-k2.5
+```
+
+`cc list <profile> --reveal` prints the full API key instead — do not paste that output anywhere.
+
+There is no way to convert a custom-endpoint profile back to a subscription profile. To stop using an endpoint, `cc remove` the profile and recreate it.
+
+When you launch a custom-endpoint profile, `cc use` prints a one-line reminder to stderr:
 
 ```
 [cchost] Profile 'kimi' → api.moonshot.ai (custom endpoint billing applies)
@@ -174,7 +199,7 @@ The env var is set on the child process only — that's all `claude` needs.
 
 `~/.claude-profiles/<profile>/` holds real OAuth credentials. Treat it like SSH keys: don't commit it, don't share it, don't sync it to public cloud storage. The `.gitignore` shipped with this project excludes profile directories from anywhere they might land. `cc migrate` and `cc link` never copy `.credentials.json` or `.claude.json` across profiles.
 
-`.cc-env.json` (custom-endpoint config) contains a third-party **API key** — treat it exactly like `.credentials.json`. It is written with user-only file permissions, and `cc migrate`/`cc link` never copy or link it across profiles. `cc env show` masks the token; only `cc env show --reveal` prints it in full.
+`.cc-env.json` (custom-endpoint config) contains a third-party **API key** — treat it exactly like `.credentials.json`. It is written with user-only file permissions, and `cc migrate`/`cc link` never copy or link it across profiles. `cc list <profile>` masks the token; only `cc list <profile> --reveal` prints it in full.
 
 ## Troubleshooting
 

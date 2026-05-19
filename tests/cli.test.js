@@ -31,8 +31,12 @@ describe('cc list — strict flag parsing', () => {
     await expect(cli.run(['list', '--foo'])).rejects.toThrow(/Unknown flag: --foo/);
   });
 
-  it('rejects positional argument on cc list', async () => {
-    await expect(cli.run(['list', 'extra'])).rejects.toThrow(/Unexpected argument: extra/);
+  it('treats a single positional as a profile name (cc list <profile>)', async () => {
+    await expect(cli.run(['list', 'extra'])).rejects.toThrow(/Profile "extra" does not exist/);
+  });
+
+  it('rejects a second positional argument on cc list', async () => {
+    await expect(cli.run(['list', 'a', 'b'])).rejects.toThrow(/Unexpected argument: b/);
   });
 
   it('accepts --json on cc list', async () => {
@@ -96,12 +100,16 @@ describe('cc add — input validation', () => {
   });
 
   it('rejects `cc add --resume` rather than creating ~/.claude-profiles/--resume', async () => {
-    await expect(cli.run(['add', '--resume'])).rejects.toThrow(/looks like a flag/);
+    await expect(cli.run(['add', '--resume'])).rejects.toThrow(/Unknown flag: --resume/);
     expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', '--resume'))).toBe(false);
   });
 
-  it('rejects any extra argument after the profile name', async () => {
-    await expect(cli.run(['add', 'work', '--bogus=x'])).rejects.toThrow(/no extra arguments/);
+  it('rejects an unknown flag after the profile name', async () => {
+    await expect(cli.run(['add', 'work', '--bogus=x'])).rejects.toThrow(/Unknown flag: --bogus/);
+  });
+
+  it('rejects an extra positional argument after the profile name', async () => {
+    await expect(cli.run(['add', 'work', 'extra'])).rejects.toThrow(/no extra arguments/);
   });
 });
 
@@ -123,6 +131,15 @@ describe('cc unknown action', () => {
 
   it('returns exit 2 and prints help', async () => {
     await expect(cli.run(['bogus-command'])).resolves.toBe(2);
+  });
+
+  it('cc env (removed in v0.3.1) returns exit 2 with a migration hint', async () => {
+    let err = '';
+    process.stderr.write = (s) => { err += s; return true; };
+    const code = await cli.run(['env', 'kimi']);
+    expect(code).toBe(2);
+    expect(err).toMatch(/removed in v0\.3\.1/);
+    expect(err).toMatch(/cc add <profile> --custom/);
   });
 });
 

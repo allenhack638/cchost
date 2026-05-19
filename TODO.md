@@ -49,6 +49,30 @@ usage — do not build them on spec alone.
       `emailAddress` / `organizationName` / `organizationType` from the server on
       every launch, so masking only `displayName` was not worth shipping.
 
+## v0.3.1 — shipped 2026-05-19
+
+Custom-endpoint configuration unified into `cc add`. The standalone `cc env`
+command from v0.3.0 is removed.
+
+- [x] `cc add <profile> --custom` — create a custom-endpoint profile (wizard
+      or `--base-url/--token/--model/...` flags). Re-running it on an existing
+      endpoint profile edits in place.
+- [x] `cc add --custom` is atomic — a cancelled wizard, or a config that fails
+      validation, removes the freshly-created profile directory.
+- [x] `cc list <profile>` — per-profile detail view; replaces `cc env show`.
+      `--reveal` unmasks the token, `--json` emits an object.
+- [x] Removed `cc env` / `cc env show`.
+
+### v0.3.1 design rationale
+
+- Endpoint profiles are rare to create and rarer to edit; editing is almost
+  always a one-field change (key rotation, model bump). So the surface was
+  optimised for *few commands*, not fast edits — re-running `cc add --custom`
+  covers the rare edit without a dedicated `cc env`/`cc set` verb.
+- `cc env` did not create profiles, so a custom endpoint took two commands
+  (`cc add` + `cc env`). Folding `--custom` into `cc add` makes it one, and
+  leaves each command with a single job.
+
 ## v0.3 — shipped 2026-05-19
 
 Per-profile custom API endpoints: a profile can route through any

@@ -184,10 +184,11 @@ describe('env config — library', () => {
   describe('runConfigure — non-interactive', () => {
     it('creates .cc-env.json from flags', async () => {
       const d = profileDir('endp');
-      const code = await envLib.runConfigure('endp', d, {
+      const result = await envLib.runConfigure('endp', d, {
         base_url: 'https://api.moonshot.ai/anthropic', auth_token: 'sk-test', model: 'kimi-k2.5',
       });
-      expect(code).toBe(0);
+      expect(result.code).toBe(0);
+      expect(result.written).toBe(true);
       const raw = JSON.parse(fs.readFileSync(path.join(d, '.cc-env.json'), 'utf8'));
       expect(raw).toEqual({ base_url: 'https://api.moonshot.ai/anthropic', auth_token: 'sk-test', model: 'kimi-k2.5' });
     });
@@ -236,8 +237,9 @@ describe('env config — library', () => {
         '', '', '', '',                      // opus/sonnet/haiku/subagent — accept fallback
         's',                                 // submit
       ]);
-      const code = await envLib.runConfigure('endp', d, {}, { io });
-      expect(code).toBe(0);
+      const result = await envLib.runConfigure('endp', d, {}, { io });
+      expect(result.code).toBe(0);
+      expect(result.written).toBe(true);
       const raw = JSON.parse(fs.readFileSync(path.join(d, '.cc-env.json'), 'utf8'));
       expect(raw).toEqual({
         base_url: 'https://api.moonshot.ai/anthropic',
@@ -253,7 +255,8 @@ describe('env config — library', () => {
       envLib.writeEnvConfig(d, { base_url: 'https://x', auth_token: 'sk', model: 'm' });
       const before = fs.readFileSync(path.join(d, '.cc-env.json'));
       const io = scriptIo(['', '', '', '', '', '', '', 'c']);
-      await envLib.runConfigure('endp', d, {}, { io });
+      const result = await envLib.runConfigure('endp', d, {}, { io });
+      expect(result.written).toBe(false);
       const after = fs.readFileSync(path.join(d, '.cc-env.json'));
       expect(after.equals(before)).toBe(true);
     });
@@ -282,8 +285,8 @@ describe('env config — library', () => {
         'x',                        // invalid — re-display
         's',                        // finally submit
       ]);
-      const code = await envLib.runConfigure('endp', d, {}, { io });
-      expect(code).toBe(0);
+      const result = await envLib.runConfigure('endp', d, {}, { io });
+      expect(result.code).toBe(0);
     });
 
     it('errors in a non-TTY context with no flags', async () => {
@@ -303,35 +306,9 @@ describe('env config — library', () => {
     });
   });
 
-  describe('runShow', () => {
-    it('masks the token by default', () => {
-      const d = profileDir('endp');
-      envLib.writeEnvConfig(d, { base_url: 'https://x', auth_token: 'sk-abcdefghijklmnop' });
-      const out = [];
-      envLib.runShow('endp', d, { write: (s) => out.push(s) });
-      const text = out.join('\n');
-      expect(text).not.toContain('sk-abcdefghijklmnop');
-      expect(text).toMatch(/sk-abc\.\.\./);
-    });
-
-    it('reveals the full token with --reveal and prints a warning', () => {
-      const d = profileDir('endp');
-      envLib.writeEnvConfig(d, { base_url: 'https://x', auth_token: 'sk-abcdefghijklmnop' });
-      const out = [];
-      envLib.runShow('endp', d, { reveal: true, write: (s) => out.push(s) });
-      const text = out.join('\n');
-      expect(text).toContain('sk-abcdefghijklmnop');
-      expect(text).toMatch(/WARNING/);
-    });
-
-    it('errors on an OAuth (non-endpoint) profile', () => {
-      const d = profileDir('oauth');
-      expect(() => envLib.runShow('oauth', d, { write: () => {} })).toThrow(/not an endpoint profile/);
-    });
-  });
 });
 
-describe('cc env — CLI surface', () => {
+describe('cc add --custom — CLI surface', () => {
   let tmpHome;
   let originalHomedir;
   let originalLog;
@@ -339,7 +316,7 @@ describe('cc env — CLI surface', () => {
   let originalErr;
 
   beforeEach(() => {
-    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-env-cli-'));
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-add-custom-'));
     originalHomedir = os.homedir;
     os.homedir = () => tmpHome;
     originalLog = console.log;
@@ -358,42 +335,88 @@ describe('cc env — CLI surface', () => {
     fs.rmSync(tmpHome, { recursive: true, force: true });
   });
 
-  it('rejects an unknown flag, naming it', async () => {
-    await cli.run(['add', 'endp']);
+  function ccEnvPath(name) {
+    return path.join(tmpHome, '.claude-profiles', name, '.cc-env.json');
+  }
+
+  it('rejects endpoint flags without --custom', async () => {
     await expect(
-      cli.run(['env', 'endp', '--token=sk-x', '--base-url=https://x', '--foo=bar']),
+      cli.run(['add', 'kimi', '--base-url=https://x', '--token=sk']),
+    ).rejects.toThrow(/require --custom/);
+  });
+
+  it('rejects an unknown flag, naming it', async () => {
+    await expect(
+      cli.run(['add', 'kimi', '--custom', '--base-url=https://x', '--token=sk', '--foo=bar']),
     ).rejects.toThrow(/Unknown flag: --foo/);
   });
 
-  it('treats --force as an unknown flag (no override exists)', async () => {
-    await cli.run(['add', 'endp']);
-    await expect(
-      cli.run(['env', 'endp', '--force', '--base-url=https://x', '--token=sk']),
-    ).rejects.toThrow(/Unknown flag: --force/);
-  });
-
-  it('rejects --reveal outside of show mode', async () => {
-    await cli.run(['add', 'endp']);
-    await expect(cli.run(['env', 'endp', '--reveal'])).rejects.toThrow(/--reveal/);
-  });
-
-  it('creates a config non-interactively via flags', async () => {
-    await cli.run(['add', 'endp']);
+  it('creates an endpoint profile non-interactively via flags', async () => {
     const code = await cli.run([
-      'env', 'endp', '--base-url=https://api.moonshot.ai/anthropic', '--token=sk-x',
+      'add', 'kimi', '--custom',
+      '--base-url=https://api.moonshot.ai/anthropic', '--token=sk-x',
     ]);
     expect(code).toBe(0);
-    const p = path.join(tmpHome, '.claude-profiles', 'endp', '.cc-env.json');
-    expect(fs.existsSync(p)).toBe(true);
+    expect(fs.existsSync(ccEnvPath('kimi'))).toBe(true);
   });
 
-  it('cc env show errors on a non-endpoint profile', async () => {
-    await cli.run(['add', 'plain']);
-    await expect(cli.run(['env', 'plain', 'show'])).rejects.toThrow(/not an endpoint profile/);
+  it('creating a custom profile requires --base-url and --token', async () => {
+    await expect(
+      cli.run(['add', 'kimi', '--custom', '--model=kimi-k2.5']),
+    ).rejects.toThrow(/--base-url and --token/);
+    // The freshly-created profile directory is cleaned up — add --custom is atomic.
+    expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', 'kimi'))).toBe(false);
+  });
+
+  it('re-running cc add --custom on an endpoint profile edits it in place', async () => {
+    await cli.run([
+      'add', 'kimi', '--custom', '--base-url=https://x', '--token=sk-keep', '--model=old',
+    ]);
+    await cli.run(['add', 'kimi', '--custom', '--model=new']);
+    const raw = JSON.parse(fs.readFileSync(ccEnvPath('kimi'), 'utf8'));
+    expect(raw).toEqual({ base_url: 'https://x', auth_token: 'sk-keep', model: 'new' });
+  });
+
+  it('refuses cc add --custom on a profile that has OAuth credentials', async () => {
+    await cli.run(['add', 'work']);
+    fs.writeFileSync(
+      path.join(tmpHome, '.claude-profiles', 'work', '.credentials.json'), '{}',
+    );
+    await expect(
+      cli.run(['add', 'work', '--custom', '--base-url=https://x', '--token=sk']),
+    ).rejects.toThrow(/OAuth credentials/);
+    expect(fs.existsSync(ccEnvPath('work'))).toBe(false);
+  });
+
+  it('plain cc add still errors on an existing profile', async () => {
+    await cli.run(['add', 'dup']);
+    await expect(cli.run(['add', 'dup'])).rejects.toThrow(/already exists/);
+  });
+
+  it('cc add --custom on an existing un-used plain profile configures it', async () => {
+    // A profile created with plain `cc add` but never logged in (no
+    // credentials) carries no OAuth state, so --custom may configure it.
+    await cli.run(['add', 'plainp']);
+    const code = await cli.run([
+      'add', 'plainp', '--custom', '--base-url=https://x.test', '--token=sk-x',
+    ]);
+    expect(code).toBe(0);
+    expect(fs.existsSync(ccEnvPath('plainp'))).toBe(true);
+  });
+
+  it('cc add --custom with tier flags but no --model omits unset tiers', async () => {
+    await cli.run([
+      'add', 'tiers', '--custom', '--base-url=https://t.test', '--token=sk-t',
+      '--opus=big', '--haiku=small',
+    ]);
+    const raw = JSON.parse(fs.readFileSync(ccEnvPath('tiers'), 'utf8'));
+    expect(raw).toEqual({
+      base_url: 'https://t.test', auth_token: 'sk-t', opus: 'big', haiku: 'small',
+    });
   });
 });
 
-describe('cc list — Endpoint column', () => {
+describe('cc list — Endpoint column and detail view', () => {
   let tmpHome;
   let originalHomedir;
   let originalLog;
@@ -448,6 +471,76 @@ describe('cc list — Endpoint column', () => {
     await cli.run(['list', '--json']);
     const arr = JSON.parse(captured);
     expect(arr[0].endpoint).toBe('api.moonshot.ai');
+  });
+
+  it('cc list <profile> shows endpoint detail with a masked token', async () => {
+    await cli.run([
+      'add', 'kimi', '--custom',
+      '--base-url=https://api.moonshot.ai/anthropic',
+      '--token=sk-abcdefghijklmnop', '--model=kimi-k2.5',
+    ]);
+    captured = '';
+    await cli.run(['list', 'kimi']);
+    expect(captured).toMatch(/Endpoint:\s+api\.moonshot\.ai/);
+    expect(captured).toMatch(/Base URL:\s+https:\/\/api\.moonshot\.ai\/anthropic/);
+    expect(captured).not.toContain('sk-abcdefghijklmnop');
+    expect(captured).toMatch(/sk-abc\.\.\./);
+  });
+
+  it('cc list <profile> --reveal prints the full token and a warning', async () => {
+    await cli.run([
+      'add', 'kimi', '--custom', '--base-url=https://x', '--token=sk-abcdefghijklmnop',
+    ]);
+    captured = '';
+    await cli.run(['list', 'kimi', '--reveal']);
+    expect(captured).toContain('sk-abcdefghijklmnop');
+    expect(captured).toMatch(/WARNING/);
+  });
+
+  it('cc list <profile> shows "subscription" for a plain profile', async () => {
+    await cli.run(['add', 'work']);
+    captured = '';
+    await cli.run(['list', 'work']);
+    expect(captured).toMatch(/Endpoint:\s+subscription/);
+  });
+
+  it('cc list <profile> errors for a missing profile', async () => {
+    await expect(cli.run(['list', 'ghost'])).rejects.toThrow(/does not exist/);
+  });
+
+  it('cc list --reveal without a profile name is rejected', async () => {
+    await expect(cli.run(['list', '--reveal'])).rejects.toThrow(/--reveal/);
+  });
+
+  it('cc list <profile> --json --reveal together is rejected', async () => {
+    await cli.run(['add', 'kimi', '--custom', '--base-url=https://x', '--token=sk']);
+    await expect(
+      cli.run(['list', 'kimi', '--json', '--reveal']),
+    ).rejects.toThrow(/reveal/);
+  });
+
+  it('cc list <profile> reports a malformed .cc-env.json without crashing', async () => {
+    await cli.run(['add', 'brk']);
+    fs.writeFileSync(
+      path.join(tmpHome, '.claude-profiles', 'brk', '.cc-env.json'), '{garbage',
+    );
+    captured = '';
+    const code = await cli.run(['list', 'brk']);
+    expect(code).toBe(0);
+    expect(captured).toMatch(/invalid config/);
+    expect(captured).toMatch(/malformed/);
+  });
+
+  it('cc list <profile> --json masks the token in endpointConfig', async () => {
+    await cli.run([
+      'add', 'kimi', '--custom', '--base-url=https://x', '--token=sk-abcdefghijklmnop',
+    ]);
+    captured = '';
+    await cli.run(['list', 'kimi', '--json']);
+    const obj = JSON.parse(captured);
+    expect(obj.name).toBe('kimi');
+    expect(obj.endpointConfig.auth_token).not.toContain('sk-abcdefghijklmnop');
+    expect(obj.endpointConfig.auth_token).toMatch(/sk-abc\.\.\./);
   });
 });
 
