@@ -15,7 +15,7 @@ Claude Code keeps one account's login, history, and settings in a single config 
 
 Each profile is a complete, isolated `CLAUDE_CONFIG_DIR`: credentials, session history, project state, plugins, and settings. Create one with `cc add <name>`, launch under it with `cc use <name>`. Nothing is shared between profiles unless you ask for it.
 
-`cc` is a plain Node CLI on your PATH, so it works the same from PowerShell, cmd, bash, zsh, or fish. No shell scripts, no rc-file edits. Tested on Windows and Linux; macOS should work but is not verified yet.
+`cc` is a plain Node CLI on your PATH, so it works the same from PowerShell, cmd, bash, zsh, or fish. No shell scripts, no rc-file edits. Tested on Windows, Linux, and macOS in CI.
 
 ## Install
 
