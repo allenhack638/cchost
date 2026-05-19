@@ -22,9 +22,10 @@ desktop.ini
 ehthumbs.db
 $RECYCLE.BIN/
 
-# editor / IDE
+# editor / IDE / local agent tooling
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~

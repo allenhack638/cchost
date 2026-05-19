@@ -1,8 +1,19 @@
 # cchost
 
-Host multiple isolated Claude Code accounts on one machine via a single `cc` command. `cc` is a plain Node CLI on your PATH, so it runs the same from PowerShell, cmd, bash, zsh, or fish — there are no shell scripts or rc-file edits involved. Tested on Windows and Linux; macOS is expected to work but is not yet verified.
+> Run multiple isolated Claude Code accounts on one machine — switch between them with a single `cc` command.
 
-Each profile is a complete, isolated `CLAUDE_CONFIG_DIR` — credentials, session history, project state, plugins, and settings. Create one with `cc add <name>`; launch under it with `cc use <name>`.
+[![npm version](https://img.shields.io/npm/v/cchost.svg)](https://www.npmjs.com/package/cchost)
+[![CI](https://github.com/allenhack638/cchost/actions/workflows/ci.yml/badge.svg)](https://github.com/allenhack638/cchost/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/cchost.svg)](./LICENSE)
+[![node](https://img.shields.io/node/v/cchost.svg)](https://nodejs.org)
+
+<!-- Demo: record a ~15s clip of `cc add` → `cc use` → `cc list`, save it as
+     docs/demo.gif, and uncomment the line below. -->
+<!-- ![cchost in action](docs/demo.gif) -->
+
+Each profile is a complete, isolated `CLAUDE_CONFIG_DIR` — credentials, session history, project state, plugins, and settings. Create one with `cc add <name>`, launch under it with `cc use <name>`.
+
+`cc` is a plain Node CLI on your PATH, so it behaves identically from PowerShell, cmd, bash, zsh, or fish — no shell scripts, no rc-file edits. Tested on Windows and Linux; macOS is expected to work but is not yet verified.
 
 ## Install
 
