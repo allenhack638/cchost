@@ -25,21 +25,6 @@ usage — do not build them on spec alone.
       version is on npm. Use the existing `~/.claude-profiles/.cc-cache.json`
       pattern; keep it non-blocking and respect `NO_COLOR`.
 
-## QA-audit leftovers — nice-to-have
-
-- [ ] `cc list --json` embeds absolute home paths — consider a home-relative form
-      or a `--no-paths` toggle so piped output does not leak the OS username.
-- [ ] Dedupe `isLink` / `isLinkLike` — identical helper duplicated in
-      `lib/cli.js` and `lib/share.js`.
-- [ ] Dedupe `usageError` — duplicated in `lib/cli.js`, `lib/migrate.js`,
-      and `lib/profiles.js`.
-- [ ] Move the version cache out of the data dir — `~/.claude-profiles/.cc-cache.json`
-      sits alongside profile data; a `.cache/` subdir (or `XDG_CACHE_HOME`) is cleaner.
-- [ ] Cosmetic: file-name collisions on link produce names like
-      `dummyagent.md__v2test2` (the `__<profile>` suffix lands after the
-      extension). Functionally correct; a nicer form would be
-      `dummyagent__v2test2.md`. Found during the v0.2 QA audit.
-
 ## Done
 
 - [x] `cc --version` / `cc -v` flag — prints the installed version from package.json.
