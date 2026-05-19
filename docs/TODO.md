@@ -3,13 +3,6 @@
 Deferred work for cchost. Ordered by priority. Feature ideas are gated on real
 usage — do not build them on spec alone.
 
-## v0.1.x polish — small, not features
-
-- [ ] Add macOS to the CI test matrix in `.github/workflows/ci.yml`. The README
-      now says macOS is "expected but not verified" — verifying it lets that
-      claim be tightened. (`tests/spawn-e2e.test.js` is already cross-platform,
-      so it will run as-is once macOS is in the matrix.)
-
 ## v0.4 feature candidates — gated on real usage
 
 - [ ] Plugin sharing via `cc link --include-plugins` — `plugins/` was
@@ -34,6 +27,9 @@ usage — do not build them on spec alone.
 - [x] `tests/spawn-e2e.test.js` runs on Linux/macOS, not just Windows. The
       POSIX `claude` shim is committed with the exec bit (mode 100755) and the
       suite re-applies it in `beforeAll` so a Windows clone can't drop it.
+- [x] CI test matrix covers ubuntu-latest, windows-latest, and macos-latest.
+      All three run the full suite including the e2e tests; macOS support is
+      now verified, not just expected.
 
 ## v0.3.1 — shipped 2026-05-19
 
