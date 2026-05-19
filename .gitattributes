@@ -1,0 +1,3 @@
+# The POSIX `claude` shim used by tests/spawn-e2e.test.js must stay LF so its
+# #!/bin/sh shebang works when the suite runs on Linux/macOS CI runners.
+test-fixtures/claude text eol=lf

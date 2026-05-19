@@ -7,10 +7,8 @@ usage — do not build them on spec alone.
 
 - [ ] Add macOS to the CI test matrix in `.github/workflows/ci.yml`. The README
       now says macOS is "expected but not verified" — verifying it lets that
-      claim be tightened.
-- [ ] Make `tests/spawn-e2e.test.js` cross-platform. It is currently gated to
-      `win32` (the `claude` shim needs an exec bit on POSIX), so it is skipped on
-      the Ubuntu runner and would be skipped on macOS.
+      claim be tightened. (`tests/spawn-e2e.test.js` is already cross-platform,
+      so it will run as-is once macOS is in the matrix.)
 
 ## v0.4 feature candidates — gated on real usage
 
@@ -33,6 +31,9 @@ usage — do not build them on spec alone.
 - [x] Removed the `cc add` alias masking feature — Claude Code re-syncs
       `emailAddress` / `organizationName` / `organizationType` from the server on
       every launch, so masking only `displayName` was not worth shipping.
+- [x] `tests/spawn-e2e.test.js` runs on Linux/macOS, not just Windows. The
+      POSIX `claude` shim is committed with the exec bit (mode 100755) and the
+      suite re-applies it in `beforeAll` so a Windows clone can't drop it.
 
 ## v0.3.1 — shipped 2026-05-19
 
