@@ -31,6 +31,16 @@ usage — do not build them on spec alone.
       All three run the full suite including the e2e tests; macOS support is
       now verified, not just expected.
 
+## v0.3.2 — shipped 2026-06-04
+
+`cc list` now masks account emails by default — the output is safe to paste in
+screenshots and issue reports.
+
+- [x] `cc list` and `cc list <profile>` mask the local-part of every email
+      (`i***@example.com`) in both text and JSON output.
+- [x] `--reveal-email` opt-in flag prints the full email; rejected together
+      with `--json` (same precedent as `--reveal` for tokens).
+
 ## v0.3.1 — shipped 2026-05-19
 
 Custom-endpoint configuration unified into `cc add`. The standalone `cc env`

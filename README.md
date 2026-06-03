@@ -32,7 +32,7 @@ Requires Node.js 18+ and Claude Code 2.1.140+ already installed. Get Claude Code
 | `cc add <profile>` | Create a subscription profile (logs in with Anthropic OAuth on first use). |
 | `cc add <profile> --custom [...]` | Create — or, if it already exists, edit — a profile routed through a custom API endpoint. Opens a wizard, or takes `--base-url=URL --token=TOKEN [--model=…]`. See [Custom endpoints](#custom-endpoints-kimi-openrouter-etc). |
 | `cc use <profile> [...args]` | Launch Claude under that profile. Profile must already exist. Args after the name are forwarded verbatim to `claude`. |
-| `cc list [<profile>] [--json] [--reveal]` | List every profile (login state, email, shared dirs N/4, endpoint), or show one profile in detail. `--reveal` unmasks a custom endpoint's API token. |
+| `cc list [<profile>] [--json] [--reveal] [--reveal-email]` | List every profile (login state, email, shared dirs N/4, endpoint), or show one profile in detail. Emails are masked by default; `--reveal-email` shows them in full. `--reveal` unmasks a custom endpoint's API token. |
 | `cc migrate <src> <dest> [--force]` | Copy artifacts from `default`\|`shared` to `shared`\|`<profile>`. Skip-on-collision by default; `--force` overwrites. |
 | `cc link <profile> [<profile>...]` | Link a profile's artifact dirs to `~/.claude-shared/`. Migrates existing content; renames on collision. |
 | `cc unlink <profile>` | Restore a profile to its own private artifact dirs (copies shared content back). |
@@ -56,10 +56,13 @@ cc remove old-profile
 ```
 Profile   LoggedIn  Email                 Shared  Endpoint
 kimi      false     -                     0/4     api.moonshot.ai
-personal  true      personal@example.com  4/4     subscription
+personal  true      p***@example.com      4/4     subscription
 scratch   false     -                     0/4     subscription
-work      true      work@example.com      0/4     subscription
+work      true      w***@example.com      0/4     subscription
 ```
+
+Emails are masked by default so the list is safe to paste in screenshots and
+issue reports. Pass `--reveal-email` to show them in full.
 
 The **Shared** column is a count: how many of the 4 shareable directories
 (`projects`, `skills`, `agents`, `commands`) are linked to `~/.claude-shared/`.
@@ -185,7 +188,7 @@ Endpoint:  api.moonshot.ai
   Subagent:  kimi-k2.5
 ```
 
-`cc list <profile> --reveal` prints the full API key instead — do not paste that output anywhere.
+`cc list <profile> --reveal` prints the full API key instead — do not paste that output anywhere. Account emails are masked the same way; `--reveal-email` shows them in full.
 
 There is no way to convert a custom-endpoint profile back to a subscription profile. To stop using an endpoint, `cc remove` the profile and recreate it.
 
