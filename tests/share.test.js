@@ -32,7 +32,7 @@ describe('share link migration with collisions', () => {
 
     share.shareLink('work');
 
-    const shared = path.join(tmpHome, '.claude-shared');
+    const shared = path.join(tmpHome, '.claude');
     expect(fs.existsSync(path.join(shared, 'projects', 'MyProject', 'note.txt'))).toBe(true);
     expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(true);
     // sessions/ stays per-profile, never linked, content preserved
@@ -51,7 +51,7 @@ describe('share link migration with collisions', () => {
 
     share.shareLink('multi');
 
-    const shared = path.join(tmpHome, '.claude-shared');
+    const shared = path.join(tmpHome, '.claude');
     for (const sub of ['projects', 'skills', 'agents', 'commands']) {
       expect(fs.lstatSync(path.join(pdir, sub)).isSymbolicLink()).toBe(true);
       expect(fs.existsSync(path.join(shared, sub, 'item', 'f.txt'))).toBe(true);
@@ -79,7 +79,7 @@ describe('share link migration with collisions', () => {
     share.shareLink('work');
     share.shareLink('personal');
 
-    const sharedProjects = path.join(tmpHome, '.claude-shared', 'projects');
+    const sharedProjects = path.join(tmpHome, '.claude', 'projects');
     expect(fs.existsSync(path.join(sharedProjects, 'shared-name', 'a.txt'))).toBe(true);
     expect(fs.existsSync(path.join(sharedProjects, 'shared-name__personal', 'b.txt'))).toBe(true);
   });
@@ -131,10 +131,69 @@ describe('share link migration with collisions', () => {
     expect(fs.lstatSync(path.join(pdir, 'commands')).isSymbolicLink()).toBe(true);
   });
 
+  it('symlinks point at ~/.claude/ in v0.4, not ~/.claude-shared/', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    share.shareLink('work');
+    for (const sub of ['projects', 'skills', 'agents', 'commands']) {
+      const link = path.join(pdir, sub);
+      expect(fs.lstatSync(link).isSymbolicLink()).toBe(true);
+      const target = path.resolve(pdir, fs.readlinkSync(link));
+      expect(target).toBe(path.join(tmpHome, '.claude', sub));
+    }
+  });
+
+  it('shareLink with { tools: true } links only skills/agents/commands', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    const results = share.shareLink('work', { tools: true });
+    const subs = results.map((r) => r.sub).sort();
+    expect(subs).toEqual(['agents', 'commands', 'skills']);
+    expect(fs.lstatSync(path.join(pdir, 'skills')).isSymbolicLink()).toBe(true);
+    expect(fs.existsSync(path.join(pdir, 'projects'))).toBe(false);
+  });
+
+  it('shareLink with { projects: true } links only projects', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    const results = share.shareLink('work', { projects: true });
+    expect(results).toHaveLength(1);
+    expect(results[0].sub).toBe('projects');
+    expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(true);
+    expect(fs.existsSync(path.join(pdir, 'skills'))).toBe(false);
+  });
+
+  it('shareUnlink with { tools: true } only restores tool dirs; leaves projects linked', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    share.shareLink('work');
+    share.shareUnlink('work', { tools: true });
+    expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(true);
+    for (const sub of ['skills', 'agents', 'commands']) {
+      expect(fs.lstatSync(path.join(pdir, sub)).isSymbolicLink()).toBe(false);
+    }
+  });
+
+  it('shareLink relinks silently when an existing link points at the legacy ~/.claude-shared/ pool', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    // Simulate a pre-v0.4 link pointing at ~/.claude-shared/projects/
+    const legacy = path.join(tmpHome, '.claude-shared', 'projects');
+    fs.mkdirSync(legacy, { recursive: true });
+    fs.symlinkSync(legacy, path.join(pdir, 'projects'), process.platform === 'win32' ? 'junction' : 'dir');
+
+    const results = share.shareLink('work');
+    const projects = results.find((r) => r.sub === 'projects');
+    expect(projects.status).toBe('linked');
+    expect(projects.relinkedFromLegacy).toBe(true);
+    const newTarget = path.resolve(pdir, fs.readlinkSync(path.join(pdir, 'projects')));
+    expect(newTarget).toBe(path.join(tmpHome, '.claude', 'projects'));
+  });
+
   it('collision counter falls back to __<profile>_2 when first rename also collides', () => {
     // Pre-seed shared with both `dup` and `dup__work` already taken,
     // so migrating profile "work" with its own `dup` must end up at `dup__work_2`.
-    const sharedProjects = path.join(tmpHome, '.claude-shared', 'projects');
+    const sharedProjects = path.join(tmpHome, '.claude', 'projects');
     fs.mkdirSync(path.join(sharedProjects, 'dup'), { recursive: true });
     fs.writeFileSync(path.join(sharedProjects, 'dup', 's.txt'), 'original');
     fs.mkdirSync(path.join(sharedProjects, 'dup__work'), { recursive: true });
@@ -149,5 +208,98 @@ describe('share link migration with collisions', () => {
     expect(fs.readFileSync(path.join(sharedProjects, 'dup', 's.txt'), 'utf8')).toBe('original');
     expect(fs.readFileSync(path.join(sharedProjects, 'dup__work', 'a.txt'), 'utf8')).toBe('pre-existing');
     expect(fs.readFileSync(path.join(sharedProjects, 'dup__work_2', 'mine.txt'), 'utf8')).toBe('from-work');
+  });
+});
+
+describe('migrateLegacyPool — v0.3 → v0.4', () => {
+  let tmpHome;
+  let originalHomedir;
+  let originalLog;
+
+  beforeEach(() => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-legacy-'));
+    originalHomedir = os.homedir;
+    os.homedir = () => tmpHome;
+    originalLog = console.log;
+    console.log = () => {};
+  });
+
+  afterEach(() => {
+    os.homedir = originalHomedir;
+    console.log = originalLog;
+    fs.rmSync(tmpHome, { recursive: true, force: true });
+  });
+
+  it('is a no-op when ~/.claude-shared/ does not exist', () => {
+    const result = share.migrateLegacyPool();
+    expect(result.migrated).toBe(false);
+    expect(result.moves).toEqual([]);
+  });
+
+  it('moves legacy pool content into ~/.claude/ and removes the legacy dir', () => {
+    const legacy = path.join(tmpHome, '.claude-shared');
+    fs.mkdirSync(path.join(legacy, 'skills', 'context7-mcp'), { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'skills', 'context7-mcp', 'skill.md'), 'mcp content');
+    fs.mkdirSync(path.join(legacy, 'projects', 'D--myapp'), { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'projects', 'D--myapp', 'conv.jsonl'), 'log');
+
+    const result = share.migrateLegacyPool();
+
+    expect(result.migrated).toBe(true);
+    expect(result.moves.length).toBe(2);
+    const pool = path.join(tmpHome, '.claude');
+    expect(fs.readFileSync(path.join(pool, 'skills', 'context7-mcp', 'skill.md'), 'utf8')).toBe('mcp content');
+    expect(fs.readFileSync(path.join(pool, 'projects', 'D--myapp', 'conv.jsonl'), 'utf8')).toBe('log');
+    expect(fs.existsSync(legacy)).toBe(false);
+  });
+
+  it('collision-renames on conflict with __legacy suffix', () => {
+    const legacy = path.join(tmpHome, '.claude-shared');
+    const pool = path.join(tmpHome, '.claude');
+    // Existing entry in the new pool
+    fs.mkdirSync(path.join(pool, 'skills', 'context7-mcp'), { recursive: true });
+    fs.writeFileSync(path.join(pool, 'skills', 'context7-mcp', 'skill.md'), 'NEW');
+    // Same name in the legacy pool
+    fs.mkdirSync(path.join(legacy, 'skills', 'context7-mcp'), { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'skills', 'context7-mcp', 'skill.md'), 'LEGACY');
+
+    share.migrateLegacyPool();
+
+    expect(fs.readFileSync(path.join(pool, 'skills', 'context7-mcp', 'skill.md'), 'utf8')).toBe('NEW');
+    expect(
+      fs.readFileSync(path.join(pool, 'skills', 'context7-mcp__legacy', 'skill.md'), 'utf8'),
+    ).toBe('LEGACY');
+  });
+
+  it('re-points profile symlinks from legacy → new pool', () => {
+    const legacy = path.join(tmpHome, '.claude-shared');
+    fs.mkdirSync(path.join(legacy, 'projects'), { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'projects', 'SENTINEL.txt'), 'kept');
+
+    const pdir = path.join(tmpHome, '.claude-profiles', 'p1');
+    fs.mkdirSync(pdir, { recursive: true });
+    // Pre-v0.4 symlink shape
+    fs.symlinkSync(
+      path.join(legacy, 'projects'),
+      path.join(pdir, 'projects'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
+
+    const result = share.migrateLegacyPool();
+
+    expect(result.relinked).toContainEqual({ profile: 'p1', sub: 'projects' });
+    const newTarget = path.resolve(pdir, fs.readlinkSync(path.join(pdir, 'projects')));
+    expect(newTarget).toBe(path.join(tmpHome, '.claude', 'projects'));
+    // Content still reachable through the relinked symlink
+    expect(fs.readFileSync(path.join(pdir, 'projects', 'SENTINEL.txt'), 'utf8')).toBe('kept');
+  });
+
+  it('is idempotent — running twice does nothing extra after the legacy dir is gone', () => {
+    const legacy = path.join(tmpHome, '.claude-shared');
+    fs.mkdirSync(path.join(legacy, 'skills'), { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'skills', 'sentinel.md'), 'x');
+    share.migrateLegacyPool();
+    const result = share.migrateLegacyPool();
+    expect(result.migrated).toBe(false);
   });
 });

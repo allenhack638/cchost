@@ -3,7 +3,7 @@
 Deferred work for cchost. Ordered by priority. Feature ideas are gated on real
 usage — do not build them on spec alone.
 
-## v0.4 feature candidates — gated on real usage
+## v0.5 feature candidates — gated on real usage
 
 - [ ] Plugin sharing via `cc link --include-plugins` — `plugins/` was
       deliberately excluded from v0.2 sharing because it carries auth tokens.
@@ -30,6 +30,24 @@ usage — do not build them on spec alone.
 - [x] CI test matrix covers ubuntu-latest, windows-latest, and macos-latest.
       All three run the full suite including the e2e tests; macOS support is
       now verified, not just expected.
+
+## v0.4.0 — shipped 2026-06-04
+
+`~/.claude/` is the shared pool; profiles are credential sets with symlinks
+back to it. The parallel `~/.claude-shared/` location is gone.
+
+- [x] `cc add` auto-symlinks `projects/`, `skills/`, `agents/`, `commands/`
+      into `~/.claude/` so every profile sees the same tools and history by
+      default.
+- [x] `cc link <profile>` / `cc unlink <profile>` accept `--tools` and
+      `--projects` flags for granular control.
+- [x] `cc migrate default shared` and `cc migrate shared <profile>` are
+      removed — both endpoints now resolve to the same location.
+- [x] One-time migration from `~/.claude-shared/` to `~/.claude/` runs on the
+      first `cc add` after upgrade (or `cc doctor --fix`). Collision rename
+      with `__legacy` suffix; profile symlinks repointed; legacy dir removed.
+- [x] `cc doctor` surfaces the legacy pool while it still exists, and warns
+      on profiles whose tool/project dirs are private (un-symlinked).
 
 ## v0.3.2 — shipped 2026-06-04
 

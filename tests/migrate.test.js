@@ -46,12 +46,9 @@ describe('cc migrate', () => {
     expect(fs.existsSync(path.join(profilesDir, '.credentials.json'))).toBe(false);
   });
 
-  it('default → shared: copies projects into ~/.claude-shared/projects', () => {
+  it('rejects "shared" as destination in v0.4 (was supported in v0.2/0.3)', () => {
     seedDefault();
-    migrateLib.migrate('default', 'shared');
-    const sharedProjects = path.join(tmpHome, '.claude-shared', 'projects');
-    expect(fs.existsSync(path.join(sharedProjects, 'ProjectA', 'sess1.jsonl'))).toBe(true);
-    expect(fs.existsSync(path.join(sharedProjects, 'ProjectB', 'sess2.jsonl'))).toBe(true);
+    expect(() => migrateLib.migrate('default', 'shared')).toThrow(/v0\.4/);
   });
 
   it('copies skills/, agents/, commands/ when present', () => {
@@ -82,19 +79,8 @@ describe('cc migrate', () => {
     expect(fs.readFileSync(path.join(pdir, 'CLAUDE.md'), 'utf8')).toBe('# project guide');
   });
 
-  it('default → shared: does NOT copy mcp.json, settings.json, CLAUDE.md', () => {
-    const d = path.join(tmpHome, '.claude');
-    fs.mkdirSync(d, { recursive: true });
-    fs.writeFileSync(path.join(d, 'mcp.json'), '{"servers":{}}');
-    fs.writeFileSync(path.join(d, 'settings.json'), '{}');
-    fs.writeFileSync(path.join(d, 'CLAUDE.md'), '# notes');
-
-    migrateLib.migrate('default', 'shared');
-
-    const sharedDir = path.join(tmpHome, '.claude-shared');
-    expect(fs.existsSync(path.join(sharedDir, 'mcp.json'))).toBe(false);
-    expect(fs.existsSync(path.join(sharedDir, 'settings.json'))).toBe(false);
-    expect(fs.existsSync(path.join(sharedDir, 'CLAUDE.md'))).toBe(false);
+  it('rejects "shared" as source in v0.4', () => {
+    expect(() => migrateLib.migrate('shared', 'work')).toThrow(/v0\.4/);
   });
 
   it('default → <profile>: skips single files already present (no --force)', () => {
@@ -180,19 +166,10 @@ describe('cc migrate', () => {
   });
 
   it('rejects "default" as destination', () => {
-    expect(() => migrateLib.migrate('shared', 'default')).toThrow(/Cannot migrate into "default"/);
-  });
-
-  it('rejects src == dest (shared → shared)', () => {
-    expect(() => migrateLib.migrate('shared', 'shared')).toThrow(/same directory/);
-  });
-
-  it('shared → <profile> works after default → shared seeding', () => {
-    seedDefault();
-    migrateLib.migrate('default', 'shared');
-    migrateLib.migrate('shared', 'personal');
-    const personalProjects = path.join(tmpHome, '.claude-profiles', 'personal', 'projects');
-    expect(fs.existsSync(path.join(personalProjects, 'ProjectA', 'sess1.jsonl'))).toBe(true);
+    // In v0.4, both 'shared' and 'default' as destinations are rejected.
+    // 'shared' is rejected with a v0.4 hint; 'default' is rejected as "cannot
+    // migrate into default."
+    expect(() => migrateLib.migrate('default', 'default')).toThrow(/Cannot migrate into "default"/);
   });
 
   it('never copies sessions/ even when present at the source (transient per-process state)', () => {

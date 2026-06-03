@@ -5,6 +5,52 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-06-04
+
+### Changed (breaking)
+
+- **`~/.claude/` is now the shared pool.** Every profile's `projects/`,
+  `skills/`, `agents/`, `commands/` symlink directly into Claude Code's own
+  default config dir. There is no longer a parallel `~/.claude-shared/` pool:
+  the two locations are unified. A profile is now a credential set + a
+  symlinked view onto the shared pool.
+- **`cc add` auto-links all four artifact dirs.** New profiles ship with the
+  symlinks in place, so a skill, agent, or command installed under any profile
+  is immediately visible to every other profile. Bare `claude` (without
+  `cc use`) sees the same set too — there is no profile-vs-bare split.
+- **`cc link <profile>` and `cc unlink <profile>` accept `--tools` and
+  `--projects` flags** to target a subset:
+  - `--tools` → `skills/`, `agents/`, `commands/`
+  - `--projects` → `projects/`
+  - No flag → all four (current default behavior)
+- **`cc list` "Shared" column expects `4/4`** as the steady state for v0.4
+  profiles. `0/4`, `3/4`, etc. show profiles whose tool or project sharing has
+  been turned off via `cc unlink --tools` / `--projects`.
+
+### Removed
+
+- **`cc migrate default shared` and `cc migrate shared <profile>`.** The shared
+  pool was the destination of the first and the source of the second; with the
+  pool unified into `~/.claude/`, both directions are no-ops. Use
+  `cc link <profile>` / `cc unlink <profile>` to control sharing.
+
+### Migration from 0.3.x
+
+The v0.3 pool at `~/.claude-shared/` is folded into `~/.claude/` automatically
+on the next `cc add` or `cc doctor --fix`. The migration:
+
+- Moves every entry in `~/.claude-shared/{projects,skills,agents,commands}/`
+  into the matching `~/.claude/<sub>/`, renaming on collision (existing
+  `~/.claude/` content is never overwritten — duplicates get an `__legacy`
+  suffix).
+- Re-points any existing profile symlink that targets `~/.claude-shared/<sub>/`
+  to `~/.claude/<sub>/`.
+- Removes `~/.claude-shared/` once empty.
+
+Idempotent and non-destructive — re-running is a no-op once the legacy dir is
+gone. `cc doctor` surfaces an explicit warning while the legacy dir still
+exists, with a `--fix` action that runs the migration.
+
 ## [0.3.2] - 2026-06-04
 
 ### Changed

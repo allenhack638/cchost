@@ -52,6 +52,60 @@ describe('cc list — strict flag parsing', () => {
   });
 });
 
+describe('cc link / cc unlink — --tools and --projects flags', () => {
+  let tmpHome;
+  let originalHomedir;
+  let originalLog;
+  let originalErr;
+
+  beforeEach(() => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-link-flags-'));
+    originalHomedir = os.homedir;
+    os.homedir = () => tmpHome;
+    originalLog = console.log;
+    console.log = () => {};
+    originalErr = process.stderr.write;
+    process.stderr.write = () => true;
+  });
+
+  afterEach(() => {
+    os.homedir = originalHomedir;
+    console.log = originalLog;
+    process.stderr.write = originalErr;
+    fs.rmSync(tmpHome, { recursive: true, force: true });
+  });
+
+  it('cc link <profile> --tools links only skills/agents/commands', async () => {
+    await cli.run(['add', 'work']);
+    // Wipe all artifacts back to nothing to start clean
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    for (const sub of ['projects', 'skills', 'agents', 'commands']) {
+      try { fs.unlinkSync(path.join(pdir, sub)); } catch { /* ignore */ }
+      try { fs.rmdirSync(path.join(pdir, sub)); } catch { /* ignore */ }
+    }
+    await cli.run(['link', 'work', '--tools']);
+    expect(fs.existsSync(path.join(pdir, 'projects'))).toBe(false);
+    for (const sub of ['skills', 'agents', 'commands']) {
+      expect(fs.lstatSync(path.join(pdir, sub)).isSymbolicLink()).toBe(true);
+    }
+  });
+
+  it('cc unlink <profile> --projects only unlinks projects/', async () => {
+    await cli.run(['add', 'work']);
+    await cli.run(['unlink', 'work', '--projects']);
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(false);
+    for (const sub of ['skills', 'agents', 'commands']) {
+      expect(fs.lstatSync(path.join(pdir, sub)).isSymbolicLink()).toBe(true);
+    }
+  });
+
+  it('cc link rejects unknown flags', async () => {
+    await cli.run(['add', 'work']);
+    await expect(cli.run(['link', 'work', '--bogus'])).rejects.toThrow(/Unknown flag/);
+  });
+});
+
 describe('cc use — refuses to launch missing profile', () => {
   let tmpHome;
   let originalHomedir;
