@@ -5,9 +5,9 @@
 [![license](https://img.shields.io/npm/l/cchost.svg)](./LICENSE)
 [![node](https://img.shields.io/node/v/cchost.svg)](https://nodejs.org)
 
-<!-- Demo: record a ~15s clip of `cc add` → `cc use` → `cc list`, save it as
-     docs/demo.gif, and uncomment the line below. -->
-<!-- ![cchost in action](docs/demo.gif) -->
+<p align="center">
+  <img src="https://raw.githubusercontent.com/allenhack638/cchost/master/docs/demo.png" alt="cchost CLI — cc list showing masked emails and shared resource counts" width="100%">
+</p>
 
 Claude Code keeps one account's login, history, and settings in a single config directory. To use a second account you normally have to log out and back in, which loses your place. cchost gives each account its own directory so you can keep several side by side and pick one when you launch.
 
