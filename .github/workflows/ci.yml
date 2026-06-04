@@ -51,6 +51,12 @@ jobs:
       - name: Install
         run: npm ci
 
+      # Trusted Publishing (OIDC) requires npm >= 11.5.1; Node 20 LTS ships
+      # with an older npm by default. Upgrading the global npm only affects
+      # this job's runner.
+      - name: Upgrade npm to a Trusted-Publishing-capable version
+        run: npm install -g npm@latest
+
       # Skip publish (without failing) when package.json's version is already on npm.
       # Lets you push docs/CI tweaks to master without bumping the version every time.
       - name: Check if version is already published
@@ -68,11 +74,14 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # Authentication is via OIDC Trusted Publishing — no NPM_TOKEN secret
+      # needed. Configure the trusted publisher at:
+      #   https://www.npmjs.com/package/cchost/access
+      # The id-token: write permission at the top of this workflow is what
+      # lets npm verify GitHub's OIDC assertion.
       - name: Publish
         if: steps.check.outputs.skip == 'false'
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Summary
         if: steps.check.outputs.skip == 'false'
