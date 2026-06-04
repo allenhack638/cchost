@@ -31,6 +31,34 @@ usage — do not build them on spec alone.
       All three run the full suite including the e2e tests; macOS support is
       now verified, not just expected.
 
+## v0.4.1 — shipped 2026-06-04
+
+Sharing expanded to all 7 resources; `cc migrate` renamed to `cc copy`;
+email masking strengthened.
+
+- [x] `cc add` auto-links `mcp.json`, `settings.json`, `CLAUDE.md` in
+      addition to the 4 dirs from v0.4.0. Trust boundary: only the 3
+      credential files (`.credentials.json` / `.claude.json` /
+      `.cc-env.json`) stay per-profile.
+- [x] `cc link` / `cc unlink` accept `--config` for the 3 file resources.
+      Granular control: `--projects` / `--tools` / `--config` (combinable).
+- [x] `cc unlink` materializes pool content into a private dir/file before
+      breaking the link — non-destructive, idempotent.
+- [x] `cc link` refuses to overwrite private content (no auto-merge). User
+      must move/remove the private content manually, then re-run.
+- [x] `cc copy <src> <dest> [--force]` replaces `cc migrate`. `cc migrate`
+      is a deprecation alias that forwards with a one-line warning; remove
+      in v0.5.
+- [x] `cc remove` requires `--force` when private artifact content exists.
+- [x] `cc list --reveal-email` removed; `--reveal` now reveals both token
+      and email. Email mask strengthened to `a*************.in` (first char
+      + TLD only).
+- [x] `cc doctor` backfills missing resource links on existing profiles.
+- [x] Windows file symlink fallback to hard link when Developer Mode is
+      off, so file resources still sync between profiles.
+- [x] Per-command help expanded to spell out the 7 resources and the
+      three flag groups.
+
 ## v0.4.0 — shipped 2026-06-04
 
 `~/.claude/` is the shared pool; profiles are credential sets with symlinks

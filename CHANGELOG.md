@@ -5,6 +5,59 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.1] - 2026-06-04
+
+### Changed
+
+- **Shared resources expanded from 4 to 7.** Profiles now also auto-link
+  `mcp.json`, `settings.json`, and `CLAUDE.md` into `~/.claude/`, in addition
+  to the four directories (`projects/`, `skills/`, `agents/`, `commands/`).
+  MCP servers, user settings, and user-level memory are now visible to every
+  profile by default — the trust boundary becomes clean: only the three
+  credential files (`.credentials.json`, `.claude.json`, `.cc-env.json`) stay
+  per-profile.
+- **`cc copy` replaces `cc migrate`.** Same direction (`default → <profile>`),
+  same `--force` flag — the verb just matches what the command actually does.
+  `cc migrate` still works as a deprecation alias and forwards to `cc copy`
+  with a one-line warning; it will be removed in a future version.
+- **`cc link` / `cc unlink` accept `--config`** to target the three single
+  files. The three groups now: `--projects`, `--tools`, `--config`. No flag
+  still means all 7.
+- **`cc unlink` is non-destructive.** Materializes the current pool content
+  into a private directory or file as part of breaking the link, so the
+  profile's view of that resource is preserved. Same-name collisions in the
+  profile (if any) are kept untouched.
+- **`cc link` refuses to overwrite private content.** If a profile's resource
+  already has non-empty private content, `cc link` reports it as `refused`
+  and leaves it alone (other resources still link). Move or remove the
+  content manually, then re-run.
+- **`cc remove` requires `--force` when private (unlinked) content exists.**
+  Symlinked resources are still removed silently (the shared pool is
+  untouched); private content prompts the user to acknowledge that its
+  content is unique and will be lost.
+- **`cc list` uses a single `--reveal` flag.** Drops `--reveal-email`;
+  `--reveal` now shows both the API token (where applicable) and the full
+  email. Email mask format also changed for stronger redaction:
+  `allen@cyber.co.in` → `a*************.in` (first char + TLD only; the
+  domain is no longer visible).
+- **`cc list` "Shared" column is `N/7`.**
+
+### Added
+
+- `cc doctor` now backfills missing resource symlinks on existing profiles
+  (e.g. v0.4.0 profiles that pre-date `mcp.json` / `settings.json` /
+  `CLAUDE.md` sharing). Safe auto-fix when the resource is missing or empty;
+  warning-only with manual guidance when private content exists.
+- Windows file symlink fallback: when `fs.symlinkSync(..., 'file')` fails
+  with EPERM/UNKNOWN (Developer Mode not enabled), `cc link` falls back to a
+  hard link so editing-in-place still propagates between profiles. The
+  fallback is noted in the link command output.
+
+### Help
+
+- Per-command help (`cc help <cmd>`) now spells out the 7 resources, the
+  three flag groups, and what stays per-profile.
+
 ## [0.4.0] - 2026-06-04
 
 ### Changed (breaking)

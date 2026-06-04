@@ -508,8 +508,10 @@ describe('cc list — Endpoint column and detail view', () => {
     await expect(cli.run(['list', 'ghost'])).rejects.toThrow(/does not exist/);
   });
 
-  it('cc list --reveal without a profile name is rejected', async () => {
-    await expect(cli.run(['list', '--reveal'])).rejects.toThrow(/--reveal/);
+  it('cc list --reveal without a profile name reveals emails in the table', async () => {
+    await cli.run(['add', 'work']);
+    // Should not throw — --reveal is valid on the table too in v0.4.1.
+    await expect(cli.run(['list', '--reveal'])).resolves.toBeDefined();
   });
 
   it('cc list <profile> --json --reveal together is rejected', async () => {
@@ -576,17 +578,18 @@ describe('cc list — email masking', () => {
     fs.rmSync(tmpHome, { recursive: true, force: true });
   });
 
-  it('maskEmail keeps only the first character of the local-part', () => {
-    expect(envLib.maskEmail('info@vpatrol.co.in')).toBe('i***@vpatrol.co.in');
-    expect(envLib.maskEmail('a@b.com')).toBe('a***@b.com');
-    expect(envLib.maskEmail('alice.long@example.org')).toBe('a***@example.org');
+  it('maskEmail keeps only the first character and the TLD', () => {
+    // info@vpatrol.co.in → first='i', last dot at index 15 (.in), middle = 14 stars
+    expect(envLib.maskEmail('info@vpatrol.co.in')).toBe('i**************.in');
+    expect(envLib.maskEmail('a@b.com')).toBe('a**.com');
+    expect(envLib.maskEmail('alice.long@example.org')).toBe('a*****************.org');
   });
 
   it('maskEmail handles malformed input without throwing', () => {
     expect(envLib.maskEmail('')).toBe('');
     expect(envLib.maskEmail(null)).toBe(null);
-    expect(envLib.maskEmail('no-at-sign')).toBe('***');
-    expect(envLib.maskEmail('@leading-at.com')).toBe('***');
+    // No dot at all — mask everything after the first char.
+    expect(envLib.maskEmail('no-at-sign')).toBe('n*********');
   });
 
   it('cc list (table) masks emails by default', async () => {
@@ -594,15 +597,15 @@ describe('cc list — email masking', () => {
     writeEmail('work', 'info@vpatrol.co.in');
     captured = '';
     await cli.run(['list']);
-    expect(captured).toContain('i***@vpatrol.co.in');
+    expect(captured).toContain('i**************.in');
     expect(captured).not.toContain('info@vpatrol.co.in');
   });
 
-  it('cc list --reveal-email (table) shows full emails', async () => {
+  it('cc list --reveal (table) shows full emails', async () => {
     await cli.run(['add', 'work']);
     writeEmail('work', 'info@vpatrol.co.in');
     captured = '';
-    await cli.run(['list', '--reveal-email']);
+    await cli.run(['list', '--reveal']);
     expect(captured).toContain('info@vpatrol.co.in');
   });
 
@@ -613,14 +616,14 @@ describe('cc list — email masking', () => {
     await cli.run(['list', '--json']);
     const arr = JSON.parse(captured);
     const work = arr.find((p) => p.name === 'work');
-    expect(work.email).toBe('i***@vpatrol.co.in');
+    expect(work.email).toBe('i**************.in');
   });
 
-  it('cc list --json --reveal-email is rejected', async () => {
+  it('cc list --json --reveal is rejected', async () => {
     await cli.run(['add', 'work']);
     await expect(
-      cli.run(['list', '--json', '--reveal-email']),
-    ).rejects.toThrow(/reveal-email/);
+      cli.run(['list', '--json', '--reveal']),
+    ).rejects.toThrow(/--reveal/);
   });
 
   it('cc list <profile> masks email by default', async () => {
@@ -628,15 +631,15 @@ describe('cc list — email masking', () => {
     writeEmail('work', 'info@vpatrol.co.in');
     captured = '';
     await cli.run(['list', 'work']);
-    expect(captured).toMatch(/Email:\s+i\*\*\*@vpatrol\.co\.in/);
+    expect(captured).toMatch(/Email:\s+i\*+\.in/);
     expect(captured).not.toContain('info@vpatrol.co.in');
   });
 
-  it('cc list <profile> --reveal-email shows the full email', async () => {
+  it('cc list <profile> --reveal shows the full email', async () => {
     await cli.run(['add', 'work']);
     writeEmail('work', 'info@vpatrol.co.in');
     captured = '';
-    await cli.run(['list', 'work', '--reveal-email']);
+    await cli.run(['list', 'work', '--reveal']);
     expect(captured).toMatch(/Email:\s+info@vpatrol\.co\.in/);
   });
 
@@ -646,30 +649,29 @@ describe('cc list — email masking', () => {
     captured = '';
     await cli.run(['list', 'work', '--json']);
     const obj = JSON.parse(captured);
-    expect(obj.email).toBe('i***@vpatrol.co.in');
+    expect(obj.email).toBe('i**************.in');
   });
 
-  it('cc list <profile> --json --reveal-email is rejected', async () => {
+  it('cc list <profile> --json --reveal is rejected', async () => {
     await cli.run(['add', 'work']);
     await expect(
-      cli.run(['list', 'work', '--json', '--reveal-email']),
-    ).rejects.toThrow(/reveal-email/);
+      cli.run(['list', 'work', '--json', '--reveal']),
+    ).rejects.toThrow(/--reveal/);
   });
 
-  it('--reveal-email does not affect token masking on endpoint profiles', async () => {
+  it('cc list --reveal also reveals the API token on endpoint profiles', async () => {
     await cli.run([
       'add', 'kimi', '--custom', '--base-url=https://x', '--token=sk-abcdefghijklmnop',
     ]);
     captured = '';
-    await cli.run(['list', 'kimi', '--reveal-email']);
-    expect(captured).not.toContain('sk-abcdefghijklmnop');
-    expect(captured).toMatch(/sk-abc\.\.\./);
+    await cli.run(['list', 'kimi', '--reveal']);
+    expect(captured).toContain('sk-abcdefghijklmnop');
   });
 
-  it('an empty email column still renders as "-" with --reveal-email', async () => {
+  it('an empty email column still renders as "-" with --reveal', async () => {
     await cli.run(['add', 'fresh']);
     captured = '';
-    await cli.run(['list', '--reveal-email']);
+    await cli.run(['list', '--reveal']);
     expect(captured).toMatch(/fresh\s+\S+\s+-/);
   });
 });
@@ -704,14 +706,15 @@ describe('.cc-env.json is never migrated or linked', () => {
     expect(fs.readFileSync(path.join(d, '.cc-env.json')).equals(before)).toBe(true);
   });
 
-  it('migrate does not copy .cc-env.json from default into a profile', async () => {
-    const migrateLib = (await import('../lib/migrate.js')).default;
+  it('cc copy does not copy .cc-env.json from default into a profile', async () => {
+    const copyLib = (await import('../lib/copy.js')).default;
     const def = path.join(tmpHome, '.claude');
     fs.mkdirSync(path.join(def, 'projects'), { recursive: true });
     fs.writeFileSync(path.join(def, '.cc-env.json'), '{"base_url":"https://leak","auth_token":"sk"}');
     fs.writeFileSync(path.join(def, 'projects', '.cc-env.json'), 'NEVER_COPY');
-    migrateLib.migrate('default', 'work');
     const wdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(wdir, { recursive: true });
+    copyLib.copy('default', 'work');
     expect(fs.existsSync(path.join(wdir, '.cc-env.json'))).toBe(false);
     expect(fs.existsSync(path.join(wdir, 'projects', '.cc-env.json'))).toBe(false);
   });

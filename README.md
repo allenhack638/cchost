@@ -32,11 +32,11 @@ Requires Node.js 18+ and Claude Code 2.1.140+ already installed. Get Claude Code
 | `cc add <profile>` | Create a subscription profile (logs in with Anthropic OAuth on first use). Auto-symlinks artifact dirs into `~/.claude/`. |
 | `cc add <profile> --custom [...]` | Create — or, if it already exists, edit — a profile routed through a custom API endpoint. Opens a wizard, or takes `--base-url=URL --token=TOKEN [--model=…]`. See [Custom endpoints](#custom-endpoints-kimi-openrouter-etc). |
 | `cc use <profile> [...args]` | Launch Claude under that profile. Profile must already exist. Args after the name are forwarded verbatim to `claude`. |
-| `cc list [<profile>] [--json] [--reveal] [--reveal-email]` | List every profile (login state, email, shared dirs N/4, endpoint), or show one profile in detail. Emails are masked by default; `--reveal-email` shows them in full. `--reveal` unmasks a custom endpoint's API token. |
-| `cc migrate default <profile> [--force]` | Copy `mcp.json` / `settings.json` / `CLAUDE.md` from `~/.claude/` into a profile. Artifact dirs are already shared via symlink. Skip-on-collision by default; `--force` overwrites. |
-| `cc link <profile> [<profile>...] [--tools \| --projects]` | (Re-)link a profile's artifact dirs to `~/.claude/`. No flag = all four; `--tools` = `skills`/`agents`/`commands`; `--projects` = just `projects`. |
-| `cc unlink <profile> [--tools \| --projects]` | Restore artifact dirs to private (copies content from `~/.claude/` back into the profile). Same flag semantics as `cc link`. |
-| `cc remove <profile>` | Delete a profile. Requires typing the profile name to confirm. |
+| `cc list [<profile>] [--json] [--reveal]` | List every profile (login state, email, shared count N/7, endpoint), or show one profile in detail. Emails and tokens are masked by default; `--reveal` shows both in full. |
+| `cc copy default <profile> [--force]` | Copy `~/.claude/` resources into a profile. Meaningful only when one or more resources have been unlinked via `cc unlink`; otherwise every resource resolves to the same on-disk path and is skipped. Skip-on-collision by default; `--force` overwrites. `cc migrate` is a deprecated alias. |
+| `cc link <profile> [<profile>...] [--projects\|--tools\|--config]` | (Re-)link a profile's resources to `~/.claude/`. No flag = all 7. Refuses to overwrite private content. |
+| `cc unlink <profile> [--projects\|--tools\|--config]` | Break the links and copy current `~/.claude/` content into the profile as private resources. Non-destructive. |
+| `cc remove <profile> [--force]` | Delete a profile. Requires typing the profile name to confirm. `--force` is required when private (unlinked) resources exist. |
 | `cc doctor [--fix [--force]] [--json]` | Diagnose environment, storage, and platform issues. |
 | `cc help [command]` | Print usage (top-level, or for a single command). |
 
@@ -54,81 +54,87 @@ cc remove old-profile
 `cc list` output:
 
 ```
-Profile   LoggedIn  Email                 Shared  Endpoint
-kimi      false     -                     4/4     api.moonshot.ai
-personal  true      p***@example.com      4/4     subscription
-scratch   false     -                     4/4     subscription
-work      true      w***@example.com      4/4     subscription
+Profile   LoggedIn  Email                  Shared  Endpoint
+kimi      false     -                      7/7     api.moonshot.ai
+personal  true      p************.com      7/7     subscription
+scratch   false     -                      7/7     subscription
+work      true      w************.com      7/7     subscription
 ```
 
-`4/4` is the steady state since v0.4 — every profile auto-shares the four artifact dirs with `~/.claude/`. A lower number means one or more dirs were unlinked via `cc unlink <profile> --tools` or `--projects`.
+`7/7` is the steady state since v0.4.1 — every profile auto-shares 4 dirs (`projects`, `skills`, `agents`, `commands`) **and** 3 files (`mcp.json`, `settings.json`, `CLAUDE.md`) with `~/.claude/`. A lower number means one or more resources were unlinked via `cc unlink <profile> --projects|--tools|--config`.
 
-Emails are masked by default so the list is safe to paste in screenshots and issue reports. Pass `--reveal-email` to show them in full.
+Emails are masked by default so the list is safe to paste in screenshots and issue reports. Pass `--reveal` to show them in full (same flag also reveals the API token on custom-endpoint profiles).
 
-The **Shared** column is a count: how many of the 4 shareable directories
-(`projects`, `skills`, `agents`, `commands`) symlink into `~/.claude/`.
+The **Shared** column is a count: how many of the 7 shareable resources symlink into `~/.claude/`.
 
-- `4/4` — the default since v0.4. All four artifact dirs point at the shared
-  pool; a tool installed under any profile is immediately visible to every
-  other profile.
-- `3/4` — `cc unlink <profile> --projects` (or `--tools` partially) was run.
-  The profile keeps a private copy for the unlinked subset.
-- `0/4` — fully isolated; the profile keeps its own private copies of
-  everything.
-- `1/4`, `2/4` — usually an upgrade from cchost ≤ 0.2.0 (which only linked
-  `projects/`) or a partial link failure. Re-run `cc link <profile>` to bring
-  it to `4/4`.
+- `7/7` — the default since v0.4.1. All four artifact dirs *and* the three
+  config files point at the shared pool; a tool, server, or hook configured
+  under any profile is immediately visible to every other profile.
+- `6/7`, `5/7`, … — one or more resources were `cc unlink`ed and now hold
+  private content.
+- `0/7` — fully isolated; the profile keeps its own copy of everything.
+- `4/7` — typical of a profile created on v0.4.0 before the file resources
+  were added. Run `cc doctor --fix` to backfill them.
 
 ### What's shared, what's per-profile
 
-Since v0.4, **`~/.claude/` is the shared pool**. Every profile's artifact dirs symlink into it on `cc add`, so a tool installed under any profile is immediately visible to every other profile (and to bare `claude` without `cc use`).
+Since v0.4.1, **`~/.claude/` is the shared pool**, and **all 7 resources** auto-link into it on `cc add`. The trust boundary is simple: anything that authenticates this profile's identity stays per-profile; everything else is global.
 
-| Artifact | Location | Shared? | Notes |
+| Resource | Location | Shared? | Flag group |
 | --- | --- | :---: | --- |
-| `projects/` | `~/.claude/projects/` | ✓ (symlink) | Conversation transcripts; visible across profiles. Opt out with `cc unlink <p> --projects`. |
-| `skills/` | `~/.claude/skills/` | ✓ (symlink) | Custom slash-command scripts. |
-| `agents/` | `~/.claude/agents/` | ✓ (symlink) | Custom agent definitions. |
-| `commands/` | `~/.claude/commands/` | ✓ (symlink) | Custom command configs. |
-| `mcp.json` | per-profile | — | Optional `cc migrate default <profile>` seed. May carry auth tokens. |
-| `settings.json` | per-profile | — | Same as above. |
-| `CLAUDE.md` | per-profile | — | Same as above. |
-| `sessions/` | per-profile | — | Transient per-process state; sharing would corrupt bookkeeping. |
-| `plugins/` | per-profile | — | Carries auth tokens; never shared. |
-| `.credentials.json` | per-profile | — | The actual identity boundary. Never touched by any command. |
-| `.claude.json` | per-profile | — | Account identity (re-synced from server on every launch). |
-| `.cc-env.json` | per-profile | — | Custom-endpoint API key. Never migrated, never linked. |
+| `projects/` | `~/.claude/projects/` | ✓ (symlink) | `--projects` |
+| `skills/` | `~/.claude/skills/` | ✓ (symlink) | `--tools` |
+| `agents/` | `~/.claude/agents/` | ✓ (symlink) | `--tools` |
+| `commands/` | `~/.claude/commands/` | ✓ (symlink) | `--tools` |
+| `mcp.json` | `~/.claude/mcp.json` | ✓ (file symlink / hard link) | `--config` |
+| `settings.json` | `~/.claude/settings.json` | ✓ (file symlink / hard link) | `--config` |
+| `CLAUDE.md` | `~/.claude/CLAUDE.md` | ✓ (file symlink / hard link) | `--config` |
+| `sessions/` | per-profile | — | (never shared) |
+| `plugins/` | per-profile | — | (never shared) |
+| `.credentials.json` | per-profile | — | Anthropic OAuth token. Never touched. |
+| `.claude.json` | per-profile | — | Account identity (re-synced on every launch). |
+| `.cc-env.json` | per-profile | — | Custom-endpoint API key. Never copied, never linked. |
 
-### Seeding `mcp.json` / `settings.json` / `CLAUDE.md` from a prior bare-claude install
+`mcp.json` carries MCP server tokens and `settings.json` carries hooks that can run arbitrary commands. Sharing them means every profile sees the same set — if you need per-profile separation for one of them, `cc unlink <profile> --config` breaks the link and makes that profile's copies private.
 
-If you have a pre-cchost `~/.claude/` with those config files and want to copy them into a profile:
+### Seeding a private profile from `~/.claude/`
+
+If a profile has unlinked resources (`cc unlink <p>`) and you want to seed them from the current `~/.claude/`:
 
 ```bash
-cc migrate default work          # copies mcp.json, settings.json, CLAUDE.md → work
-cc migrate default work --force  # same, overwriting if already present
+cc copy default work          # copies anything unlinked from ~/.claude/ → work
+cc copy default work --force  # same, overwriting if already present
 ```
 
-The artifact dirs (`projects`, `skills`, `agents`, `commands`) are not re-copied — they're already shared via the symlinks `cc add` created.
+For a fresh `cc add` profile this is a no-op — every resource already resolves to `~/.claude/` via its symlink, so there's nothing to copy. `cc copy` becomes meaningful only after `cc unlink`. (`cc migrate` is a deprecated alias for `cc copy` and still works.)
 
 ### Opting out of sharing for a profile
 
 ```bash
-cc unlink work --tools       # private skills/agents/commands for "work" only
-cc unlink work --projects    # private projects/ for "work" only
-cc unlink work               # private everything (all 4 unlinked)
-cc link work --tools         # re-share just the tools
+cc unlink work --tools         # private skills/agents/commands for "work" only
+cc unlink work --projects      # private projects/ for "work" only
+cc unlink work --config        # private mcp.json/settings.json/CLAUDE.md
+cc unlink work                 # private everything (all 7 unlinked)
+cc link work --tools           # re-share just the tools
+cc link work --config          # re-share just the config files
 ```
 
-Credential files (`.credentials.json`, `.claude.json`) are never copied: each profile keeps its own auth state.
+`cc unlink` is non-destructive — current pool content is copied into the profile as a private dir or file before the link is broken, so your view of the resource is preserved. `cc link` refuses to overwrite existing private content; move or remove it manually and re-run.
+
+Credential files (`.credentials.json`, `.claude.json`, `.cc-env.json`) are never touched: each profile keeps its own auth state.
 
 ### How sharing works under the hood
 
-Every profile created by `cc add` ships with four symlinks (`projects`, `skills`, `agents`, `commands`) pointing at `~/.claude/<sub>`. On Windows these are directory junctions (no admin/Developer Mode required); on macOS/Linux, regular symlinks.
+Every profile created by `cc add` ships with 7 links pointing at `~/.claude/<resource>`:
 
-`sessions/` is **never** linked. It holds transient per-process registry state — PID, working directory, status, timestamps — and sharing it would corrupt Claude's running-process bookkeeping. It stays per-profile under `~/.claude-profiles/<name>/sessions/`.
+- Directories use Windows junctions (no admin / Developer Mode required) or POSIX symlinks.
+- Files (`mcp.json`, `settings.json`, `CLAUDE.md`) use file symlinks where possible. On Windows without Developer Mode, file symlinks require elevation — `cc link` falls back to a **hard link** there, which works without admin and behaves identically for edit-in-place flows.
+
+`sessions/` and `plugins/` are **never** linked. `sessions/` holds transient per-process registry state (PID, status, timestamps) and sharing it would corrupt Claude's running-process bookkeeping. `plugins/` carries auth tokens.
 
 If two profiles open the same project at the same time, both will write to the same conversation files in `~/.claude/projects/<cwd>/` (last write wins). Either avoid that or run `cc unlink <profile> --projects` on one of them.
 
-`cc remove` is safe with shared profiles — it deletes only the symlinks, leaving `~/.claude/` and its contents untouched.
+`cc remove` is safe with fully-shared profiles — it deletes only the symlinks, leaving `~/.claude/` untouched. If a profile has *private* (unlinked) resources, `cc remove` requires `--force` because that content is unique to the profile and will be lost.
 
 ## Custom endpoints (Kimi, OpenRouter, etc.)
 
@@ -167,7 +173,7 @@ Profile:   kimi
 Directory: /home/you/.claude-profiles/kimi
 LoggedIn:  false
 Email:     -
-Shared:    0/4
+Shared:    7/7
 Endpoint:  api.moonshot.ai
   Base URL:  https://api.moonshot.ai/anthropic
   Token:     sk-you...key9 (32 chars)
@@ -178,7 +184,7 @@ Endpoint:  api.moonshot.ai
   Subagent:  kimi-k2.5
 ```
 
-`cc list <profile> --reveal` prints the full API key instead — do not paste that output anywhere. Account emails are masked the same way; `--reveal-email` shows them in full.
+`cc list <profile> --reveal` prints the full API key and the full email — do not paste that output anywhere.
 
 There is no way to convert a custom-endpoint profile back to a subscription profile. To stop using an endpoint, `cc remove` the profile and recreate it.
 
@@ -203,9 +209,9 @@ The env var is set on the child process only — that's all `claude` needs.
 
 ## Sensitive data
 
-`~/.claude-profiles/<profile>/` holds real OAuth credentials. Treat it like SSH keys: don't commit it, don't share it, don't sync it to public cloud storage. The `.gitignore` shipped with this project excludes profile directories from anywhere they might land. `cc migrate` and `cc link` never copy `.credentials.json` or `.claude.json` across profiles.
+`~/.claude-profiles/<profile>/` holds real OAuth credentials. Treat it like SSH keys: don't commit it, don't share it, don't sync it to public cloud storage. The `.gitignore` shipped with this project excludes profile directories from anywhere they might land. `cc copy` and `cc link` never touch `.credentials.json` or `.claude.json`.
 
-`.cc-env.json` (custom-endpoint config) contains a third-party **API key** — treat it exactly like `.credentials.json`. It is written with user-only file permissions, and `cc migrate`/`cc link` never copy or link it across profiles. `cc list <profile>` masks the token; only `cc list <profile> --reveal` prints it in full.
+`.cc-env.json` (custom-endpoint config) contains a third-party **API key** — treat it exactly like `.credentials.json`. It is written with user-only file permissions, and `cc copy`/`cc link` never copy or link it across profiles. `cc list <profile>` masks the token; only `cc list <profile> --reveal` prints it in full.
 
 ## Troubleshooting
 
