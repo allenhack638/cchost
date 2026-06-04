@@ -1,7 +1,5 @@
 # cchost
 
-> Run multiple isolated Claude Code accounts on one machine — switch between them with a single `cc` command.
-
 [![npm version](https://img.shields.io/npm/v/cchost.svg)](https://www.npmjs.com/package/cchost)
 [![CI](https://github.com/allenhack638/cchost/actions/workflows/ci.yml/badge.svg)](https://github.com/allenhack638/cchost/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/cchost.svg)](./LICENSE)
