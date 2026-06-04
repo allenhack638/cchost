@@ -31,7 +31,7 @@ describe('removeRecursivelyPreservingLinks — junction safety', () => {
     fs.mkdirSync(path.join(pdir, 'projects'), { recursive: true });
 
     // Pre-populate shared with a sentinel file BEFORE linking.
-    const sharedProjects = path.join(tmpHome, '.claude-shared', 'projects');
+    const sharedProjects = path.join(tmpHome, '.claude', 'projects');
     fs.mkdirSync(sharedProjects, { recursive: true });
     fs.writeFileSync(path.join(sharedProjects, 'SENTINEL.txt'), 'do not delete me');
 
@@ -76,7 +76,7 @@ describe('removeRecursivelyPreservingLinks — junction safety', () => {
     fs.mkdirSync(path.join(pdir, 'subdir'));
     fs.writeFileSync(path.join(pdir, 'subdir', 'inner.txt'), 'y');
 
-    const sharedProjects = path.join(tmpHome, '.claude-shared', 'projects');
+    const sharedProjects = path.join(tmpHome, '.claude', 'projects');
     fs.mkdirSync(sharedProjects, { recursive: true });
     fs.writeFileSync(path.join(sharedProjects, 'KEEP.txt'), 'must-survive');
 
