@@ -342,6 +342,27 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
     expect(fs.readFileSync(path.join(pdir, 'projects', 'SENTINEL.txt'), 'utf8')).toBe('kept');
   });
 
+  it('aborts cleanly when ~/.claude/<sub>/ is a junction into ~/.claude-shared/<sub>/', () => {
+    const legacy = path.join(tmpHome, '.claude-shared');
+    const pool = path.join(tmpHome, '.claude');
+    fs.mkdirSync(path.join(legacy, 'projects', 'D--app'), { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'projects', 'D--app', 'a.jsonl'), 'sentinel');
+    fs.mkdirSync(pool, { recursive: true });
+    fs.symlinkSync(
+      path.join(legacy, 'projects'),
+      path.join(pool, 'projects'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
+
+    const result = share.migrateLegacyPool();
+
+    expect(result.selfReferencing).toBe(true);
+    expect(result.migrated).toBe(false);
+    // Sentinel file still in place — no self-moves happened.
+    expect(fs.readFileSync(path.join(legacy, 'projects', 'D--app', 'a.jsonl'), 'utf8')).toBe('sentinel');
+    expect(fs.readdirSync(path.join(legacy, 'projects', 'D--app'))).toEqual(['a.jsonl']);
+  });
+
   it('is idempotent — running twice does nothing extra after the legacy dir is gone', () => {
     const legacy = path.join(tmpHome, '.claude-shared');
     fs.mkdirSync(path.join(legacy, 'skills'), { recursive: true });
@@ -349,5 +370,251 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
     share.migrateLegacyPool();
     const result = share.migrateLegacyPool();
     expect(result.migrated).toBe(false);
+  });
+
+  it('merges projects/ folder children on collision instead of renaming the folder', () => {
+    const legacy = path.join(tmpHome, '.claude-shared');
+    const pool = path.join(tmpHome, '.claude');
+    fs.mkdirSync(path.join(pool, 'projects', 'D--myapp'), { recursive: true });
+    fs.writeFileSync(path.join(pool, 'projects', 'D--myapp', 'new.jsonl'), 'NEW');
+    fs.mkdirSync(path.join(legacy, 'projects', 'D--myapp'), { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'projects', 'D--myapp', 'old.jsonl'), 'OLD');
+
+    share.migrateLegacyPool();
+
+    expect(fs.existsSync(path.join(pool, 'projects', 'D--myapp__legacy'))).toBe(false);
+    expect(fs.readFileSync(path.join(pool, 'projects', 'D--myapp', 'new.jsonl'), 'utf8')).toBe('NEW');
+    expect(fs.readFileSync(path.join(pool, 'projects', 'D--myapp', 'old.jsonl'), 'utf8')).toBe('OLD');
+  });
+
+  it('reissues a new UUID when a <uuid>.jsonl session-file collides during projects/ merge', () => {
+    const legacy = path.join(tmpHome, '.claude-shared');
+    const pool = path.join(tmpHome, '.claude');
+    const uuid = '2a4c2afb-6cc0-4496-b0fe-09cd2f1b2f04';
+    fs.mkdirSync(path.join(pool, 'projects', 'D--myapp'), { recursive: true });
+    fs.writeFileSync(path.join(pool, 'projects', 'D--myapp', `${uuid}.jsonl`), 'NEW');
+    fs.mkdirSync(path.join(legacy, 'projects', 'D--myapp'), { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'projects', 'D--myapp', `${uuid}.jsonl`), 'OLD');
+
+    share.migrateLegacyPool();
+
+    expect(fs.readFileSync(path.join(pool, 'projects', 'D--myapp', `${uuid}.jsonl`), 'utf8')).toBe('NEW');
+    // Old file should still be present under a *different* UUID, not __legacy-suffixed.
+    const dst = fs.readdirSync(path.join(pool, 'projects', 'D--myapp'));
+    const others = dst.filter((n) => n !== `${uuid}.jsonl` && n.endsWith('.jsonl'));
+    expect(others.length).toBe(1);
+    expect(others[0]).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jsonl$/i);
+    expect(fs.readFileSync(path.join(pool, 'projects', 'D--myapp', others[0]), 'utf8')).toBe('OLD');
+  });
+
+  it('pairs a <uuid>/ sub-uuid dir with its <uuid>.jsonl under the reissued UUID', () => {
+    const legacy = path.join(tmpHome, '.claude-shared');
+    const pool = path.join(tmpHome, '.claude');
+    const uuid = '2a4c2afb-6cc0-4496-b0fe-09cd2f1b2f04';
+    fs.mkdirSync(path.join(pool, 'projects', 'D--myapp'), { recursive: true });
+    fs.writeFileSync(path.join(pool, 'projects', 'D--myapp', `${uuid}.jsonl`), 'NEW');
+    fs.mkdirSync(path.join(pool, 'projects', 'D--myapp', uuid), { recursive: true });
+    fs.writeFileSync(path.join(pool, 'projects', 'D--myapp', uuid, 'todo.json'), 'NEW-todo');
+    fs.mkdirSync(path.join(legacy, 'projects', 'D--myapp'), { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'projects', 'D--myapp', `${uuid}.jsonl`), 'OLD');
+    fs.mkdirSync(path.join(legacy, 'projects', 'D--myapp', uuid), { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'projects', 'D--myapp', uuid, 'todo.json'), 'OLD-todo');
+
+    share.migrateLegacyPool();
+
+    const dst = fs.readdirSync(path.join(pool, 'projects', 'D--myapp'));
+    const reissuedFile = dst.find((n) => n !== `${uuid}.jsonl` && n.endsWith('.jsonl'));
+    const reissuedDir = dst.find((n) => n !== uuid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(n));
+    expect(reissuedFile).toBeTruthy();
+    expect(reissuedDir).toBeTruthy();
+    // File and dir share the same reissued stem.
+    expect(reissuedFile.replace(/\.jsonl$/, '')).toBe(reissuedDir);
+    expect(fs.readFileSync(path.join(pool, 'projects', 'D--myapp', reissuedFile), 'utf8')).toBe('OLD');
+    expect(fs.readFileSync(path.join(pool, 'projects', 'D--myapp', reissuedDir, 'todo.json'), 'utf8')).toBe('OLD-todo');
+  });
+});
+
+describe('repairProjectFilenames', () => {
+  let tmpHome;
+  let originalHomedir;
+
+  beforeEach(() => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-repair-'));
+    originalHomedir = os.homedir;
+    os.homedir = () => tmpHome;
+  });
+
+  afterEach(() => {
+    os.homedir = originalHomedir;
+    fs.rmSync(tmpHome, { recursive: true, force: true });
+  });
+
+  it('strips __legacy suffix when canonical <uuid>.jsonl is free', () => {
+    const uuid = '2a4c2afb-6cc0-4496-b0fe-09cd2f1b2f04';
+    const folder = path.join(tmpHome, '.claude', 'projects', 'D--myapp');
+    fs.mkdirSync(folder, { recursive: true });
+    fs.writeFileSync(path.join(folder, `${uuid}__legacy.jsonl`), 'X');
+
+    const result = share.repairProjectFilenames();
+
+    expect(result.repaired.length).toBe(1);
+    expect(fs.readFileSync(path.join(folder, `${uuid}.jsonl`), 'utf8')).toBe('X');
+    expect(fs.existsSync(path.join(folder, `${uuid}__legacy.jsonl`))).toBe(false);
+  });
+
+  it('reissues a fresh UUID when canonical <uuid>.jsonl is taken', () => {
+    const uuid = '2a4c2afb-6cc0-4496-b0fe-09cd2f1b2f04';
+    const folder = path.join(tmpHome, '.claude', 'projects', 'D--myapp');
+    fs.mkdirSync(folder, { recursive: true });
+    fs.writeFileSync(path.join(folder, `${uuid}.jsonl`), 'CANONICAL');
+    fs.writeFileSync(path.join(folder, `${uuid}__legacy.jsonl`), 'DAMAGED');
+
+    share.repairProjectFilenames();
+
+    expect(fs.readFileSync(path.join(folder, `${uuid}.jsonl`), 'utf8')).toBe('CANONICAL');
+    const children = fs.readdirSync(folder);
+    const others = children.filter((n) => n !== `${uuid}.jsonl`);
+    expect(others.length).toBe(1);
+    expect(others[0]).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jsonl$/i);
+    expect(fs.readFileSync(path.join(folder, others[0]), 'utf8')).toBe('DAMAGED');
+  });
+
+  it('peels compounded suffixes like __legacy__legacy and __legacy_2', () => {
+    const uuid = '2a4c2afb-6cc0-4496-b0fe-09cd2f1b2f04';
+    const folder = path.join(tmpHome, '.claude', 'projects', 'D--myapp');
+    fs.mkdirSync(folder, { recursive: true });
+    fs.writeFileSync(path.join(folder, `${uuid}__legacy__legacy.jsonl`), 'A');
+    fs.writeFileSync(path.join(folder, `${uuid}__legacy_2.jsonl`), 'B');
+
+    share.repairProjectFilenames();
+
+    const children = fs.readdirSync(folder).filter((n) => n.endsWith('.jsonl'));
+    expect(children.length).toBe(2);
+    // One file took the canonical name; the other got a fresh UUID.
+    expect(children).toContain(`${uuid}.jsonl`);
+    const fresh = children.find((n) => n !== `${uuid}.jsonl`);
+    expect(fresh).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jsonl$/i);
+  });
+
+  it('pairs a <uuid>__legacy/ sub-uuid dir with its .jsonl under the same restored stem', () => {
+    const uuid = '2a4c2afb-6cc0-4496-b0fe-09cd2f1b2f04';
+    const folder = path.join(tmpHome, '.claude', 'projects', 'D--myapp');
+    fs.mkdirSync(folder, { recursive: true });
+    fs.writeFileSync(path.join(folder, `${uuid}__legacy.jsonl`), 'F');
+    fs.mkdirSync(path.join(folder, `${uuid}__legacy`));
+    fs.writeFileSync(path.join(folder, `${uuid}__legacy`, 'todo.json'), 'T');
+
+    share.repairProjectFilenames();
+
+    // canonical was free, so both restore to <uuid>.jsonl and <uuid>/.
+    expect(fs.readFileSync(path.join(folder, `${uuid}.jsonl`), 'utf8')).toBe('F');
+    expect(fs.readFileSync(path.join(folder, uuid, 'todo.json'), 'utf8')).toBe('T');
+  });
+
+  it('restores memory__legacy/ and sessions-index__legacy.json when canonical is free', () => {
+    const folder = path.join(tmpHome, '.claude', 'projects', 'D--myapp');
+    fs.mkdirSync(folder, { recursive: true });
+    fs.mkdirSync(path.join(folder, 'memory__legacy'));
+    fs.writeFileSync(path.join(folder, 'memory__legacy', 'k.md'), 'mem');
+    fs.writeFileSync(path.join(folder, 'sessions-index__legacy.json'), '{}');
+
+    share.repairProjectFilenames();
+
+    expect(fs.existsSync(path.join(folder, 'memory'))).toBe(true);
+    expect(fs.readFileSync(path.join(folder, 'memory', 'k.md'), 'utf8')).toBe('mem');
+    expect(fs.readFileSync(path.join(folder, 'sessions-index.json'), 'utf8')).toBe('{}');
+  });
+
+  it('is a no-op when nothing is damaged', () => {
+    const folder = path.join(tmpHome, '.claude', 'projects', 'D--myapp');
+    fs.mkdirSync(folder, { recursive: true });
+    fs.writeFileSync(path.join(folder, '2a4c2afb-6cc0-4496-b0fe-09cd2f1b2f04.jsonl'), 'x');
+    const result = share.repairProjectFilenames();
+    expect(result.repaired).toEqual([]);
+  });
+});
+
+describe('healProjectsLegacy', () => {
+  let tmpHome;
+  let originalHomedir;
+
+  beforeEach(() => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-heal-'));
+    originalHomedir = os.homedir;
+    os.homedir = () => tmpHome;
+  });
+
+  afterEach(() => {
+    os.homedir = originalHomedir;
+    fs.rmSync(tmpHome, { recursive: true, force: true });
+  });
+
+  it('is a no-op when projects/ has no __legacy folders', () => {
+    fs.mkdirSync(path.join(tmpHome, '.claude', 'projects', 'D--myapp'), { recursive: true });
+    const result = share.healProjectsLegacy();
+    expect(result.healed).toEqual([]);
+    expect(result.failures).toEqual([]);
+  });
+
+  it('merges <base>__legacy/ children into a canonical <base>/ sibling', () => {
+    const projects = path.join(tmpHome, '.claude', 'projects');
+    fs.mkdirSync(path.join(projects, 'D--myapp'), { recursive: true });
+    fs.writeFileSync(path.join(projects, 'D--myapp', 'new.jsonl'), 'NEW');
+    fs.mkdirSync(path.join(projects, 'D--myapp__legacy'), { recursive: true });
+    fs.writeFileSync(path.join(projects, 'D--myapp__legacy', 'old.jsonl'), 'OLD');
+
+    const result = share.healProjectsLegacy();
+
+    expect(result.healed.length).toBe(1);
+    expect(result.healed[0]).toMatchObject({ from: 'D--myapp__legacy', to: 'D--myapp', renamed: false });
+    expect(fs.existsSync(path.join(projects, 'D--myapp__legacy'))).toBe(false);
+    expect(fs.readFileSync(path.join(projects, 'D--myapp', 'new.jsonl'), 'utf8')).toBe('NEW');
+    expect(fs.readFileSync(path.join(projects, 'D--myapp', 'old.jsonl'), 'utf8')).toBe('OLD');
+  });
+
+  it('renames <base>__legacy/ to <base>/ when no canonical sibling exists', () => {
+    const projects = path.join(tmpHome, '.claude', 'projects');
+    fs.mkdirSync(path.join(projects, 'D--orphan__legacy'), { recursive: true });
+    fs.writeFileSync(path.join(projects, 'D--orphan__legacy', 's.jsonl'), 'x');
+
+    const result = share.healProjectsLegacy();
+
+    expect(result.healed.length).toBe(1);
+    expect(result.healed[0]).toMatchObject({ from: 'D--orphan__legacy', to: 'D--orphan', renamed: true });
+    expect(fs.existsSync(path.join(projects, 'D--orphan__legacy'))).toBe(false);
+    expect(fs.readFileSync(path.join(projects, 'D--orphan', 's.jsonl'), 'utf8')).toBe('x');
+  });
+
+  it('peels compounded suffixes like __legacy__legacy and __legacy_2', () => {
+    const projects = path.join(tmpHome, '.claude', 'projects');
+    fs.mkdirSync(path.join(projects, 'D--app'), { recursive: true });
+    fs.writeFileSync(path.join(projects, 'D--app', 'a.jsonl'), 'A');
+    fs.mkdirSync(path.join(projects, 'D--app__legacy__legacy'), { recursive: true });
+    fs.writeFileSync(path.join(projects, 'D--app__legacy__legacy', 'b.jsonl'), 'B');
+    fs.mkdirSync(path.join(projects, 'D--app__legacy_2'), { recursive: true });
+    fs.writeFileSync(path.join(projects, 'D--app__legacy_2', 'c.jsonl'), 'C');
+
+    share.healProjectsLegacy();
+
+    expect(fs.readFileSync(path.join(projects, 'D--app', 'a.jsonl'), 'utf8')).toBe('A');
+    expect(fs.readFileSync(path.join(projects, 'D--app', 'b.jsonl'), 'utf8')).toBe('B');
+    expect(fs.readFileSync(path.join(projects, 'D--app', 'c.jsonl'), 'utf8')).toBe('C');
+    expect(fs.existsSync(path.join(projects, 'D--app__legacy__legacy'))).toBe(false);
+    expect(fs.existsSync(path.join(projects, 'D--app__legacy_2'))).toBe(false);
+  });
+
+  it('on Windows, merges d--…__legacy into a case-different D--… sibling', () => {
+    if (process.platform !== 'win32') return;
+    const projects = path.join(tmpHome, '.claude', 'projects');
+    fs.mkdirSync(path.join(projects, 'D--myapp'), { recursive: true });
+    fs.writeFileSync(path.join(projects, 'D--myapp', 'u.jsonl'), 'U');
+    fs.mkdirSync(path.join(projects, 'd--myapp__legacy'), { recursive: true });
+    fs.writeFileSync(path.join(projects, 'd--myapp__legacy', 'l.jsonl'), 'L');
+
+    const result = share.healProjectsLegacy();
+
+    expect(result.healed[0]).toMatchObject({ to: 'D--myapp' });
+    expect(fs.readFileSync(path.join(projects, 'D--myapp', 'u.jsonl'), 'utf8')).toBe('U');
+    expect(fs.readFileSync(path.join(projects, 'D--myapp', 'l.jsonl'), 'utf8')).toBe('L');
   });
 });

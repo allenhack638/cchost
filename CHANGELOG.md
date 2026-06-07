@@ -5,6 +5,39 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.3] - 2026-06-07
+
+### Fixed
+
+- **`claude --resume` now finds older sessions after a v0.3 → v0.4 upgrade.**
+  The v0.4 migration's `__legacy` collision rename was applied to
+  `projects/` folders too, which hid their sessions from `claude --resume`
+  (resume filters by cwd-encoded folder name; a `__legacy` suffix never
+  matches a real cwd). Four changes:
+  - `migrateLegacyPool` now merges `projects/<base>/` children into the
+    existing canonical folder instead of renaming the directory.
+    Skills/agents/commands keep the directory-level `__legacy` rename —
+    only `projects/` changes.
+  - Same-UUID session-file collisions during merge reissue a fresh UUID v4
+    instead of appending `__legacy.jsonl`, so the file stays a valid Claude
+    session filename. Paired `<uuid>/` sub-uuid dirs travel under the same
+    new UUID.
+  - `cc doctor` detects pre-existing `projects/<base>__legacy*` folders and
+    `--fix` merges them into the canonical sibling (or renames the legacy
+    folder in place if no sibling exists). Case-insensitive sibling lookup
+    on Windows also collapses split `d--…` / `D--…` variants.
+  - `cc doctor` also detects damaged `<uuid>__legacy*.jsonl` filenames left
+    in `projects/` by earlier heal logic and `--fix` restores them to
+    `<uuid>.jsonl` (or reissues a fresh UUID when the canonical name is
+    taken).
+- **Self-referencing legacy pool detection.** When `~/.claude/projects/` is
+  a junction/symlink pointing into `~/.claude-shared/projects/`
+  (a layout some pre-v0.4 setups produced), `migrateLegacyPool` aborts
+  cleanly instead of treating it as a real migration — what would otherwise
+  have moved every file onto itself and triggered the legacy-suffix path on
+  every entry. `cc doctor` surfaces this case as a manual-cleanup warning
+  instead of offering a self-move auto-fix.
+
 ## [0.4.2] - 2026-06-04
 
 ### Fixed
