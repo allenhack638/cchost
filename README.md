@@ -1,19 +1,23 @@
 # cchost
 
+> **nvm, but for your Claude Code accounts.** Works on Windows, Linux, and macOS.
+
 [![npm version](https://img.shields.io/npm/v/cchost.svg)](https://www.npmjs.com/package/cchost)
 [![CI](https://github.com/allenhack638/cchost/actions/workflows/ci.yml/badge.svg)](https://github.com/allenhack638/cchost/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/cchost.svg)](./LICENSE)
 [![node](https://img.shields.io/node/v/cchost.svg)](https://nodejs.org)
+[![platforms](https://img.shields.io/badge/platforms-windows%20%7C%20linux%20%7C%20macos-blue)](#install)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/allenhack638/cchost/master/docs/demo.png" alt="cchost CLI — cc list showing masked emails and shared resource counts" width="100%">
 </p>
 
-Claude Code keeps one account's login, history, and settings in a single config directory. To use a second account you normally have to log out and back in, which loses your place. cchost gives each account its own directory so you can keep several side by side and pick one when you launch.
+`cchost` is a multi-account profile manager for [Claude Code](https://code.claude.com).
 
-Each profile is a complete, isolated `CLAUDE_CONFIG_DIR`: credentials, session history, project state, plugins, and settings. Create one with `cc add <name>`, launch under it with `cc use <name>`. Nothing is shared between profiles unless you ask for it.
-
-`cc` is a plain Node CLI on your PATH, so it works the same from PowerShell, cmd, bash, zsh, or fish. No shell scripts, no rc-file edits. Tested on Windows, Linux, and macOS in CI.
+- **Isolated profiles** — each profile is a complete `CLAUDE_CONFIG_DIR` with its own credentials, session history, and settings. Switch with `cc use <name>`.
+- **Shared pool** — `skills/`, `agents/`, `commands/`, `projects/`, and shared config files (`mcp.json`, `settings.json`, `CLAUDE.md`) link across all profiles by default. Credentials never do.
+- **Custom endpoints** — route a profile through any Anthropic-compatible API (Moonshot, OpenRouter, self-hosted vLLM, corporate proxies) instead of Anthropic OAuth.
+- **Zero runtime dependencies** — single Node CLI on your `PATH`. Identical behavior across PowerShell, cmd, bash, zsh, and fish.
 
 ## Install
 
@@ -21,212 +25,117 @@ Each profile is a complete, isolated `CLAUDE_CONFIG_DIR`: credentials, session h
 npm install -g cchost
 ```
 
-Requires Node.js 18+ and Claude Code 2.1.140+ already installed. Get Claude Code from <https://code.claude.com> (`npm install -g @anthropic-ai/claude-code`).
+Requires Node.js 18+ and Claude Code 2.1.140+ (`npm install -g @anthropic-ai/claude-code`).
+
+## Quickstart
+
+```bash
+cc add work             # create a profile
+cc use work             # launch Claude under it (prompts for login on first run)
+cc use work --resume    # resume the last conversation
+cc list                 # see all profiles
+cc remove old-profile   # delete a profile
+```
 
 ## Commands
 
 | Command | What it does |
 | --- | --- |
-| `cc add <profile>` | Create a subscription profile (logs in with Anthropic OAuth on first use). Auto-symlinks artifact dirs into `~/.claude/`. |
-| `cc add <profile> --custom [...]` | Create — or, if it already exists, edit — a profile routed through a custom API endpoint. Opens a wizard, or takes `--base-url=URL --token=TOKEN [--model=…]`. See [Custom endpoints](#custom-endpoints-kimi-openrouter-etc). |
-| `cc use <profile> [...args]` | Launch Claude under that profile. Profile must already exist. Args after the name are forwarded verbatim to `claude`. |
-| `cc list [<profile>] [--json] [--reveal]` | List every profile (login state, email, shared count N/7, endpoint), or show one profile in detail. Emails and tokens are masked by default; `--reveal` shows both in full. |
-| `cc copy default <profile> [--force]` | Copy `~/.claude/` resources into a profile. Meaningful only when one or more resources have been unlinked via `cc unlink`; otherwise every resource resolves to the same on-disk path and is skipped. Skip-on-collision by default; `--force` overwrites. `cc migrate` is a deprecated alias. |
-| `cc link <profile> [<profile>...] [--projects\|--tools\|--config]` | (Re-)link a profile's resources to `~/.claude/`. No flag = all 7. Refuses to overwrite private content. |
-| `cc unlink <profile> [--projects\|--tools\|--config]` | Break the links and copy current `~/.claude/` content into the profile as private resources. Non-destructive. |
-| `cc remove <profile> [--force]` | Delete a profile. Requires typing the profile name to confirm. `--force` is required when private (unlinked) resources exist. |
-| `cc doctor [--fix [--force]] [--json]` | Diagnose environment, storage, and platform issues. |
-| `cc help [command]` | Print usage (top-level, or for a single command). |
+| `cc add <profile>` | Create a subscription profile. Logs in via Anthropic OAuth on first `cc use`. Auto-shares all 7 resources with `~/.claude/`. |
+| `cc add <profile> --custom [...]` | Create or edit a custom-endpoint profile. Interactive wizard, or `--base-url=URL --token=TOKEN [--model=…]`. See [Custom endpoints](#custom-endpoints). |
+| `cc use <profile> [...args]` | Launch Claude under that profile. Extra args are forwarded to `claude`. |
+| `cc list [<profile>] [--json] [--reveal]` | List all profiles or show one in detail. Emails and tokens are masked by default; `--reveal` prints them in full. |
+| `cc copy default <profile> [--force]` | Seed an unlinked profile resource from `~/.claude/`. No-op for fully-shared profiles. |
+| `cc link <profile> [--projects\|--tools\|--config]` | Link a profile's resources to `~/.claude/`. Defaults to all 7 when no flag is passed. |
+| `cc unlink <profile> [--projects\|--tools\|--config]` | Break the link and make those resources private to the profile. Non-destructive. |
+| `cc remove <profile> [--force]` | Delete a profile. Requires typing the profile name. `--force` required when private resources exist. |
+| `cc doctor [--fix [--force]] [--json]` | Diagnose environment, storage, and platform issues. `--fix` applies safe auto-fixes; `--force` is required for destructive ones. |
+| `cc help [command]` | Print usage. |
 
-### Examples
-
-```bash
-cc add work                            # create the profile, do not launch
-cc use work                            # first launch: Claude prompts for login
-cc use work --resume                   # resume last conversation under "work"
-cc use personal -p "summarize"         # one-shot prompt under "personal"
-cc list
-cc remove old-profile
-```
-
-`cc list` output:
+Sample `cc list` output:
 
 ```
 Profile   LoggedIn  Email                  Shared  Endpoint
 kimi      false     -                      7/7     api.moonshot.ai
 personal  true      p************.com      7/7     subscription
-scratch   false     -                      7/7     subscription
 work      true      w************.com      7/7     subscription
 ```
 
-`7/7` is the steady state since v0.4.1 — every profile auto-shares 4 dirs (`projects`, `skills`, `agents`, `commands`) **and** 3 files (`mcp.json`, `settings.json`, `CLAUDE.md`) with `~/.claude/`. A lower number means one or more resources were unlinked via `cc unlink <profile> --projects|--tools|--config`.
+The `Shared` column counts how many of the 7 shareable resources are linked into `~/.claude/`. `7/7` is the default; lower numbers mean one or more resources have been `cc unlink`ed and now hold private content.
 
-Emails are masked by default so the list is safe to paste in screenshots and issue reports. Pass `--reveal` to show them in full (same flag also reveals the API token on custom-endpoint profiles).
+## Sharing model
 
-The **Shared** column is a count: how many of the 7 shareable resources symlink into `~/.claude/`.
+Anything that authenticates a profile stays per-profile; everything else is shared.
 
-- `7/7` — the default since v0.4.1. All four artifact dirs *and* the three
-  config files point at the shared pool; a tool, server, or hook configured
-  under any profile is immediately visible to every other profile.
-- `6/7`, `5/7`, … — one or more resources were `cc unlink`ed and now hold
-  private content.
-- `0/7` — fully isolated; the profile keeps its own copy of everything.
-- `4/7` — typical of a profile created on v0.4.0 before the file resources
-  were added. Run `cc doctor --fix` to backfill them.
+| Resource | Shared by default | Flag group |
+| --- | :---: | --- |
+| `projects/` | ✓ | `--projects` |
+| `skills/`, `agents/`, `commands/` | ✓ | `--tools` |
+| `mcp.json`, `settings.json`, `CLAUDE.md` | ✓ | `--config` |
+| `.credentials.json`, `.claude.json`, `.cc-env.json` | never | — |
+| `sessions/`, `plugins/` | never | — |
 
-### What's shared, what's per-profile
+Sharing uses POSIX symlinks on Linux/macOS and directory junctions on Windows (no admin or Developer Mode required). File resources fall back to a hard link on Windows when symlink creation would require elevation. Note that `mcp.json` and `settings.json` can execute arbitrary code through MCP servers and hooks — if a profile needs an isolated copy of either, run `cc unlink <profile> --config`.
 
-Since v0.4.1, **`~/.claude/` is the shared pool**, and **all 7 resources** auto-link into it on `cc add`. The trust boundary is simple: anything that authenticates this profile's identity stays per-profile; everything else is global.
-
-| Resource | Location | Shared? | Flag group |
-| --- | --- | :---: | --- |
-| `projects/` | `~/.claude/projects/` | ✓ (symlink) | `--projects` |
-| `skills/` | `~/.claude/skills/` | ✓ (symlink) | `--tools` |
-| `agents/` | `~/.claude/agents/` | ✓ (symlink) | `--tools` |
-| `commands/` | `~/.claude/commands/` | ✓ (symlink) | `--tools` |
-| `mcp.json` | `~/.claude/mcp.json` | ✓ (file symlink / hard link) | `--config` |
-| `settings.json` | `~/.claude/settings.json` | ✓ (file symlink / hard link) | `--config` |
-| `CLAUDE.md` | `~/.claude/CLAUDE.md` | ✓ (file symlink / hard link) | `--config` |
-| `sessions/` | per-profile | — | (never shared) |
-| `plugins/` | per-profile | — | (never shared) |
-| `.credentials.json` | per-profile | — | Anthropic OAuth token. Never touched. |
-| `.claude.json` | per-profile | — | Account identity (re-synced on every launch). |
-| `.cc-env.json` | per-profile | — | Custom-endpoint API key. Never copied, never linked. |
-
-`mcp.json` carries MCP server tokens and `settings.json` carries hooks that can run arbitrary commands. Sharing them means every profile sees the same set — if you need per-profile separation for one of them, `cc unlink <profile> --config` breaks the link and makes that profile's copies private.
-
-### Seeding a private profile from `~/.claude/`
-
-If a profile has unlinked resources (`cc unlink <p>`) and you want to seed them from the current `~/.claude/`:
+To break sharing for a single profile:
 
 ```bash
-cc copy default work          # copies anything unlinked from ~/.claude/ → work
-cc copy default work --force  # same, overwriting if already present
+cc unlink work --tools     # private skills/agents/commands
+cc unlink work --projects  # private projects/
+cc unlink work --config    # private mcp.json/settings.json/CLAUDE.md
+cc unlink work             # all 7 private
+cc link work --tools       # re-share
 ```
 
-For a fresh `cc add` profile this is a no-op — every resource already resolves to `~/.claude/` via its symlink, so there's nothing to copy. `cc copy` becomes meaningful only after `cc unlink`. (`cc migrate` is a deprecated alias for `cc copy` and still works.)
+`cc unlink` is non-destructive — pool content is copied into the profile before the link is broken. `cc link` refuses to overwrite existing private content; remove or relocate the private resource manually, then re-run.
 
-### Opting out of sharing for a profile
+Use `cc copy default <profile>` to seed an unlinked resource from the current `~/.claude/`. For fully-shared profiles this is a no-op.
 
-```bash
-cc unlink work --tools         # private skills/agents/commands for "work" only
-cc unlink work --projects      # private projects/ for "work" only
-cc unlink work --config        # private mcp.json/settings.json/CLAUDE.md
-cc unlink work                 # private everything (all 7 unlinked)
-cc link work --tools           # re-share just the tools
-cc link work --config          # re-share just the config files
-```
+## Custom endpoints
 
-`cc unlink` is non-destructive — current pool content is copied into the profile as a private dir or file before the link is broken, so your view of the resource is preserved. `cc link` refuses to overwrite existing private content; move or remove it manually and re-run.
+A profile can route through any Anthropic-compatible API — Moonshot/Kimi, OpenRouter, Requesty, self-hosted vLLM, or a corporate proxy — instead of Anthropic's subscription OAuth.
 
-Credential files (`.credentials.json`, `.claude.json`, `.cc-env.json`) are never touched: each profile keeps its own auth state.
-
-### How sharing works under the hood
-
-Every profile created by `cc add` ships with 7 links pointing at `~/.claude/<resource>`:
-
-- Directories use Windows junctions (no admin / Developer Mode required) or POSIX symlinks.
-- Files (`mcp.json`, `settings.json`, `CLAUDE.md`) use file symlinks where possible. On Windows without Developer Mode, file symlinks require elevation — `cc link` falls back to a **hard link** there, which works without admin and behaves identically for edit-in-place flows.
-
-`sessions/` and `plugins/` are **never** linked. `sessions/` holds transient per-process registry state (PID, status, timestamps) and sharing it would corrupt Claude's running-process bookkeeping. `plugins/` carries auth tokens.
-
-If two profiles open the same project at the same time, both will write to the same conversation files in `~/.claude/projects/<cwd>/` (last write wins). Either avoid that or run `cc unlink <profile> --projects` on one of them.
-
-`cc remove` is safe with fully-shared profiles — it deletes only the symlinks, leaving `~/.claude/` untouched. If a profile has *private* (unlinked) resources, `cc remove` requires `--force` because that content is unique to the profile and will be lost.
-
-## Custom endpoints (Kimi, OpenRouter, etc.)
-
-A profile can route through any Anthropic-compatible API endpoint instead of Anthropic's subscription OAuth — Moonshot/Kimi, OpenRouter, Requesty, a self-hosted vLLM, or a corporate proxy. You declare this when you create the profile, with `cc add <profile> --custom`.
-
-> **Billing:** a custom-endpoint profile bills through the **third-party provider**, using the API key you supply — **not** your Anthropic subscription. You are responsible for that provider's usage charges. A subscription profile is unaffected.
-
-A custom-endpoint profile and a subscription profile are mutually exclusive: a profile is born one or the other and stays that way. `cc add --custom` refuses to run on a profile that already has Anthropic OAuth credentials — create custom-endpoint profiles fresh.
-
-### Worked example — Moonshot / Kimi
+> **Billing:** custom-endpoint profiles bill through the **third-party provider**, not your Anthropic subscription.
 
 ```bash
 cc add kimi --custom --base-url=https://api.moonshot.ai/anthropic \
-                     --token=sk-your-moonshot-key \
+                     --token=sk-your-key \
                      --model=kimi-k2.5
 cc use kimi
 ```
 
-Moonshot's endpoint URL ends in `/anthropic` — Claude Code appends `/v1/messages` itself, so do **not** add `/v1`. Most third-party providers serve a single model name; pass it as `--model` and it is applied to every tier (opus/sonnet/haiku/subagent). To override a tier, pass `--opus=`, `--sonnet=`, `--haiku=`, or `--subagent=`.
-
-Run `cc add <profile> --custom` with no value flags for an interactive wizard instead — it prompts for every field and never echoes the token. `cc add --custom` is atomic: if you cancel the wizard, no profile is left behind.
-
-### Editing a custom-endpoint profile
-
-Re-run `cc add <profile> --custom` on a profile that already has a custom endpoint and it switches to **edit mode**: the wizard prefills current values, and with flags only the flags you pass are changed.
+Run `cc add <profile> --custom` with no value flags for an interactive wizard — it prompts for every field and never echoes the token. Re-running on an existing custom-endpoint profile enters **edit mode**: the wizard prefills current values, and with flags only the flags you pass are changed.
 
 ```bash
 cc add kimi --custom --model=kimi-k3      # change just the model
 cc add kimi --custom --token=sk-rotated   # rotate the API key
 ```
 
-Inspect a config with `cc list <profile>` — the API token is masked:
+Subscription and custom-endpoint profiles are mutually exclusive: a profile is either one or the other for its entire lifetime. To switch, remove the profile with `cc remove` and recreate it.
 
-```
-Profile:   kimi
-Directory: /home/you/.claude-profiles/kimi
-LoggedIn:  false
-Email:     -
-Shared:    7/7
-Endpoint:  api.moonshot.ai
-  Base URL:  https://api.moonshot.ai/anthropic
-  Token:     sk-you...key9 (32 chars)
-  Model:     kimi-k2.5
-  Opus:      kimi-k2.5
-  Sonnet:    kimi-k2.5
-  Haiku:     kimi-k2.5
-  Subagent:  kimi-k2.5
-```
+Inspect with `cc list <profile>` (token masked) or `cc list <profile> --reveal` (full). The endpoint URL should not include `/v1` — Claude Code appends `/v1/messages` itself. Most providers serve a single model; `--model` applies to every tier (`opus`/`sonnet`/`haiku`/`subagent`), or override per-tier with `--opus=`, `--sonnet=`, etc.
 
-`cc list <profile> --reveal` prints the full API key and the full email — do not paste that output anywhere.
-
-There is no way to convert a custom-endpoint profile back to a subscription profile. To stop using an endpoint, `cc remove` the profile and recreate it.
-
-When you launch a custom-endpoint profile, `cc use` prints a one-line reminder to stderr:
+On launch, `cc use` prints a one-line endpoint banner to stderr:
 
 ```
 [cchost] Profile 'kimi' → api.moonshot.ai (custom endpoint billing applies)
 ```
 
-The config lives at `~/.claude-profiles/<profile>/.cc-env.json` with user-only file permissions. It contains your API key — see [Sensitive data](#sensitive-data).
+## Security
 
-## How it works
-
-`cc` is a Node CLI with **zero runtime dependencies**. For `cc use` it:
-
-1. Resolves the profile directory under `~/.claude-profiles/<name>/`
-2. Sets `CLAUDE_CONFIG_DIR` in its **own** spawn environment
-3. Spawns `claude` with `stdio: 'inherit'` so the TUI works correctly
-4. Forwards the child's exit code
-
-The env var is set on the child process only — that's all `claude` needs.
-
-## Sensitive data
-
-`~/.claude-profiles/<profile>/` holds real OAuth credentials. Treat it like SSH keys: don't commit it, don't share it, don't sync it to public cloud storage. The `.gitignore` shipped with this project excludes profile directories from anywhere they might land. `cc copy` and `cc link` never touch `.credentials.json` or `.claude.json`.
-
-`.cc-env.json` (custom-endpoint config) contains a third-party **API key** — treat it exactly like `.credentials.json`. It is written with user-only file permissions, and `cc copy`/`cc link` never copy or link it across profiles. `cc list <profile>` masks the token; only `cc list <profile> --reveal` prints it in full.
+`~/.claude-profiles/<profile>/` holds real OAuth credentials and API keys. Treat it like `~/.ssh`: don't commit it, don't share it, don't sync it to public cloud storage. The shipped `.gitignore` excludes profile directories. `cc copy` and `cc link` never touch credential files (`.credentials.json`, `.claude.json`, `.cc-env.json`); each profile keeps its own auth state.
 
 ## Troubleshooting
 
-**`Claude Code does not appear to be installed`**
-Install it (`npm install -g @anthropic-ai/claude-code`) and make sure `claude --version` runs in a fresh terminal.
+Run `cc doctor` first — it checks Node, Claude Code version, profile integrity, symlinks, and the shared pool.
 
-**`warning: Claude Code <version> is older than 2.1.140`**
-Earlier versions had bugs where Windows read `.claude.json` from `%USERPROFILE%` regardless of `CLAUDE_CONFIG_DIR`, breaking isolation. Run `claude update`.
+**`Claude Code does not appear to be installed`** — install with `npm install -g @anthropic-ai/claude-code` and verify `claude --version` runs in a fresh terminal.
 
-**`Profile "<name>" does not exist. Create it with: cc add <name>`**
-`cc use` does not auto-create profiles — that prevents typos like `cc use wokr` from silently creating a new, blank one. Run `cc add <name>` first.
+**`warning: Claude Code <version> is older than 2.1.140`** — earlier versions on Windows read `.claude.json` from `%USERPROFILE%` regardless of `CLAUDE_CONFIG_DIR`, breaking isolation. Run `claude update`.
 
-**Profile name rejected**
-Names must be free of path separators, whitespace, `..`, leading dots, and reserved DOS names (CON, PRN, COM1…). Stick to letters, digits, dashes, underscores.
+**`Profile "<name>" does not exist`** — `cc use` does not auto-create profiles. Run `cc add <name>` first.
 
-**Old shell-script version was leaking keystrokes / leaking `use work` into the prompt**
-That was a known bug in the cmd-based predecessor (`%*` ignored `shift`). This package forwards only the argv after `<profile>` to `claude`; the action and profile name themselves are consumed by `cc`.
+**Profile name rejected** — names must not contain path separators, whitespace, `..`, leading dots, or DOS reserved names (`CON`, `PRN`, `COM1`…). Use letters, digits, dashes, and underscores.
 
 ## License
 

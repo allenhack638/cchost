@@ -5,6 +5,20 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.4] - 2026-06-19
+
+### Changed
+
+- **macOS officially supported.** CI has been running the full test matrix on
+  `macos-latest` since v0.4.0; documentation now reflects that. README, package
+  description, and keywords updated. No code change — macOS users were already
+  on a verified path, the claim was just stale.
+- Sharper `package.json` description — leads with the value prop
+  ("multi-account profile manager for Claude Code") instead of the implementation
+  detail. Improves discoverability on `npm search` and the npm package page.
+- README tagline added under the H1 ("nvm, but for your Claude Code accounts")
+  and a platforms badge for at-a-glance OS support.
+
 ## [0.4.3] - 2026-06-07
 
 ### Fixed

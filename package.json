@@ -1,7 +1,7 @@
 {
   "name": "cchost",
-  "version": "0.4.3",
-  "description": "Host multiple isolated Claude Code accounts on one machine via the `cc` command.",
+  "version": "0.4.4",
+  "description": "Multi-account profile manager for Claude Code — switch accounts, share skills/agents/projects, route to custom endpoints. Works on Windows, Linux, and macOS.",
   "keywords": [
     "claude",
     "claude-code",
@@ -10,7 +10,10 @@
     "profile",
     "multi-account",
     "credentials",
-    "isolation"
+    "isolation",
+    "macos",
+    "windows",
+    "linux"
   ],
   "homepage": "https://github.com/allenhack638/cchost#readme",
   "bugs": {
