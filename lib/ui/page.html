@@ -40,10 +40,12 @@
   --warn-bg: #fef3c7;
   --err: #dc2626;
   --err-fg: #b91c1c;
+  --danger-solid: #dc2626;
   --err-bg: #fef2f2;
   --overlay: rgba(9, 9, 11, 0.32);
   --shadow-sm: 0 1px 2px rgba(9, 9, 11, 0.05);
   --shadow-panel: -12px 0 32px rgba(9, 9, 11, 0.12), -1px 0 0 var(--border);
+  --shadow-toast: 0 8px 24px rgba(9, 9, 11, 0.2);
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -54,7 +56,7 @@
     --bg: #09090b; --surface: #111113; --surface-2: #18181b; --surface-3: #212125;
     --border: #27272a; --border-strong: #3f3f46;
     --text: #fafafa; --text-2: #a1a1aa; --text-3: #8f8f98;
-    --primary: #3b82f6; --primary-hover: #60a5fa; --primary-fg: #ffffff; --focus: #60a5fa;
+    --primary: #2563eb; --primary-hover: #1d4ed8; --primary-fg: #ffffff; --focus: #60a5fa;
     --shared-bg: #172554; --shared-fg: #bfdbfe; --shared-bd: #1e3a8a;
     --private-bg: #3a2a0a; --private-fg: #fcd34d; --private-bd: #713f12;
     --missing-fg: #a1a1aa; --missing-bd: #3f3f46;
@@ -71,7 +73,7 @@
   --bg: #09090b; --surface: #111113; --surface-2: #18181b; --surface-3: #212125;
   --border: #27272a; --border-strong: #3f3f46;
   --text: #fafafa; --text-2: #a1a1aa; --text-3: #8f8f98;
-  --primary: #3b82f6; --primary-hover: #60a5fa; --primary-fg: #ffffff; --focus: #60a5fa;
+  --primary: #2563eb; --primary-hover: #1d4ed8; --primary-fg: #ffffff; --focus: #60a5fa;
   --shared-bg: #172554; --shared-fg: #bfdbfe; --shared-bd: #1e3a8a;
   --private-bg: #3a2a0a; --private-fg: #fcd34d; --private-bd: #713f12;
   --missing-fg: #a1a1aa; --missing-bd: #3f3f46;
@@ -129,7 +131,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .side-foot { margin-top: auto; display: grid; gap: 10px; padding: 12px 8px 4px; border-top: 1px solid var(--border); }
 .side-foot .label { font-size: 12px; color: var(--text-3); }
 .side-foot .path { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
-.theme { display: inline-flex; border: 1px solid var(--border); border-radius: 7px; padding: 2px; gap: 2px; width: max-content; }
+.theme { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; width: max-content; }
 .theme button { border: 0; background: transparent; color: var(--text-3); padding: 4px 8px; border-radius: 5px; font: inherit; font-size: 12px; cursor: pointer; }
 .theme button[aria-pressed="true"] { background: var(--shared-bg); color: var(--shared-fg); }
 
@@ -160,7 +162,7 @@ main { min-width: 0; }
 .btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 .btn.danger { color: var(--err-fg); }
 .btn.danger:hover { background: var(--err-bg); border-color: var(--foreign-bd); }
-.btn.danger.solid { background: var(--err); border-color: var(--err); color: #fff; }
+.btn.danger.solid { background: var(--danger-solid); border-color: var(--danger-solid); color: var(--primary-fg); }
 .btn.ghost { border-color: transparent; background: transparent; box-shadow: none; color: var(--text-2); }
 .btn.ghost:hover { background: var(--surface-2); color: var(--text); }
 .btn.icon { width: 32px; padding: 0; }
@@ -222,7 +224,7 @@ main { min-width: 0; }
   display: grid; justify-items: start; gap: 12px; padding: 40px;
   border: 1px dashed var(--border-strong); border-radius: 10px; background: var(--surface);
 }
-.empty h2 { font-size: 16px; }
+.empty h2 { font-size: 15px; }
 .empty p { color: var(--text-2); max-width: 60ch; }
 
 /* Tables (pool, doctor) */
@@ -301,8 +303,13 @@ main { min-width: 0; }
 .share-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 0; }
 .share-row + .share-row { border-top: 1px dashed var(--border); }
 .share-row .name { font-weight: 550; }
+.share-row .help, .section .actions { margin-top: 2px; }
+.help { font-size: 12.5px; color: var(--text-3); }
+.section .actions { margin-top: 12px; }
+.danger-box .muted { font-size: 13px; }
+.spacer { margin-left: auto; }
 .share-row .badges { margin-top: 6px; }
-.seg { display: inline-flex; padding: 2px; border: 1px solid var(--border-strong); border-radius: 7px; background: var(--surface-2); }
+.seg { display: inline-flex; padding: 2px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface-2); }
 .seg button {
   border: 0; background: transparent; color: var(--text-2); font: inherit; font-size: 12.5px; font-weight: 550;
   padding: 4px 10px; border-radius: 5px; cursor: pointer;
@@ -359,7 +366,7 @@ main { min-width: 0; }
 .toast {
   position: fixed; left: 50%; bottom: 24px; z-index: 30; transform: translate(-50%, 16px); opacity: 0;
   display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px;
-  background: var(--text); color: var(--bg); font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  background: var(--text); color: var(--bg); font-size: 13px; box-shadow: var(--shadow-toast);
   transition: opacity 200ms, transform 300ms var(--ease); pointer-events: none;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
@@ -369,16 +376,48 @@ main { min-width: 0; }
 
 @media (max-width: 860px) {
   .app { grid-template-columns: 1fr; }
-  .side { position: static; height: auto; flex-direction: row; align-items: center; flex-wrap: wrap; padding: 10px 16px; border-right: 0; border-bottom: 1px solid var(--border); }
-  .brand { padding: 0 8px 0 0; }
-  .nav { display: flex; gap: 2px; overflow-x: auto; }
-  .side-foot { margin: 0 0 0 auto; padding: 0; border-top: 0; }
+  .side {
+    position: static; height: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+    gap: 8px; padding: 10px 16px; border-right: 0; border-bottom: 1px solid var(--border);
+  }
+  .brand { padding: 0; }
+  .nav { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(4, auto); justify-content: space-between; gap: 2px; min-width: 0; }
+  .nav a { gap: 5px; padding: 7px 6px; font-size: 13px; }
+  .nav a .count { display: none; }
+  .side-foot { grid-column: 2; grid-row: 1; margin: 0; padding: 0 0 0 8px; border-top: none; }
   .side-foot > div:first-child { display: none; }
   .top, .content { padding-left: 16px; padding-right: 16px; }
   .legend { margin-left: 0; }
+  .cards { grid-template-columns: minmax(0, 1fr); }
+  .check { grid-template-columns: 20px minmax(0, 1fr); }
+  .check > span:last-child { grid-column: 2; color: var(--text-2); }
+  code { overflow-wrap: anywhere; }
+  .table.stack thead { display: none; }
+  .table.stack tr { display: grid; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .table.stack tr:last-child { border-bottom: 0; }
+  .table.stack td { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; padding: 0; border: 0; }
+  .table.stack td::before { content: attr(data-label); font-size: 12px; color: var(--text-3); }
+}
+@media (max-width: 520px) {
+  #sync-text { display: none; }
+}
+@media (max-width: 380px) {
+  .nav a svg.i { display: none; }
+}
+@media (pointer: coarse) {
+  .btn { height: 44px; padding: 0 14px; }
+  .btn.icon { width: 44px; }
+  .seg button { padding: 10px 14px; }
+  .theme button { padding: 10px 12px; }
+  .nav a { padding-top: 10px; padding-bottom: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
+  /* No movement; state changes still show, as instant swaps and a static ring. */
+  .panel, .toast { transition: none; }
+  .lines.reveal li { animation: none; }
+  .btn .spin { animation-duration: 2.4s; }
+  .badge.changed { animation: none; outline: 2px solid var(--primary); outline-offset: 1px; }
+  .check-group summary::before { transition: none; }
 }
 </style>
 </head>
@@ -442,6 +481,7 @@ main { min-width: 0; }
 <div class="scrim" id="scrim"></div>
 <aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title"></aside>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="sr" id="announce" aria-live="polite"></div>
 
 <script nonce="__NONCE__">
 (() => {
@@ -489,10 +529,15 @@ main { min-width: 0; }
 
   async function loadState() {
     try {
-      data = await api('/api/state');
+      const next = await api('/api/state');
       lastSync = Date.now();
-      $('#count-profiles').textContent = data.profiles.length || '';
       renderSync();
+      // Re-render only when the disk actually changed, so polling never
+      // steals focus, hover or scroll from what the user is doing.
+      const changed = JSON.stringify(next) !== JSON.stringify(data);
+      data = next;
+      if (!changed) return;
+      $('#count-profiles').textContent = data.profiles.length || '';
       if (view === 'profiles' || view === 'pool') render();
       refreshOpenPanel();
     } catch (err) {
@@ -610,10 +655,10 @@ main { min-width: 0; }
     const rows = data.resources.map((r) => {
       const by = (st) => data.profiles.filter((p) => p.resources[r.id] === st || (st === 'private' && p.resources[r.id] === 'empty'));
       const chips = (list) => list.length ? `<div class="chips">${list.map((p) => `<span class="chip">${esc(p.name)}</span>`).join('')}</div>` : '<span class="muted">—</span>';
-      return `<tr><td><code>~/.claude/${esc(r.label)}</code></td><td>${GROUP_TEXT[r.group]}</td><td>${chips(by('shared'))}</td><td>${chips(by('private'))}</td></tr>`;
+      return `<tr><td data-label="Resource"><code>~/.claude/${esc(r.label)}</code></td><td data-label="Group">${GROUP_TEXT[r.group]}</td><td data-label="Shared by">${chips(by('shared'))}</td><td data-label="Private in">${chips(by('private'))}</td></tr>`;
     }).join('');
     return `<div class="toolbar"><p>Everything in <code>~/.claude</code> is visible to every profile that shares it. Changes made in one sharing profile show up in all of them.</p></div>
-      <table class="table"><thead><tr><th>Resource</th><th>Group</th><th>Shared by</th><th>Private in</th></tr></thead><tbody>${rows}</tbody></table>`;
+      <table class="table stack"><thead><tr><th>Resource</th><th>Group</th><th>Shared by</th><th>Private in</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
   function viewDoctor() {
@@ -628,7 +673,7 @@ main { min-width: 0; }
       ? `<span class="status ${errs ? 'error' : 'warn'}">${icon(errs ? 'xcircle' : 'alert')}${errs} error${errs === 1 ? '' : 's'}, ${warns} warning${warns === 1 ? '' : 's'}</span>`
       : `<span class="status ok">${icon('check')}All ${doctor.length} checks passed</span>`;
     return `<div class="summary">${summary}
-        <span style="margin-left:auto"></span>
+        <span class="spacer"></span>
         <button class="btn" type="button" data-act="rerun">${icon('refresh')}Run again</button>
         ${fixable ? `<button class="btn primary" type="button" data-act="fix">Fix ${fixable} issue${fixable === 1 ? '' : 's'}…</button>` : ''}
       </div>
@@ -685,7 +730,7 @@ main { min-width: 0; }
       if (!(panelState.plan && panelState.plan.done)) closePanel();
       return;
     }
-    if (!panelState.plan) renderPanel();
+    if (!panelState.plan && panelState.type === 'manage') renderPanel();
   }
   function profileByName(n) { return data && data.profiles.find((p) => p.name === n); }
 
@@ -700,7 +745,7 @@ main { min-width: 0; }
     const plan = panelState.plan;
     if (!plan) return '';
     if (plan.loading) return `<div class="plan"><div class="plan-head">${icon('loader', 'spin')}Working out what would change…</div></div>`;
-    if (plan.error) return `<div class="plan failed"><div class="plan-head">${icon('xcircle')}${esc(plan.error)}</div><div class="plan-foot"><span class="note"></span><button class="btn" type="button" data-act="plan-cancel">Dismiss</button></div></div>`;
+    if (plan.error) return `<div class="plan failed"><div class="plan-head" id="f-err" role="alert">${icon('xcircle')}${esc(plan.error)}</div><div class="plan-foot"><span class="note"></span><button class="btn" type="button" data-act="plan-cancel">Dismiss</button></div></div>`;
     if (plan.done) {
       const ok = plan.entry.ok;
       return `<div class="plan ${ok ? 'done' : 'failed'}" tabindex="-1" id="plan-result">
@@ -724,17 +769,26 @@ main { min-width: 0; }
   }
 
   async function preview(body, title, section) {
+    // Remember what opened the preview so Cancel can return focus there.
+    panelState.returnFocus = focusKey(document.activeElement);
     panelState.section = section || null;
     panelState.plan = { loading: true };
     renderPanel();
     try {
       const { lines } = await api('/api/preview', body);
       panelState.plan = { body, title, lines };
+      const n = lines.filter((l) => l.kind === 'change').length;
+      announce(`Preview ready: ${title}. ${n} change${n === 1 ? '' : 's'}. Nothing has changed yet.`);
     } catch (err) {
       panelState.plan = { error: err.message };
+      announce(err.message);
     }
     renderPanel();
     const box = $('#plan-preview') || panel.querySelector('.plan');
+    if (box && panelState && panelState.type !== 'add') {
+      box.setAttribute('tabindex', '-1');
+      box.focus({ preventScroll: true });
+    }
     if (box) box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
@@ -778,8 +832,34 @@ main { min-width: 0; }
     setTimeout(() => { changedBadges = new Set(); }, 1800);
   }
 
+  // Identify the focused control so a re-render can put focus back on its
+  // replacement (WCAG 2.4.3): by id, or by its data-act/group/to/profile.
+  function focusKey(el) {
+    if (!el || !panel.contains(el)) return null;
+    if (el.id) return `#${CSS.escape(el.id)}`;
+    const d = el.dataset || {};
+    if (!d.act) return null;
+    return ['act', 'group', 'to', 'profile', 'share'].filter((k) => d[k])
+      .map((k) => `[data-${k}="${CSS.escape(d[k])}"]`).join('');
+  }
   function renderPanel() {
     if (!panelState) return;
+    const active = document.activeElement;
+    const key = focusKey(active);
+    const caret = active && typeof active.selectionStart === 'number' ? active.selectionStart : null;
+    renderPanelInner();
+    if (!panel.classList.contains('open')) return;
+    let target = key && panel.querySelector(key);
+    if (target && target.disabled) target = null;
+    if (!target && panelState.plan) target = panel.querySelector('#plan-result, #plan-preview, .plan');
+    if (!target && key) target = panel.querySelector('[data-act="close"]');
+    if (target) {
+      if (!target.hasAttribute('tabindex') && !/^(BUTTON|INPUT|A)$/.test(target.tagName)) target.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+      if (caret !== null) { try { target.setSelectionRange(caret, caret); } catch { /* not text */ } }
+    }
+  }
+  function renderPanelInner() {
     const t = panelState.type;
     if (t === 'manage') panel.innerHTML = panelManage();
     if (t === 'add') {
@@ -811,7 +891,7 @@ main { min-width: 0; }
       const shown = pending || st;
       const segBtn = (to, text) => `<button type="button" class="${pending === to ? 'target' : ''}" aria-pressed="${shown === to}" data-act="set-group" data-group="${g}" data-to="${to}" ${busy ? 'disabled' : ''}>${text}</button>`;
       return `<div class="share-row">
-        <div><div class="name">${GROUP_TEXT[g]}</div><div class="muted" style="font-size:12.5px">${esc(GROUP_HELP[g])}</div>
+        <div><div class="name">${GROUP_TEXT[g]}</div><div class="help">${esc(GROUP_HELP[g])}</div>
           <div class="badges">${rs.map((r) => badge(p, r)).join('')}</div></div>
         <div><div class="seg" role="group" aria-label="${GROUP_TEXT[g]} sharing">${segBtn('shared', 'Shared')}${segBtn('private', 'Private')}</div>
           ${pending ? `<span class="now">Now: ${st === 'mixed' ? 'mixed' : st}</span>` : ''}</div></div>`;
@@ -821,9 +901,9 @@ main { min-width: 0; }
         ${panelState.section === 'share' ? planBox() : ''}</div>
       <div class="section"><h3>Copy from ~/.claude</h3><p>Add what <code>~/.claude</code> has into this profile's private resources. Shared resources are skipped — they already see it.</p>
         <div class="checks"><label><input type="checkbox" id="copy-force"><span><b>Overwrite items this profile already has</b><span>Off: existing items are kept and skipped.</span></span></label></div>
-        <div style="margin-top:12px"><button class="btn" type="button" data-act="copy" ${busy ? 'disabled' : ''}>${icon('copy')}Preview copy</button></div>
+        <div class="actions"><button class="btn" type="button" data-act="copy" ${busy ? 'disabled' : ''}>${icon('copy')}Preview copy</button></div>
         ${panelState.section === 'copy' ? planBox() : ''}</div>
-      <div class="section"><div class="danger-box"><h3>Remove profile</h3><p class="muted" style="font-size:13px">Deletes this profile's login, sessions and private resources. Shared content in <code>~/.claude</code> is kept.</p>
+      <div class="section"><div class="danger-box"><h3>Remove profile</h3><p class="muted">Deletes this profile's login, sessions and private resources. Shared content in <code>~/.claude</code> is kept.</p>
         <div><button class="btn danger" type="button" data-act="remove" data-profile="${esc(p.name)}">${icon('trash')}Remove ${esc(p.name)}…</button></div></div></div>
     </div>`;
   }
@@ -841,11 +921,13 @@ main { min-width: 0; }
 
   function panelAdd() {
     const f = panelState.form;
+    const nameErr = Boolean(panelState.plan && panelState.plan.error && /name/i.test(panelState.plan.error));
     const e = f.endpoint;
     return head('Add profile', 'Creates a new Claude Code login under ~/.claude-profiles') + `<div class="panel-body">
       <div class="section">
         <div class="field"><label for="f-name">Name</label>
-          <input class="input" id="f-name" value="${esc(f.name)}" placeholder="work" autocomplete="off" spellcheck="false" autofocus aria-describedby="f-name-help">
+          <input class="input" id="f-name" value="${esc(f.name)}" placeholder="work" autocomplete="off" spellcheck="false" autofocus required
+            aria-describedby="f-name-help${nameErr ? ' f-err' : ''}"${nameErr ? ' aria-invalid="true"' : ''}>
           <span class="help" id="f-name-help">Used as <code>cchost use ${esc(f.name || '&lt;name&gt;')}</code>. No spaces or slashes.</span></div>
         <div class="field"><span class="label">Login</span>
           <div class="choice" role="radiogroup" aria-label="Login type">
@@ -897,15 +979,7 @@ main { min-width: 0; }
       });
     }, 250);
   }
-  function renderPanelKeepFocus() {
-    const id = document.activeElement && document.activeElement.id;
-    const pos = document.activeElement && document.activeElement.selectionStart;
-    renderPanel();
-    if (id) {
-      const el = document.getElementById(id);
-      if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch { /* not text */ } }
-    }
-  }
+  const renderPanelKeepFocus = () => renderPanel();
 
   // --- Events -------------------------------------------------------------
   document.addEventListener('click', (ev) => {
@@ -940,7 +1014,10 @@ main { min-width: 0; }
       panelState.plan = null;
       if (panelState.type === 'remove' || panelState.type === 'fix') { closePanel(); return; }
       if (wasRemoveDone) { closePanel(); return; }
+      const back = panelState.returnFocus;
       renderPanel();
+      const el = back && panel.querySelector(back);
+      if (el) el.focus();
     }
     if (act === 'plan-apply') apply();
     if (act === 'rerun') loadDoctor();
@@ -994,6 +1071,12 @@ main { min-width: 0; }
   let savedTheme = 'system';
   try { savedTheme = localStorage.getItem('cchost-theme') || 'system'; } catch { /* storage blocked */ }
   setTheme(savedTheme);
+
+  function announce(msg) {
+    const el = $('#announce');
+    el.textContent = '';
+    setTimeout(() => { el.textContent = msg; }, 30);
+  }
 
   // --- Toast ----------------------------------------------------------------
   let toastTimer = null;

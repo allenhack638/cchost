@@ -134,3 +134,30 @@ describe('cchost ui server', () => {
     expect(p.resources.skills).toBe('shared');
   });
 });
+
+describe('cchost ui server — doctor', () => {
+  it('runs doctor checks for the current home without blocking', async () => {
+    const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-ui-doc-'));
+    const originalHomedir = os.homedir;
+    os.homedir = () => tmpHome;
+    const token = 'c'.repeat(48);
+    const server = uiServer.createServer({ token });
+    await new Promise((r) => server.listen(0, '127.0.0.1', r));
+    const port = server.address().port;
+    try {
+      const headers = { Host: `127.0.0.1:${port}`, 'X-CCHost-Token': token };
+      const doctorP = request(port, { path: '/api/doctor', headers });
+      // A state request answers while doctor is still running in its child.
+      const state = await request(port, { path: '/api/state', headers });
+      expect(state.status).toBe(200);
+      const doc = await doctorP;
+      expect(doc.status).toBe(200);
+      const storage = doc.json.checks.find((c) => c.name === '~/.claude-profiles/');
+      expect(storage).toBeTruthy();
+    } finally {
+      await new Promise((r) => server.close(r));
+      os.homedir = originalHomedir;
+      fs.rmSync(tmpHome, { recursive: true, force: true });
+    }
+  }, 60000);
+});

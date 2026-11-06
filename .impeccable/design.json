@@ -1,0 +1,460 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-06T20:24:11.382Z",
+  "title": "Design System: cchost ui",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Action Blue",
+        "canonical": "#2563eb",
+        "tonalRamp": [
+          "oklch(15% 0.215 262.9)",
+          "oklch(25% 0.215 262.9)",
+          "oklch(37% 0.215 262.9)",
+          "oklch(49% 0.215 262.9)",
+          "oklch(61% 0.215 262.9)",
+          "oklch(73% 0.215 262.9)",
+          "oklch(85% 0.215 262.9)",
+          "oklch(95% 0.086 262.9)"
+        ]
+      },
+      "shared-fg": {
+        "role": "secondary",
+        "displayName": "Shared Blue",
+        "canonical": "#1d4ed8",
+        "tonalRamp": [
+          "oklch(15% 0.217 264.4)",
+          "oklch(25% 0.217 264.4)",
+          "oklch(37% 0.217 264.4)",
+          "oklch(49% 0.217 264.4)",
+          "oklch(61% 0.217 264.4)",
+          "oklch(73% 0.217 264.4)",
+          "oklch(85% 0.217 264.4)",
+          "oklch(95% 0.087 264.4)"
+        ]
+      },
+      "private-fg": {
+        "role": "secondary",
+        "displayName": "Private Amber",
+        "canonical": "#92400e",
+        "tonalRamp": [
+          "oklch(15% 0.125 46.2)",
+          "oklch(25% 0.125 46.2)",
+          "oklch(37% 0.125 46.2)",
+          "oklch(49% 0.125 46.2)",
+          "oklch(61% 0.125 46.2)",
+          "oklch(73% 0.125 46.2)",
+          "oklch(85% 0.125 46.2)",
+          "oklch(95% 0.050 46.2)"
+        ]
+      },
+      "foreign-fg": {
+        "role": "secondary",
+        "displayName": "Foreign Red",
+        "canonical": "#b91c1c",
+        "tonalRamp": [
+          "oklch(15% 0.190 27.5)",
+          "oklch(25% 0.190 27.5)",
+          "oklch(37% 0.190 27.5)",
+          "oklch(49% 0.190 27.5)",
+          "oklch(61% 0.190 27.5)",
+          "oklch(73% 0.190 27.5)",
+          "oklch(85% 0.190 27.5)",
+          "oklch(95% 0.076 27.5)"
+        ]
+      },
+      "ok": {
+        "role": "secondary",
+        "displayName": "Success Green",
+        "canonical": "#15803d",
+        "tonalRamp": [
+          "oklch(15% 0.137 150.1)",
+          "oklch(25% 0.137 150.1)",
+          "oklch(37% 0.137 150.1)",
+          "oklch(49% 0.137 150.1)",
+          "oklch(61% 0.137 150.1)",
+          "oklch(73% 0.137 150.1)",
+          "oklch(85% 0.137 150.1)",
+          "oklch(95% 0.055 150.1)"
+        ]
+      },
+      "warn": {
+        "role": "secondary",
+        "displayName": "Warning Amber",
+        "canonical": "#b45309",
+        "tonalRamp": [
+          "oklch(15% 0.146 49.0)",
+          "oklch(25% 0.146 49.0)",
+          "oklch(37% 0.146 49.0)",
+          "oklch(49% 0.146 49.0)",
+          "oklch(61% 0.146 49.0)",
+          "oklch(73% 0.146 49.0)",
+          "oklch(85% 0.146 49.0)",
+          "oklch(95% 0.058 49.0)"
+        ]
+      },
+      "err": {
+        "role": "secondary",
+        "displayName": "Error Red",
+        "canonical": "#dc2626",
+        "tonalRamp": [
+          "oklch(15% 0.215 27.3)",
+          "oklch(25% 0.215 27.3)",
+          "oklch(37% 0.215 27.3)",
+          "oklch(49% 0.215 27.3)",
+          "oklch(61% 0.215 27.3)",
+          "oklch(73% 0.215 27.3)",
+          "oklch(85% 0.215 27.3)",
+          "oklch(95% 0.086 27.3)"
+        ]
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "#fafafa",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(25% 0.000 89.9)",
+          "oklch(37% 0.000 89.9)",
+          "oklch(49% 0.000 89.9)",
+          "oklch(61% 0.000 89.9)",
+          "oklch(73% 0.000 89.9)",
+          "oklch(85% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(25% 0.000 89.9)",
+          "oklch(37% 0.000 89.9)",
+          "oklch(49% 0.000 89.9)",
+          "oklch(61% 0.000 89.9)",
+          "oklch(73% 0.000 89.9)",
+          "oklch(85% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Recess",
+        "canonical": "#f4f4f5",
+        "tonalRamp": [
+          "oklch(15% 0.001 286.4)",
+          "oklch(25% 0.001 286.4)",
+          "oklch(37% 0.001 286.4)",
+          "oklch(49% 0.001 286.4)",
+          "oklch(61% 0.001 286.4)",
+          "oklch(73% 0.001 286.4)",
+          "oklch(85% 0.001 286.4)",
+          "oklch(95% 0.001 286.4)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e4e4e7",
+        "tonalRamp": [
+          "oklch(15% 0.004 286.3)",
+          "oklch(25% 0.004 286.3)",
+          "oklch(37% 0.004 286.3)",
+          "oklch(49% 0.004 286.3)",
+          "oklch(61% 0.004 286.3)",
+          "oklch(73% 0.004 286.3)",
+          "oklch(85% 0.004 286.3)",
+          "oklch(95% 0.002 286.3)"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Firm Hairline",
+        "canonical": "#d4d4d8",
+        "tonalRamp": [
+          "oklch(15% 0.005 286.3)",
+          "oklch(25% 0.005 286.3)",
+          "oklch(37% 0.005 286.3)",
+          "oklch(49% 0.005 286.3)",
+          "oklch(61% 0.005 286.3)",
+          "oklch(73% 0.005 286.3)",
+          "oklch(85% 0.005 286.3)",
+          "oklch(95% 0.002 286.3)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#18181b",
+        "tonalRamp": [
+          "oklch(15% 0.006 285.9)",
+          "oklch(25% 0.006 285.9)",
+          "oklch(37% 0.006 285.9)",
+          "oklch(49% 0.006 285.9)",
+          "oklch(61% 0.006 285.9)",
+          "oklch(73% 0.006 285.9)",
+          "oklch(85% 0.006 285.9)",
+          "oklch(95% 0.002 285.9)"
+        ]
+      },
+      "text-2": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "canonical": "#52525b",
+        "tonalRamp": [
+          "oklch(15% 0.015 285.8)",
+          "oklch(25% 0.015 285.8)",
+          "oklch(37% 0.015 285.8)",
+          "oklch(49% 0.015 285.8)",
+          "oklch(61% 0.015 285.8)",
+          "oklch(73% 0.015 285.8)",
+          "oklch(85% 0.015 285.8)",
+          "oklch(95% 0.006 285.8)"
+        ]
+      },
+      "text-3": {
+        "role": "neutral",
+        "displayName": "Tertiary Ink",
+        "canonical": "#6b6b73",
+        "tonalRamp": [
+          "oklch(15% 0.012 286.0)",
+          "oklch(25% 0.012 286.0)",
+          "oklch(37% 0.012 286.0)",
+          "oklch(49% 0.012 286.0)",
+          "oklch(61% 0.012 286.0)",
+          "oklch(73% 0.012 286.0)",
+          "oklch(85% 0.012 286.0)",
+          "oklch(95% 0.005 286.0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "View title in the sticky header."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Profile card names and the wordmark."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Panel section, plan and doctor group headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Base text at 14px with tabular figures."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Buttons, field labels, segmented controls."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges, pills, table headers, counts, hints."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Paths and resource names in change lines only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "rest",
+        "value": "0 1px 2px rgba(9, 9, 11, 0.05)",
+        "purpose": "Resting lift on buttons, cards and the pressed segment (dark: rgba(0,0,0,0.4))."
+      },
+      {
+        "name": "panel",
+        "value": "-12px 0 32px rgba(9, 9, 11, 0.12), -1px 0 0 var(--border)",
+        "purpose": "Right-hand slide-over panel only (dark: 0.5 alpha)."
+      },
+      {
+        "name": "toast",
+        "value": "0 8px 24px rgba(9, 9, 11, 0.2)",
+        "purpose": "Inverted bottom-centre toast."
+      },
+      {
+        "name": "changed-ring",
+        "value": "0 0 0 4px color-mix(in srgb, var(--primary) 35%, transparent)",
+        "purpose": "Peak of the one-time pulse on a badge that just changed."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Shared ease-out for panel, toast, disclosure, reveal and pulse."
+      },
+      {
+        "name": "state",
+        "value": "120ms",
+        "purpose": "Button background, border and colour transitions."
+      },
+      {
+        "name": "panel-slide",
+        "value": "320ms",
+        "purpose": "Panel translateX in and out; scrim fades 200ms."
+      },
+      {
+        "name": "result-rise",
+        "value": "420ms, 70ms stagger, translateY(4px)",
+        "purpose": "The one authored motion: result lines rising in after Apply."
+      },
+      {
+        "name": "changed-pulse",
+        "value": "1.6s, once",
+        "purpose": "Blue ring pulse on badges that just changed."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "none",
+        "purpose": "prefers-reduced-motion removes movement (panel slide, toast rise, result stagger, chevron turn); state changes stay visible as instant swaps and a static blue ring on changed badges."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "860px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "One primary action per context: Add profile, Apply, Fix.",
+      "html": "<button class=\"ds-btn ds-btn-primary\"><svg viewBox=\"0 0 24 24\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>Add profile</button>",
+      "css": ".ds-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--border-strong, #d4d4d8); background:var(--surface, #fff); color:var(--text, #18181b); font:550 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; box-shadow:0 1px 2px rgba(9,9,11,0.05); cursor:pointer; transition:background 120ms, border-color 120ms, color 120ms; } .ds-btn:hover { background:var(--surface-2, #f4f4f5); } .ds-btn:focus-visible { outline:2px solid var(--focus, #2563eb); outline-offset:2px; } .ds-btn svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; } .ds-btn-primary { background:var(--primary, #2563eb); border-color:var(--primary, #2563eb); color:var(--primary-fg, #fff); } .ds-btn-primary:hover { background:var(--primary-hover, #1d4ed8); border-color:var(--primary-hover, #1d4ed8); }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Neutral secondary action: Manage sharing, Cancel, Run again.",
+      "html": "<button class=\"ds-btn\">Cancel</button>",
+      "css": ".ds-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--border-strong, #d4d4d8); background:var(--surface, #fff); color:var(--text, #18181b); font:550 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; box-shadow:0 1px 2px rgba(9,9,11,0.05); cursor:pointer; transition:background 120ms, border-color 120ms, color 120ms; } .ds-btn:hover { background:var(--surface-2, #f4f4f5); } .ds-btn:focus-visible { outline:2px solid var(--focus, #2563eb); outline-offset:2px; } .ds-btn svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; }"
+    },
+    {
+      "name": "Quiet Destructive Button",
+      "kind": "button",
+      "refersTo": "button-quiet-hover",
+      "description": "Card Remove: neutral at rest, tints red only on hover.",
+      "html": "<button class=\"ds-btn ds-btn-quiet\"><svg viewBox=\"0 0 24 24\"><path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/></svg>Remove</button>",
+      "css": ".ds-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--border-strong, #d4d4d8); background:var(--surface, #fff); color:var(--text, #18181b); font:550 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; box-shadow:0 1px 2px rgba(9,9,11,0.05); cursor:pointer; transition:background 120ms, border-color 120ms, color 120ms; } .ds-btn:hover { background:var(--surface-2, #f4f4f5); } .ds-btn:focus-visible { outline:2px solid var(--focus, #2563eb); outline-offset:2px; } .ds-btn svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; } .ds-btn-quiet:hover { color:var(--err-fg, #b91c1c); border-color:var(--foreign-bd, #fecaca); background:var(--err-bg, #fef2f2); }"
+    },
+    {
+      "name": "Danger Solid Button",
+      "kind": "button",
+      "refersTo": "button-danger-solid",
+      "description": "Final remove confirmation only, after the profile name is typed.",
+      "html": "<button class=\"ds-btn ds-btn-danger\">Remove work</button>",
+      "css": ".ds-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--border-strong, #d4d4d8); background:var(--surface, #fff); color:var(--text, #18181b); font:550 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; box-shadow:0 1px 2px rgba(9,9,11,0.05); cursor:pointer; transition:background 120ms, border-color 120ms, color 120ms; } .ds-btn:hover { background:var(--surface-2, #f4f4f5); } .ds-btn:focus-visible { outline:2px solid var(--focus, #2563eb); outline-offset:2px; } .ds-btn svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; } .ds-btn-danger { background:var(--err, #dc2626); border-color:var(--err, #dc2626); color:#fff; }"
+    },
+    {
+      "name": "Resource State Badges",
+      "kind": "chip",
+      "refersTo": "badge-shared",
+      "description": "Per-resource state: shared, private, missing, foreign-link; changed badges pulse once.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-badge-shared ds-badge-changed\"><svg viewBox=\"0 0 24 24\"><path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"/><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"/></svg>skills/</span><span class=\"ds-badge ds-badge-private\"><svg viewBox=\"0 0 24 24\"><rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/></svg>mcp.json</span><span class=\"ds-badge ds-badge-missing\"><svg viewBox=\"0 0 24 24\"><path d=\"M5 12h14\"/></svg>CLAUDE.md</span><span class=\"ds-badge ds-badge-foreign\"><svg viewBox=\"0 0 24 24\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg>agents/</span></div>",
+      "css": ".ds-badges { display:flex; flex-wrap:wrap; gap:6px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; } .ds-badge { display:inline-flex; align-items:center; gap:5px; height:24px; padding:0 8px; border-radius:6px; border:1px solid; font-size:12px; font-weight:500; white-space:nowrap; } .ds-badge svg { width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; } .ds-badge-shared { background:var(--shared-bg, #eff6ff); color:var(--shared-fg, #1d4ed8); border-color:var(--shared-bd, #bfdbfe); } .ds-badge-private { background:var(--private-bg, #fef3c7); color:var(--private-fg, #92400e); border-color:var(--private-bd, #fde68a); } .ds-badge-missing { background:transparent; color:var(--missing-fg, #6b6b73); border-color:var(--missing-bd, #d4d4d8); border-style:dashed; } .ds-badge-foreign { background:var(--foreign-bg, #fef2f2); color:var(--foreign-fg, #b91c1c); border-color:var(--foreign-bd, #fecaca); } .ds-badge-changed { animation:ds-changed 1.6s cubic-bezier(0.16,1,0.3,1) infinite; } @keyframes ds-changed { 0% { box-shadow:0 0 0 0 rgba(37,99,235,0); } 20% { box-shadow:0 0 0 4px rgba(37,99,235,0.35); } 100% { box-shadow:0 0 0 0 rgba(37,99,235,0); } }"
+    },
+    {
+      "name": "Login Pill",
+      "kind": "chip",
+      "refersTo": "pill-logged-in",
+      "description": "Login state on a profile card; green only when logged in.",
+      "html": "<span class=\"ds-pill ds-pill-on\">Logged in</span> <span class=\"ds-pill\">Not logged in</span> <span class=\"ds-pill ds-pill-ep\">Endpoint</span>",
+      "css": ".ds-pill { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:999px; font:550 12px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background:var(--surface-2, #f4f4f5); color:var(--text-2, #52525b); } .ds-pill::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; } .ds-pill-on { background:var(--ok-bg, #dcfce7); color:var(--ok, #15803d); } .ds-pill-ep { background:var(--shared-bg, #eff6ff); color:var(--shared-fg, #1d4ed8); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Single-line field in the panel forms.",
+      "html": "<input class=\"ds-input\" placeholder=\"Profile name\">",
+      "css": ".ds-input { height:34px; padding:0 10px; border-radius:6px; border:1px solid var(--border-strong, #d4d4d8); background:var(--surface, #fff); color:var(--text, #18181b); font:14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; } .ds-input::placeholder { color:var(--text-3, #6b6b73); } .ds-input:focus-visible { outline:2px solid var(--focus, #2563eb); outline-offset:0; border-color:var(--focus, #2563eb); }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item-current",
+      "description": "Sidebar links with counts; current page in the selection tint.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg>Profiles<span class=\"ds-count\">5</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\"><path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\"/></svg>Shared pool</a></nav>",
+      "css": ".ds-nav { display:grid; gap:4px; width:216px; font:500 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; } .ds-nav a { display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:6px; color:var(--text-2, #52525b); text-decoration:none; } .ds-nav a:hover { background:var(--surface-2, #f4f4f5); color:var(--text, #18181b); } .ds-nav a[aria-current=\"page\"] { background:var(--shared-bg, #eff6ff); color:var(--shared-fg, #1d4ed8); } .ds-nav a:focus-visible { outline:2px solid var(--focus, #2563eb); outline-offset:2px; } .ds-nav svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; } .ds-count { margin-left:auto; font-size:12px; color:inherit; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented-pressed",
+      "description": "Shared / Private choice per resource group; the pending target fills blue.",
+      "html": "<div class=\"ds-seg\"><button>Shared</button><button aria-pressed=\"true\">Private</button></div>",
+      "css": ".ds-seg { display:inline-flex; padding:2px; border:1px solid var(--border-strong, #d4d4d8); border-radius:7px; background:var(--surface-2, #f4f4f5); } .ds-seg button { border:0; background:transparent; color:var(--text-2, #52525b); font:550 12.5px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; padding:4px 10px; border-radius:5px; cursor:pointer; } .ds-seg button:hover { color:var(--text, #18181b); } .ds-seg button[aria-pressed=\"true\"] { background:var(--primary, #2563eb); color:var(--primary-fg, #fff); } .ds-seg button:focus-visible { outline:2px solid var(--focus, #2563eb); outline-offset:2px; }"
+    },
+    {
+      "name": "Plan Result",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Preview then result block: per-resource lines, mono names, green checks rising in on completion.",
+      "html": "<div class=\"ds-plan\"><div class=\"ds-plan-head\"><svg viewBox=\"0 0 24 24\"><path d=\"M20 6 9 17l-5-5\"/></svg>Done: Make private: config</div><ul class=\"ds-lines\"><li style=\"--i:0\"><span class=\"ds-k\"><svg viewBox=\"0 0 24 24\"><path d=\"M20 6 9 17l-5-5\"/></svg></span><span class=\"ds-res\">mcp.json</span><span>copied in from ~/.claude/, then unlinked</span></li><li style=\"--i:1\"><span class=\"ds-k\"><svg viewBox=\"0 0 24 24\"><path d=\"M20 6 9 17l-5-5\"/></svg></span><span class=\"ds-res\">settings.json</span><span>copied in from ~/.claude/, then unlinked</span></li><li class=\"ds-preview\" style=\"--i:2\"><span class=\"ds-k\"><svg viewBox=\"0 0 24 24\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></span><span class=\"ds-res\">CLAUDE.md</span><span>preview line (blue arrow)</span></li></ul></div>",
+      "css": ".ds-plan { width:420px; border:1px solid var(--border, #e4e4e7); border-radius:8px; background:var(--surface-2, #f4f4f5); font:14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color:var(--text, #18181b); } .ds-plan-head { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--border, #e4e4e7); font-size:13px; font-weight:600; color:var(--ok, #15803d); } .ds-plan svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; } .ds-lines { display:grid; gap:2px; margin:0; padding:8px 12px; list-style:none; } .ds-lines li { display:grid; grid-template-columns:18px 110px 1fr; gap:8px; padding:5px 0; font-size:13px; animation:ds-rise 420ms cubic-bezier(0.16,1,0.3,1) both; animation-delay:calc(var(--i) * 70ms); } .ds-k { padding-top:2px; color:var(--ok, #15803d); } .ds-preview .ds-k { color:var(--primary, #2563eb); } .ds-res { font-family:ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size:12.5px; } @keyframes ds-rise { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clear Window",
+    "overview": "The page is a window onto what is on disk, not an app with opinions of its own. It follows the admin-dashboard category standard deliberately, built to Vercel and Linear's level of craft: neutral zinc surfaces, 1px hairlines, one blue for action and selection, and state colour only where a state needs naming. Density is set by the work. Seven resource badges per profile, a 13 to 14px base and tabular figures let a user take in five profiles at once.\n\nEvery change is shown before it happens and reported after it happens. The panel lists each resource that would change, Apply runs it, and the same list comes back as results with green checks. That reveal is the only authored motion in the system. Everything else is plain state transitions.\n\nIt is a local, offline tool, so it uses the system sans and system monospace and loads no web fonts. Light and dark are both first-class. Dark is near-black zinc, not an inverted afterthought.",
+    "keyCharacteristics": [
+      "Neutral surfaces in three tonal steps, hairline borders, near-flat elevation.",
+      "One blue for primary actions and every kind of selection.",
+      "Semantic state colour: blue shared, amber private, dashed grey missing, red foreign or destructive, green only for \"Logged in\" and success.",
+      "System sans for UI, ui-monospace only for paths and resource names in change lines.",
+      "Preview, then apply, then a per-resource result, with one staggered reveal on the result."
+    ],
+    "rules": [
+      {
+        "name": "The One Blue Rule",
+        "body": "Blue means action or selection. Nav current, pressed segments, the theme switch, checked choices and focus are all blue. No other hue marks selection.",
+        "section": "colors"
+      },
+      {
+        "name": "The Meaning-Only Colour Rule",
+        "body": "Green appears only for \"Logged in\" and successful results. Red appears only for destructive confirmations, foreign links and errors. A resting control is never tinted to decorate it.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono-Means-Disk Rule",
+        "body": "Monospace marks literal filesystem names: paths, `code`, and resource names in change lines. UI copy never uses it.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Web Fonts Rule",
+        "body": "The tool runs locally and offline, so it uses only system faces. No font files and no font network requests.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline-First Rule",
+        "body": "Separate things with a 1px border or a tonal step before reaching for a shadow. Only the panel and the toast float.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use Action Blue for every primary action and every selected or pressed state, and for nothing decorative.",
+      "Do colour a resource by state: blue shared, amber private or empty, dashed grey missing, red foreign-link. Always pair the colour with its icon and text.",
+      "Do keep green for \"Logged in\" and successful results only.",
+      "Do preview every change as per-resource lines before Apply, and then show the same lines as results.",
+      "Do keep the staggered result rise as the only authored motion. Everything else is 120 to 320ms state transitions, and `prefers-reduced-motion` removes movement but keeps every state change visible (changed badges get a static blue ring).",
+      "Do set paths and resource names in change lines in ui-monospace at 12.5px.",
+      "Do define every colour as a custom property on `:root` with a matching dark value, and use them in light, dark and system themes."
+    ],
+    "donts": [
+      "Don't load web fonts or any network asset. The tool is local and offline.",
+      "Don't tint resting destructive controls red. Card Remove stays neutral until hover, and the solid red button exists only behind the typed-name confirmation.",
+      "Don't use green for \"shared\" or red for anything that isn't destructive, foreign or an error.",
+      "Don't add stat cards, charts or a hero to the dashboard.",
+      "Don't float surfaces other than the panel and the toast. Separate with hairlines and tonal steps."
+    ]
+  }
+}
