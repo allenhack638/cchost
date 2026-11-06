@@ -20,6 +20,24 @@
         ],
         "createdAt": "2026-11-06T20:17:11.786Z",
         "reason": "Claude: unchosen decision-round sketch (user picked canon); spent mock, never ships"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/assigned.html"
+        ],
+        "createdAt": "2026-11-06T20:32:19.802Z",
+        "reason": "Claude: unchosen decision-round sketch (user picked canon); spent mock, never ships"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/model-pick.html"
+        ],
+        "createdAt": "2026-11-06T20:32:19.820Z",
+        "reason": "Claude: unchosen decision-round sketch (user picked canon); spent mock, never ships"
       }
     ]
   }
