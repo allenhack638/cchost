@@ -1,3 +1,16 @@
+# Normalize all text files to LF in the repository and in checkouts. Without
+# this, a Windows editor or checkout can rewrite the whole tree and produce a
+# 7,000-line line-ending diff that hides real changes.
+* text=auto eol=lf
+
+# Binary assets are never touched by line-ending conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.icns binary
+*.tgz binary
+
 # The POSIX `claude` shim used by tests/spawn-e2e.test.js must stay LF so its
 # #!/bin/sh shebang works when the suite runs on Linux/macOS CI runners.
 test-fixtures/claude text eol=lf
