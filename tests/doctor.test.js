@@ -36,6 +36,10 @@ describe('cc doctor — flag parsing', () => {
     });
   });
 
+  it('rejects --json combined with --fix', async () => {
+    await expect(cli.run(['doctor', '--json', '--fix'])).rejects.toThrow(/cannot be combined/);
+  });
+
   it('accepts --json without error', async () => {
     let out = '';
     process.stdout.write = (s) => { out += s; return true; };
@@ -332,5 +336,23 @@ describe('cchost doctor — PATH shadow check', () => {
     const result = doctor.checkCcShadow();
     expect(result.status).toBe('warn');
     expect(result.message).toMatch(/multiple/i);
+  });
+});
+
+describe('cchost doctor — macOS Keychain note', () => {
+  it('warns when macOS profiles exist, and is silent elsewhere', async () => {
+    await withTmpHome(async (home) => {
+      fs.mkdirSync(path.join(home, '.claude-profiles', 'p'), { recursive: true });
+      const mac = doctor.checkMacKeychain('darwin');
+      expect(mac.status).toBe('warn');
+      expect(mac.message).toMatch(/Keychain/);
+      expect(doctor.checkMacKeychain('linux')).toBeNull();
+    });
+  });
+
+  it('stays silent when there are no profiles', async () => {
+    await withTmpHome(async () => {
+      expect(doctor.checkMacKeychain('darwin')).toBeNull();
+    });
   });
 });

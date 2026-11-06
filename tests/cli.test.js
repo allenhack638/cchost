@@ -187,6 +187,31 @@ describe('cc unknown action', () => {
     await expect(cli.run(['bogus-command'])).resolves.toBe(2);
   });
 
+  it('help migrate prints command-specific help without the banner', async () => {
+    let out = '';
+    const noop = process.stdout.write;
+    process.stdout.write = (s) => { out += s; return true; };
+    try {
+      await expect(cli.run(['help', 'migrate'])).resolves.toBe(0);
+    } finally {
+      process.stdout.write = noop;
+    }
+    expect(out).toMatch(/Deprecated alias/);
+    expect(out).not.toMatch(/████/);
+  });
+
+  it('bare help prints the banner with the package version', async () => {
+    let out = '';
+    const noop = process.stdout.write;
+    process.stdout.write = (s) => { out += s; return true; };
+    try {
+      await expect(cli.run(['help'])).resolves.toBe(0);
+    } finally {
+      process.stdout.write = noop;
+    }
+    expect(out).toMatch(/cchost \d+\.\d+\.\d+/);
+  });
+
   it('cc env (removed in v0.3.1) returns exit 2 with a migration hint', async () => {
     let err = '';
     process.stderr.write = (s) => { err += s; return true; };

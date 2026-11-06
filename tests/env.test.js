@@ -120,6 +120,22 @@ describe('env config — library', () => {
       fs.writeFileSync(path.join(d, '.cc-env.json'), '{garbage');
       expect(() => envLib.readEnvConfig(d)).toThrow(/malformed/i);
     });
+    it('throws a malformed error on a non-string field', () => {
+      const d = profileDir('p');
+      fs.writeFileSync(
+        path.join(d, '.cc-env.json'),
+        JSON.stringify({ base_url: 123, auth_token: 'sk' }),
+      );
+      let caught;
+      try {
+        envLib.readEnvConfig(d);
+      } catch (err) {
+        caught = err;
+      }
+      expect(caught).toBeDefined();
+      expect(caught.message).toMatch(/base_url.*string/i);
+      expect(caught.malformed).toBe(true);
+    });
   });
 
   describe('writeEnvConfig', () => {

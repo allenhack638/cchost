@@ -137,9 +137,10 @@ On launch, `cchost use` prints a one-line endpoint banner to stderr:
 Claude Code stores OAuth credentials in the login **Keychain**, not in
 `<profile>/.credentials.json`. Two things follow:
 
-- `cchost list`'s `LoggedIn` column checks only for `.credentials.json`, so it can
-  show `false` for a profile that is actually logged in. This is a known display
-  limitation, not a logout.
+- `cchost list` shows `true*` on macOS when `.claude.json` records an account
+  but no `.credentials.json` exists; the token itself is in the Keychain. The
+  `true*` marker is an inference, not a live token check, and does not prove
+  which account the Keychain entry belongs to.
 - Isolation between subscription (OAuth) profiles on macOS has not been verified
   against two real accounts. Claude Code's Keychain item is shared per macOS
   login user; if it is not namespaced per `CLAUDE_CONFIG_DIR`, profiles may share
@@ -167,6 +168,8 @@ Run `cchost doctor` first — it checks Node, Claude Code version, profile integ
 **`Claude Code does not appear to be installed`** — install with `npm install -g @anthropic-ai/claude-code` and verify `claude --version` runs in a fresh terminal.
 
 **`warning: Claude Code <version> is older than 2.1.140`** — earlier versions on Windows read `.claude.json` from `%USERPROFILE%` regardless of `CLAUDE_CONFIG_DIR`, breaking isolation. Run `claude update`.
+
+**`warning: ANTHROPIC_API_KEY ... may override the subscription login`** — a globally exported API key takes precedence over a profile's OAuth login. Unset it in that shell (`unset ANTHROPIC_API_KEY`, and the same for `ANTHROPIC_AUTH_TOKEN` / `CLAUDE_CODE_OAUTH_TOKEN`) or use a custom-endpoint profile.
 
 **`Profile "<name>" does not exist`** — `cchost use` does not auto-create profiles. Run `cchost add <name>` first.
 

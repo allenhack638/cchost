@@ -131,4 +131,29 @@ describe('listProfiles', () => {
     fs.writeFileSync(path.join(base, 'p', '.claude.json'), JSON.stringify({ other: 'field' }));
     expect(profiles.listProfiles()[0].email).toBe('');
   });
+
+  it('reports file credentials on every platform', () => {
+    const base = path.join(tmpHome, '.claude-profiles');
+    fs.mkdirSync(path.join(base, 'p'), { recursive: true });
+    fs.writeFileSync(path.join(base, 'p', '.credentials.json'), '{}');
+    expect(profiles.credentialSource(path.join(base, 'p'), 'linux')).toBe('file');
+    expect(profiles.credentialSource(path.join(base, 'p'), 'darwin')).toBe('file');
+  });
+
+  it('infers a Keychain login on macOS from oauthAccount', () => {
+    const base = path.join(tmpHome, '.claude-profiles');
+    fs.mkdirSync(path.join(base, 'p'), { recursive: true });
+    fs.writeFileSync(
+      path.join(base, 'p', '.claude.json'),
+      JSON.stringify({ oauthAccount: { emailAddress: 'user@example.com' } }),
+    );
+    expect(profiles.credentialSource(path.join(base, 'p'), 'darwin')).toBe('keychain');
+    expect(profiles.credentialSource(path.join(base, 'p'), 'linux')).toBe('none');
+  });
+
+  it('reports no credentials when neither signal exists', () => {
+    const base = path.join(tmpHome, '.claude-profiles');
+    fs.mkdirSync(path.join(base, 'p'), { recursive: true });
+    expect(profiles.credentialSource(path.join(base, 'p'), 'darwin')).toBe('none');
+  });
 });

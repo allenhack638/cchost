@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `cc` (legacy alias). `cc` is the system C compiler on macOS and Linux, so
   docs, help, and new scripts use `cchost`; the alias stays for backwards
   compatibility.
+- **Inherited-auth warning.** `cchost use` now warns when `ANTHROPIC_API_KEY`,
+  `ANTHROPIC_AUTH_TOKEN`, or `CLAUDE_CODE_OAUTH_TOKEN` is set in the shell for a
+  subscription profile, because those variables can silently override the
+  profile's login. It does not strip them.
+- **macOS login visibility.** `cchost list` marks an inferred Keychain login as
+  `true*` instead of `false`, exposes `credentialSource` in `--json`, and
+  `cchost doctor` explains the Keychain isolation caveat.
 
 ### Changed
 
@@ -25,14 +32,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (code-executing config) are shared across profiles by default, and are
   documented as a privacy/security trade-off rather than as isolated state.
 
+### Fixed
+
+- `cchost link` reports a symlink that points outside `~/.claude/` as
+  `foreign-link` instead of claiming it is already linked.
+- `cchost doctor --fix` exit codes now reflect the state after fixes run, and
+  `--json` can no longer be combined with `--fix` (which produced mixed output).
+- `cchost help migrate` prints command-specific help.
+- `.cc-env.json` is created user-only and rejects non-string field values.
+- Help banner shows the version again, and `NO_COLOR=` (empty) disables color.
+
 ### Known limitations
 
 - **macOS subscription profiles are not verified in isolation.** Claude Code
-  stores OAuth tokens in the login Keychain, not `<profile>/.credentials.json`,
-  so `cchost list`'s `LoggedIn` column can report `false` for an authenticated
-  profile. Subscription isolation must be tested with two real accounts before
-  the platform is claimed as fully supported; the v0.4.4 note reflected CI
-  coverage only. See the upstream report at
+  stores OAuth tokens in the login Keychain, not `<profile>/.credentials.json`.
+  `cchost list` now shows `true*` when a login is inferred from `.claude.json`,
+  but that does not prove the token is live or which account it belongs to.
+  Subscription isolation must be tested with two real accounts before the
+  platform is claimed as fully supported; the v0.4.4 note reflected CI coverage
+  only. See the upstream report at
   https://github.com/anthropics/claude-code/issues/20553.
 
 ## [0.4.4] - 2026-06-19

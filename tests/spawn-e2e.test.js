@@ -14,6 +14,10 @@ function runCc(args, { home, extraEnv = {} }) {
   const pathSep = process.platform === 'win32' ? ';' : ':';
   const env = {
     ...process.env,
+    // Strip auth vars too: tests opt in explicitly when testing the warning.
+    ANTHROPIC_API_KEY: '',
+    ANTHROPIC_AUTH_TOKEN: '',
+    CLAUDE_CODE_OAUTH_TOKEN: '',
     ...extraEnv,
     PATH: fixturesDir + pathSep + (process.env.PATH || process.env.Path || ''),
     USERPROFILE: home,
@@ -120,6 +124,35 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
     expect(res.stderr).not.toContain('[cchost]');
     expect(res.stdout).toContain('ENV:ANTHROPIC_BASE_URL=');
     expect(res.stdout).not.toMatch(/ENV:ANTHROPIC_BASE_URL=\S/);
+  });
+
+  it('warns when a subscription profile inherits an auth env var', () => {
+    const profileDir = path.join(tmpHome, '.claude-profiles', 'sub-auth');
+    fs.mkdirSync(profileDir, { recursive: true });
+
+    const res = runCc(['use', 'sub-auth'], {
+      home: tmpHome,
+      extraEnv: { ANTHROPIC_API_KEY: 'sk-inherited' },
+    });
+    expect(res.status).toBe(0);
+    expect(res.stderr).toMatch(/ANTHROPIC_API_KEY/);
+    expect(res.stderr).toMatch(/may override/i);
+  });
+
+  it('does not warn about inherited auth vars for an endpoint profile', () => {
+    const profileDir = path.join(tmpHome, '.claude-profiles', 'kimi-auth');
+    fs.mkdirSync(profileDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(profileDir, '.cc-env.json'),
+      JSON.stringify({ base_url: 'https://api.moonshot.ai/anthropic', auth_token: 'sk-endpoint' }),
+    );
+
+    const res = runCc(['use', 'kimi-auth'], {
+      home: tmpHome,
+      extraEnv: { ANTHROPIC_API_KEY: 'sk-inherited' },
+    });
+    expect(res.status).toBe(0);
+    expect(res.stderr).not.toMatch(/may override/i);
   });
 
   it('forwards --resume verbatim for an endpoint profile (no profile name leaked)', () => {

@@ -111,6 +111,21 @@ describe('shareLink — v0.4.1 (7 resources)', () => {
     }
   });
 
+  it('reports a symlink to an unrelated target as foreign and leaves it alone', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    const other = path.join(tmpHome, 'other-projects');
+    fs.mkdirSync(other, { recursive: true });
+    const link = path.join(pdir, 'projects');
+    fs.symlinkSync(other, link, process.platform === 'win32' ? 'junction' : 'dir');
+
+    const results = share.shareLink('work');
+    const projects = results.find((r) => r.resource === 'projects');
+    expect(projects.status).toBe('foreign-link');
+    expect(projects.message).toMatch(/points to/);
+    expect(fs.realpathSync(link)).toBe(fs.realpathSync(other));
+  });
+
   it('per-resource failure does not abort the rest', () => {
     const pdir = path.join(tmpHome, '.claude-profiles', 'partial');
     fs.mkdirSync(pdir, { recursive: true });
