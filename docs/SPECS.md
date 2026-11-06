@@ -1,5 +1,10 @@
 Build an npm package for Claude Code multi-profile management
 
+> **Historical design document (v0.2–v0.3).** This describes the original
+> `~/.claude-shared/` layout and `cc share ...` commands. Current behavior is
+> documented in [../README.md](../README.md); this file is kept for design
+> rationale only.
+
 ## What you are building
 
 A globally-installable npm package that provides a `cc` command for running multiple isolated Claude Code accounts on one machine. It must work identically across PowerShell, cmd, bash, zsh, and fish on Windows, macOS, and Linux. Publish-ready: `package.json`, `bin/` entry point, README, LICENSE (MIT), `.gitignore`.

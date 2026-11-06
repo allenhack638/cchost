@@ -5,6 +5,25 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- README now separates **credential** isolation from the default shared pool.
+  `projects/` (full session transcripts) and `settings.json` / `mcp.json`
+  (code-executing config) are shared across profiles by default, and are
+  documented as a privacy/security trade-off rather than as isolated state.
+
+### Known limitations
+
+- **macOS subscription profiles are not verified in isolation.** Claude Code
+  stores OAuth tokens in the login Keychain, not `<profile>/.credentials.json`,
+  so `cc list`'s `LoggedIn` column can report `false` for an authenticated
+  profile. Subscription isolation must be tested with two real accounts before
+  the platform is claimed as fully supported; the v0.4.4 note reflected CI
+  coverage only. See the upstream report at
+  https://github.com/anthropics/claude-code/issues/20553.
+
 ## [0.4.4] - 2026-06-19
 
 ### Changed
