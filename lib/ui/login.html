@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<title>Sign in · cchost</title>
+<style nonce="__NONCE__">
+/*__TOKENS__*/
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
+  background: var(--bg); color: var(--text); font: 14px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: color-mix(in srgb, var(--primary) 28%, transparent); }
+.card {
+  width: min(380px, 100%); display: grid; gap: 20px; padding: 28px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-sm);
+  animation: enter 420ms var(--ease) both;
+}
+@keyframes enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 15px; }
+.brand svg { width: 22px; height: 22px; }
+.brand .mark { fill: var(--primary); opacity: 0.9; }
+.brand small { margin-left: auto; color: var(--text-3); font-weight: 500; font-size: 12px; }
+h1 { margin: 0; font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
+.lede { margin: 4px 0 0; color: var(--text-2); font-size: 13px; }
+form { display: grid; gap: 14px; }
+label { display: grid; gap: 6px; font-size: 13px; font-weight: 550; }
+.input {
+  height: 36px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text); font: inherit; font-weight: 400;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.input:focus-visible { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent); }
+.input[aria-invalid="true"] { border-color: var(--err); }
+.btn {
+  height: 36px; border-radius: 6px; border: 1px solid var(--primary); background: var(--primary); color: var(--primary-fg);
+  font: inherit; font-weight: 550; cursor: pointer; transition: background 120ms, transform 120ms;
+}
+.btn:hover { background: var(--primary-hover); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+.btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.err { min-height: 20px; margin: 0; color: var(--err-fg); font-size: 13px; }
+.err.shake { animation: shake 320ms var(--ease); }
+@keyframes shake { 0%, 100% { transform: none; } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.hint { margin: 0; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text-3); font-size: 12.5px; }
+code { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+@media (prefers-reduced-motion: reduce) {
+  .card, .err.shake { animation: none; }
+}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="brand">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="12" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.75"/><rect class="mark" x="9.5" y="2.5" width="12" height="12" rx="3"/></svg>
+    cchost <small>v__VERSION__</small>
+  </div>
+  <div>
+    <h1>Sign in</h1>
+    <p class="lede" id="lede">Use the username and password printed in the terminal where you ran <code>cchost ui</code>.</p>
+  </div>
+  <form id="form" novalidate>
+    <label>Username<input class="input" id="user" name="user" autocomplete="username" spellcheck="false" value="cchost" required></label>
+    <label>Password<input class="input" id="pass" name="pass" type="password" autocomplete="current-password" spellcheck="false" required autofocus aria-describedby="err"></label>
+    <p class="err" id="err" role="alert"></p>
+    <button class="btn" id="go" type="submit">Sign in</button>
+  </form>
+  <p class="hint">The password changes every time <code>cchost ui</code> starts, and only this machine can reach this page.</p>
+</main>
+<script nonce="__NONCE__">
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  try {
+    const t = localStorage.getItem('cchost-theme');
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  } catch { /* storage blocked */ }
+  if (new URLSearchParams(location.search).has('expired')) {
+    $('lede').textContent = 'That sign-in link was already used or has expired. Sign in with the password from the terminal.';
+    history.replaceState(null, '', '/');
+  }
+  $('form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const err = $('err');
+    err.textContent = '';
+    err.classList.remove('shake');
+    $('go').disabled = true;
+    $('go').textContent = 'Signing in…';
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CCHost': '1' },
+        body: JSON.stringify({ user: $('user').value, pass: $('pass').value }),
+      });
+      if (res.ok) { location.replace('/'); return; }
+      const json = await res.json().catch(() => ({}));
+      err.textContent = json.error || `Sign-in failed (${res.status}).`;
+    } catch {
+      err.textContent = 'Cannot reach cchost ui — is it still running?';
+    }
+    void err.offsetWidth;
+    err.classList.add('shake');
+    $('pass').setAttribute('aria-invalid', 'true');
+    $('pass').select();
+    $('go').disabled = false;
+    $('go').textContent = 'Sign in';
+  });
+})();
+</script>
+</body>
+</html>

@@ -218,7 +218,7 @@ components:
 
 The page is a window onto what is on disk, not an app with opinions of its own. It follows the admin-dashboard category standard deliberately, built to Vercel and Linear's level of craft: neutral zinc surfaces, 1px hairlines, one blue for action and selection, and state colour only where a state needs naming. Density is set by the work. Seven resource badges per profile, a 13 to 14px base and tabular figures let a user take in five profiles at once.
 
-Every change is shown before it happens and reported after it happens. The panel lists each resource that would change, Apply runs it, and the same list comes back as results with green checks. That reveal is the only authored motion in the system. Everything else is plain state transitions.
+Every change is shown before it happens and reported after it happens. The panel lists each resource that would change, Apply runs it, and the same list comes back as results with green checks. That reveal is the signature motion. Around it, a quiet layer of entrances keeps the page from feeling static: views rise in when you switch to them, the panel's sections arrive in a short stagger, a new preview rises into place, cards lift 1px on hover, and Doctor groups expand with a height transition. None of them replay on background refreshes.
 
 It is a local, offline tool, so it uses the system sans and system monospace and loads no web fonts. Light and dark are both first-class. Dark is near-black zinc, not an inverted afterthought.
 
@@ -350,6 +350,11 @@ A signature component. An 8px bordered block on Recess with a section-weight hea
 - **Toast:** inverted (ink fill, canvas text), 8px radius, bottom centre. It rises 16px as it fades in.
 - **Banner:** an inline `err-bg` strip with an 8px radius for connection and server errors.
 
+### Sidebar rail and sign-in
+
+- **Collapsible sidebar:** the panel-left button folds the 240px sidebar into a 64px icon rail (`grid-template-columns` transition, 260ms). Labels fade out and become tooltips; counts hide; the theme switch hides; Sign out stays. The choice is remembered per browser. Below 860px the sidebar is a top bar and does not collapse.
+- **Sign-in page:** one 380px card on the page ground, the wordmark, an h1 "Sign in", username and password fields, a full-width primary button and a hairline-separated hint. Errors show in `err-fg` under the password with a short horizontal shake (none under reduced motion). It reads the same `tokens.css` as the app.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -357,7 +362,7 @@ A signature component. An 8px bordered block on Recess with a section-weight hea
 - **Do** colour a resource by state: blue shared, amber private or empty, dashed grey missing, red foreign-link. Always pair the colour with its icon and text.
 - **Do** keep green for "Logged in" and successful results only.
 - **Do** preview every change as per-resource lines before Apply, and then show the same lines as results.
-- **Do** keep the staggered result rise as the only authored motion. Everything else is 120 to 320ms state transitions, and `prefers-reduced-motion` removes movement (panel slide, toast rise, result stagger, chevron turn) while keeping every state change visible: changed badges get a static blue ring instead of the pulse.
+- **Do** keep the staggered result rise as the signature motion; entrances (view switch, panel open, new preview) stay at 260 to 340ms rises of 4px with 35 to 50ms staggers, and only fire on a real change, never on a background refresh. Everything else is 120 to 320ms state transitions, and `prefers-reduced-motion` removes movement (panel slide, toast rise, result stagger, chevron turn) while keeping every state change visible: changed badges get a static blue ring instead of the pulse.
 - **Do** set paths and resource names in change lines in ui-monospace at 12.5px.
 - **Do** define every colour as a custom property on `:root` with a matching dark value, and use them in light, dark and system themes.
 

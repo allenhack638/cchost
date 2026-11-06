@@ -14,8 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   results, and lets you add and remove profiles, share or unshare groups, copy
   from `~/.claude/` and apply doctor fixes. Every change is previewed per
   resource before it runs and reported step by step afterwards (Activity).
-  Zero dependencies; served on `127.0.0.1` with a per-run token, Host-header
-  check, strict CSP, and no endpoint tokens ever sent to the page.
+  Zero dependencies; served on `127.0.0.1` with a Host-header check, strict
+  CSP, and no endpoint tokens ever sent to the page.
+- **Web view sign-in, like rclone's web GUI.** `cchost ui` prints a username
+  and a per-run random password and opens a one-time sign-in link; the browser
+  gets an expiring HttpOnly session (`--session`, default 8h) and can sign
+  out. `--user` / `--pass` set your own credentials. Failed sign-ins are
+  rate-limited.
+- **Fix doctor issues from the web view.** Per-issue Fix buttons with a
+  preview; fixes that need `--force` in the CLI ask for confirmation; manual
+  steps show a copyable command.
+- **Web view polish.** Collapsible sidebar (remembered), share/private changes
+  can be reverted before applying by clicking the current side again, and
+  subtle motion (view and panel entrances, card hover, expanding Doctor
+  groups) that switches off under reduced motion.
 
 - **`cchost add <profile> --private[=projects,tools,config]`** creates a
   profile whose chosen resource groups (or all 7) start private and empty

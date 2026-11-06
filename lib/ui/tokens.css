@@ -1,0 +1,80 @@
+/* Design tokens for cchost ui. Injected into page.html and login.html by
+   lib/ui/server.js so both pages share one palette. */
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --surface-3: #ececee;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text: #18181b;
+  --text-2: #52525b;
+  --text-3: #6b6b73;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-fg: #ffffff;
+  --focus: #2563eb;
+  --shared-bg: #eff6ff;
+  --shared-fg: #1d4ed8;
+  --shared-bd: #bfdbfe;
+  --private-bg: #fef3c7;
+  --private-fg: #92400e;
+  --private-bd: #fde68a;
+  --missing-bg: transparent;
+  --missing-fg: #6b6b73;
+  --missing-bd: #d4d4d8;
+  --foreign-bg: #fef2f2;
+  --foreign-fg: #b91c1c;
+  --foreign-bd: #fecaca;
+  --ok: #15803d;
+  --ok-bg: #dcfce7;
+  --warn: #b45309;
+  --warn-bg: #fef3c7;
+  --err: #dc2626;
+  --err-fg: #b91c1c;
+  --danger-solid: #dc2626;
+  --err-bg: #fef2f2;
+  --overlay: rgba(9, 9, 11, 0.32);
+  --shadow-sm: 0 1px 2px rgba(9, 9, 11, 0.05);
+  --shadow-panel: -12px 0 32px rgba(9, 9, 11, 0.12), -1px 0 0 var(--border);
+  --shadow-toast: 0 8px 24px rgba(9, 9, 11, 0.2);
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #09090b; --surface: #111113; --surface-2: #18181b; --surface-3: #212125;
+    --border: #27272a; --border-strong: #3f3f46;
+    --text: #fafafa; --text-2: #a1a1aa; --text-3: #8f8f98;
+    --primary: #2563eb; --primary-hover: #1d4ed8; --primary-fg: #ffffff; --focus: #60a5fa;
+    --shared-bg: #172554; --shared-fg: #bfdbfe; --shared-bd: #1e3a8a;
+    --private-bg: #3a2a0a; --private-fg: #fcd34d; --private-bd: #713f12;
+    --missing-fg: #a1a1aa; --missing-bd: #3f3f46;
+    --foreign-bg: #3b0d0d; --foreign-fg: #fca5a5; --foreign-bd: #7f1d1d;
+    --ok: #4ade80; --ok-bg: #052e16; --warn: #fbbf24; --warn-bg: #3a2a0a;
+    --err: #f87171; --err-fg: #fca5a5; --err-bg: #3b0d0d;
+    --overlay: rgba(0, 0, 0, 0.55);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-panel: -12px 0 32px rgba(0, 0, 0, 0.5), -1px 0 0 var(--border);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #09090b; --surface: #111113; --surface-2: #18181b; --surface-3: #212125;
+  --border: #27272a; --border-strong: #3f3f46;
+  --text: #fafafa; --text-2: #a1a1aa; --text-3: #8f8f98;
+  --primary: #2563eb; --primary-hover: #1d4ed8; --primary-fg: #ffffff; --focus: #60a5fa;
+  --shared-bg: #172554; --shared-fg: #bfdbfe; --shared-bd: #1e3a8a;
+  --private-bg: #3a2a0a; --private-fg: #fcd34d; --private-bd: #713f12;
+  --missing-fg: #a1a1aa; --missing-bd: #3f3f46;
+  --foreign-bg: #3b0d0d; --foreign-fg: #fca5a5; --foreign-bd: #7f1d1d;
+  --ok: #4ade80; --ok-bg: #052e16; --warn: #fbbf24; --warn-bg: #3a2a0a;
+  --err: #f87171; --err-fg: #fca5a5; --err-bg: #3b0d0d;
+  --overlay: rgba(0, 0, 0, 0.55);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-panel: -12px 0 32px rgba(0, 0, 0, 0.5), -1px 0 0 var(--border);
+  color-scheme: dark;
+}
+

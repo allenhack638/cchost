@@ -49,7 +49,19 @@ cchost ui                   # see and change everything in your browser
 
 `cchost ui` opens a local page that shows every profile, what each one shares with `~/.claude/`, its login and endpoint, and the doctor results. You can add and remove profiles, switch a group between shared and private, copy from `~/.claude/` and apply doctor fixes from the page. Every change shows a per-resource preview first (the same result as `--dry-run`) and, once applied, lists each step it took; the Activity view keeps the history for the session.
 
-The page runs on `127.0.0.1` only and needs the random token in the link `cchost ui` prints. Endpoint tokens are never sent to the page and emails are masked. `--port=N` picks a port; `--no-open` prints the link without opening a browser. Ctrl+C stops it.
+Sign-in works like rclone's web GUI. `cchost ui` prints a username (`cchost`) and a random password that is new every run, then opens your browser with a one-time sign-in link (valid 2 minutes). The browser keeps an HttpOnly session cookie that lasts 8 hours (`--session=30m|8h|2d`) or until `cchost ui` stops; the sidebar's Sign out ends it early. Wrong passwords are rate-limited.
+
+```
+cchost ui running at http://127.0.0.1:52134/
+
+  Username:  cchost
+  Password:  k7Qp-3mZx-Wb9t-Lr2v
+  Sessions last 8h. The password is new every run.
+```
+
+The page runs on `127.0.0.1` only. Endpoint tokens are never sent to the page and emails are masked. `--port=N` picks a port, `--no-open` prints the one-time link instead of opening a browser, and `--user=NAME` / `--pass=PASSWORD` set your own credentials (a random password is safer: `--pass` ends up in shell history). Ctrl+C stops it.
+
+In Doctor, every issue with an automatic fix has its own **Fix** button with a preview; fixes the CLI only applies with `--fix --force` (such as resetting a corrupt `.claude.json`) are marked **Fix…** and ask you to confirm. Issues that need a manual step show the command with a copy button.
 
 ## Commands
 
@@ -63,7 +75,7 @@ The page runs on `127.0.0.1` only and needs the random token in the link `cchost
 | `cchost link <profile> [--projects\|--tools\|--config] [--dry-run]` | Link a profile's resources to `~/.claude/`. Defaults to all 7 when no flag is passed. |
 | `cchost unlink <profile> [--projects\|--tools\|--config] [--dry-run]` | Break the link and make those resources private to the profile. Non-destructive. |
 | `cchost remove <profile> [--force]` | Delete a profile. Requires typing the profile name. `--force` required when private resources exist. |
-| `cchost ui [--port=N] [--no-open]` | Open the local web view: see every profile and change sharing, profiles and doctor fixes with a preview first. See [Web view](#web-view). |
+| `cchost ui [--port=N] [--no-open] [--session=8h]` | Open the local web view: see every profile and change sharing, profiles and doctor fixes with a preview first. See [Web view](#web-view). |
 | `cchost doctor [--fix [--force]] [--json]` | Diagnose environment, storage, and platform issues. `--fix` applies safe auto-fixes; `--force` is required for destructive ones. |
 | `cchost help [command]` | Print usage. `cchost help sharing` is a task guide to linking, unlinking, and copying. |
 
