@@ -6,6 +6,7 @@ console.log('CLAUDE_CONFIG_DIR:' + (process.env.CLAUDE_CONFIG_DIR || ''));
 // Dump endpoint-related env vars so cc-env injection can be verified end-to-end.
 for (const k of [
   'ANTHROPIC_BASE_URL', 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_API_KEY',
+  'CLAUDE_CODE_OAUTH_TOKEN',
   'ANTHROPIC_MODEL', 'ANTHROPIC_DEFAULT_OPUS_MODEL', 'ANTHROPIC_DEFAULT_SONNET_MODEL',
   'ANTHROPIC_DEFAULT_HAIKU_MODEL', 'CLAUDE_CODE_SUBAGENT_MODEL',
 ]) {

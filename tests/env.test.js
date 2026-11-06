@@ -136,6 +136,23 @@ describe('env config — library', () => {
       expect(caught.message).toMatch(/base_url.*string/i);
       expect(caught.malformed).toBe(true);
     });
+    it('ignores non-string optional fields instead of failing', () => {
+      const d = profileDir('p');
+      fs.writeFileSync(
+        path.join(d, '.cc-env.json'),
+        JSON.stringify({
+          base_url: 'https://x',
+          auth_token: 'sk',
+          model: false,
+          opus: {},
+          haiku: '',
+        }),
+      );
+      const config = envLib.readEnvConfig(d);
+      expect(config.model).toBeUndefined();
+      expect(config.opus).toBeUndefined();
+      expect(config.haiku).toBe('');
+    });
   });
 
   describe('writeEnvConfig', () => {
@@ -151,6 +168,29 @@ describe('env config — library', () => {
       envLib.writeEnvConfig(d, { base_url: 'https://x', auth_token: 'sk' });
       const mode = fs.statSync(path.join(d, '.cc-env.json')).mode & 0o777;
       expect(mode).toBe(0o600);
+    });
+    it('recreates a stale temp file with 0600 instead of reusing its mode', () => {
+      if (process.platform === 'win32') return;
+      const d = profileDir('p');
+      const tmp = path.join(d, `.cc-env.json.tmp-${process.pid}`);
+      fs.writeFileSync(tmp, 'stale token', { mode: 0o666 });
+      fs.chmodSync(tmp, 0o666);
+
+      const originalRename = fs.renameSync;
+      let writtenMode;
+      fs.renameSync = (from) => {
+        writtenMode = fs.statSync(from).mode & 0o777;
+        throw new Error('rename failed');
+      };
+      try {
+        expect(() =>
+          envLib.writeEnvConfig(d, { base_url: 'https://x', auth_token: 'sk' }),
+        ).toThrow(/rename failed/);
+      } finally {
+        fs.renameSync = originalRename;
+      }
+      expect(writtenMode).toBe(0o600);
+      expect(fs.existsSync(tmp)).toBe(false);
     });
   });
 

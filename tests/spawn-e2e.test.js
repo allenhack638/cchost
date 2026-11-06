@@ -155,6 +155,32 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
     expect(res.stderr).not.toMatch(/may override/i);
   });
 
+  it('strips inherited Anthropic auth vars for an endpoint profile', () => {
+    const profileDir = path.join(tmpHome, '.claude-profiles', 'kimi-strip');
+    fs.mkdirSync(profileDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(profileDir, '.cc-env.json'),
+      JSON.stringify({ auth_token: 'sk-endpoint' }),
+    );
+
+    const res = runCc(['use', 'kimi-strip'], {
+      home: tmpHome,
+      extraEnv: {
+        CLAUDE_CODE_OAUTH_TOKEN: 'oauth-inherited',
+        ANTHROPIC_BASE_URL: 'https://wrong.example',
+        ANTHROPIC_API_KEY: 'sk-inherited',
+      },
+    });
+    expect(res.status).toBe(0);
+    expect(res.stderr).toMatch(/removed inherited.*CLAUDE_CODE_OAUTH_TOKEN/);
+    expect(res.stderr).toMatch(/ANTHROPIC_BASE_URL/);
+    expect(res.stdout).toContain('ENV:CLAUDE_CODE_OAUTH_TOKEN=');
+    expect(res.stdout).not.toContain('oauth-inherited');
+    expect(res.stdout).toContain('ENV:ANTHROPIC_BASE_URL=');
+    expect(res.stdout).not.toContain('wrong.example');
+    expect(res.stdout).toContain('ENV:ANTHROPIC_API_KEY=sk-endpoint');
+  });
+
   it('forwards --resume verbatim for an endpoint profile (no profile name leaked)', () => {
     const profileDir = path.join(tmpHome, '.claude-profiles', 'kimi2');
     fs.mkdirSync(profileDir, { recursive: true });

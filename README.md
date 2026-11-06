@@ -106,6 +106,8 @@ A profile can route through any Anthropic-compatible API — Moonshot/Kimi, Open
 
 > **Billing:** custom-endpoint profiles bill through the **third-party provider**, not your Anthropic subscription.
 
+Inherited Anthropic auth/endpoint variables (`ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`, `ANTHROPIC_BASE_URL`) are removed for endpoint profiles when the profile doesn't set them, so a shell-level key cannot override the endpoint.
+
 ```bash
 cchost add kimi --custom --base-url=https://api.moonshot.ai/anthropic \
                      --token=sk-your-key \

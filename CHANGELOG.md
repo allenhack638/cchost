@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `ANTHROPIC_AUTH_TOKEN`, or `CLAUDE_CODE_OAUTH_TOKEN` is set in the shell for a
   subscription profile, because those variables can silently override the
   profile's login. It does not strip them.
+- **Endpoint environment isolation.** Endpoint profiles now drop inherited
+  `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`, and
+  `ANTHROPIC_BASE_URL` values the profile does not set itself, with a short
+  notice listing what was removed.
 - **macOS login visibility.** `cchost list` marks an inferred Keychain login as
   `true*` instead of `false`, exposes `credentialSource` in `--json`, and
   `cchost doctor` explains the Keychain isolation caveat.
@@ -24,9 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - All README examples, help text, and error hints now use `cchost`.
-- `cchost doctor` no longer reports `/usr/bin/cc` (the system compiler) as a
-  duplicate install, and counts the `cchost` + `cc` shims from a single npm
-  install as one entry.
+- `cchost doctor` no longer reports `/usr/bin/cc` or a real C compiler
+  (clang, gcc, ccache) as cchost; a `cc` entry counts only when it resolves to
+  cchost, and the two shims from one install still count as one entry.
 - README now separates **credential** isolation from the default shared pool.
   `projects/` (full session transcripts) and `settings.json` / `mcp.json`
   (code-executing config) are shared across profiles by default, and are
@@ -36,11 +40,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - `cchost link` reports a symlink that points outside `~/.claude/` as
   `foreign-link` instead of claiming it is already linked.
-- `cchost doctor --fix` exit codes now reflect the state after fixes run, and
-  `--json` can no longer be combined with `--fix` (which produced mixed output).
+- `cchost doctor --fix` prints and uses the post-fix results; `--json --fix`
+  is supported again and emits one post-fix JSON report (fix logs go to stderr).
+- `cchost doctor` warns about macOS Keychain sharing only when at least two
+  logged-in subscription profiles exist, and the warning says what to do.
 - `cchost help migrate` prints command-specific help.
-- `.cc-env.json` is created user-only and rejects non-string field values.
-- Help banner shows the version again, and `NO_COLOR=` (empty) disables color.
+- `.cc-env.json` is created user-only; optional non-string fields are ignored
+  instead of making the profile unusable.
+- Help banner shows the version again, and `NO_COLOR` follows no-color.org
+  (a non-empty value disables color; `NO_COLOR=""` leaves it enabled).
 
 ### Known limitations
 

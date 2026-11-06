@@ -36,10 +36,6 @@ describe('cc doctor — flag parsing', () => {
     });
   });
 
-  it('rejects --json combined with --fix', async () => {
-    await expect(cli.run(['doctor', '--json', '--fix'])).rejects.toThrow(/cannot be combined/);
-  });
-
   it('accepts --json without error', async () => {
     let out = '';
     process.stdout.write = (s) => { out += s; return true; };
@@ -166,6 +162,28 @@ describe('cc doctor --fix', () => {
       expect(fs.existsSync(dir)).toBe(true);
     });
   });
+
+  it('emits only JSON when --fix and --json are combined', async () => {
+    let out = '';
+    let err = '';
+    const originalStdout = process.stdout.write;
+    const originalStderr = process.stderr.write;
+    process.stdout.write = (s) => { out += s; return true; };
+    process.stderr.write = (s) => { err += s; return true; };
+    try {
+      await withTmpHome(() => cli.run(['doctor', '--fix', '--json']));
+    } finally {
+      process.stdout.write = originalStdout;
+      process.stderr.write = originalStderr;
+    }
+    expect(() => JSON.parse(out)).not.toThrow();
+    expect(out.trim().startsWith('{')).toBe(true);
+    const parsed = JSON.parse(out);
+    const storage = parsed.checks.find((c) => c.name === '~/.claude-profiles/');
+    expect(storage.status).toBe('ok');
+    // Fix progress belongs on stderr, never in the JSON document.
+    expect(err).toMatch(/Fixing:|Nothing auto-fixable/);
+  });
 });
 
 // ── Individual check functions ────────────────────────────────────────────────
@@ -277,6 +295,7 @@ describe('doctor.runChecks — individual checks', () => {
 describe('cchost doctor — PATH shadow check', () => {
   const originalPath = process.env.PATH;
   const originalWinPath = process.env.Path;
+  const originalPathExt = process.env.PATHEXT;
   let tmpDirs = [];
 
   function tmpDir() {
@@ -291,8 +310,14 @@ describe('cchost doctor — PATH shadow check', () => {
     return file;
   }
 
-  function setPath(dirs) {
-    const value = dirs.join(path.delimiter);
+  function writeCmd(dir, name, content) {
+    const file = path.join(dir, `${name}.CMD`);
+    fs.writeFileSync(file, content);
+    return file;
+  }
+
+  function setPath(dirs, sep = path.delimiter) {
+    const value = dirs.join(sep);
     process.env.PATH = value;
     process.env.Path = value;
   }
@@ -300,6 +325,8 @@ describe('cchost doctor — PATH shadow check', () => {
   afterEach(() => {
     process.env.PATH = originalPath;
     process.env.Path = originalWinPath;
+    if (originalPathExt === undefined) delete process.env.PATHEXT;
+    else process.env.PATHEXT = originalPathExt;
     for (const d of tmpDirs) fs.rmSync(d, { recursive: true, force: true });
     tmpDirs = [];
   });
@@ -314,11 +341,24 @@ describe('cchost doctor — PATH shadow check', () => {
     expect(result.message).toContain(dir);
   });
 
+  it('does not count a bare cc compiler as cchost', () => {
+    if (process.platform === 'win32') return;
+    const dir = tmpDir();
+    fs.writeFileSync(path.join(dir, 'cc'), '#!/bin/sh\nexec clang "$@"\n');
+    setPath([dir]);
+    const result = doctor.checkCcShadow('linux');
+    expect(result.status).toBe('ok');
+    expect(result.message).toMatch(/not found/i);
+    expect(result.message).not.toContain(path.join(dir, 'cc'));
+  });
+
   it('counts cchost and cc symlinks from one install as a single entry', () => {
     if (process.platform === 'win32') return;
     const dir = tmpDir();
-    const target = path.join(dir, 'cc.js');
-    fs.writeFileSync(target, '');
+    const pkgBin = path.join(dir, 'pkg', 'cchost', 'bin');
+    fs.mkdirSync(pkgBin, { recursive: true });
+    const target = path.join(pkgBin, 'cc.js');
+    fs.writeFileSync(target, '#!/usr/bin/env node\n// cchost\n');
     fs.symlinkSync(target, path.join(dir, 'cchost'));
     fs.symlinkSync(target, path.join(dir, 'cc'));
     setPath([dir]);
@@ -337,22 +377,84 @@ describe('cchost doctor — PATH shadow check', () => {
     expect(result.status).toBe('warn');
     expect(result.message).toMatch(/multiple/i);
   });
+
+  it('treats cc.cmd and cchost.cmd pointing at the same install as one', () => {
+    const dir = tmpDir();
+    const shim = '@echo off\r\n"%dp0%\\node_modules\\cchost\\bin\\cc.js" %*\r\n';
+    writeCmd(dir, 'cchost', shim);
+    writeCmd(dir, 'cc', shim);
+    process.env.PATHEXT = '.CMD';
+    setPath([dir], ';');
+    const result = doctor.checkCcShadow('win32');
+    expect(result.status).toBe('ok');
+  });
+
+  it('detects a stale cc.cmd next to a fresh cchost.cmd on Windows', () => {
+    const dir = tmpDir();
+    writeCmd(dir, 'cchost', '@echo off\r\n"%dp0%\\node_modules\\cchost\\bin\\cc.js" %*\r\n');
+    writeCmd(dir, 'cc', '@echo off\r\n"C:\\old\\node_modules\\cchost\\bin\\cc.js" %*\r\n');
+    process.env.PATHEXT = '.CMD';
+    setPath([dir], ';');
+    const result = doctor.checkCcShadow('win32');
+    expect(result.status).toBe('warn');
+    expect(result.message).toMatch(/multiple/i);
+  });
+
+  it('detects two Windows installs whose shims use %dp0%', () => {
+    const a = tmpDir();
+    const b = tmpDir();
+    const shim = '@echo off\r\n"%dp0%\\node_modules\\cchost\\bin\\cc.js" %*\r\n';
+    writeCmd(a, 'cchost', shim);
+    writeCmd(b, 'cchost', shim);
+    process.env.PATHEXT = '.CMD';
+    setPath([a, b], ';');
+    const result = doctor.checkCcShadow('win32');
+    expect(result.status).toBe('warn');
+    expect(result.message).toMatch(/multiple/i);
+  });
 });
 
 describe('cchost doctor — macOS Keychain note', () => {
-  it('warns when macOS profiles exist, and is silent elsewhere', async () => {
+  function addProfile(home, name, { endpoint = false } = {}) {
+    const dir = path.join(home, '.claude-profiles', name);
+    fs.mkdirSync(dir, { recursive: true });
+    if (endpoint) {
+      fs.writeFileSync(
+        path.join(dir, '.cc-env.json'),
+        JSON.stringify({ base_url: 'https://x', auth_token: 'sk' }),
+      );
+    } else {
+      fs.writeFileSync(
+        path.join(dir, '.claude.json'),
+        JSON.stringify({ oauthAccount: { emailAddress: `${name}@example.com` } }),
+      );
+    }
+  }
+
+  it('warns only when two logged-in subscription profiles share the Keychain', async () => {
     await withTmpHome(async (home) => {
-      fs.mkdirSync(path.join(home, '.claude-profiles', 'p'), { recursive: true });
+      addProfile(home, 'one');
+      expect(doctor.checkMacKeychain('darwin').status).toBe('ok');
+      addProfile(home, 'two');
       const mac = doctor.checkMacKeychain('darwin');
       expect(mac.status).toBe('warn');
-      expect(mac.message).toMatch(/Keychain/);
+      expect(mac.message).toMatch(/separate macOS users|custom-endpoint/i);
       expect(doctor.checkMacKeychain('linux')).toBeNull();
     });
   });
 
-  it('stays silent when there are no profiles', async () => {
+  it('does not warn for an endpoint-only setup or a logged-out profile', async () => {
+    await withTmpHome(async (home) => {
+      addProfile(home, 'endpoint-a', { endpoint: true });
+      addProfile(home, 'endpoint-b', { endpoint: true });
+      fs.mkdirSync(path.join(home, '.claude-profiles', 'logged-out'), { recursive: true });
+      expect(doctor.checkMacKeychain('darwin').status).toBe('ok');
+    });
+  });
+
+  it('is ok with no profiles', async () => {
     await withTmpHome(async () => {
-      expect(doctor.checkMacKeychain('darwin')).toBeNull();
+      expect(doctor.checkMacKeychain('darwin').status).toBe('ok');
     });
   });
 });
