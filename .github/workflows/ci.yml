@@ -21,9 +21,9 @@ jobs:
         node: [20]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: npm
@@ -39,14 +39,17 @@ jobs:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # create the vX.Y.Z tag and GitHub Release
+      id-token: write   # npm Trusted Publishing (OIDC)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
-          cache: npm
+          # No dependency cache here: a poisoned cache must not reach a publish.
 
       - name: Install
         run: npm ci
@@ -77,11 +80,40 @@ jobs:
       # Authentication is via OIDC Trusted Publishing — no NPM_TOKEN secret
       # needed. Configure the trusted publisher at:
       #   https://www.npmjs.com/package/cchost/access
-      # The id-token: write permission at the top of this workflow is what
-      # lets npm verify GitHub's OIDC assertion.
+      # The job's id-token: write permission is what lets npm verify GitHub's
+      # OIDC assertion.
       - name: Publish
         if: steps.check.outputs.skip == 'false'
         run: npm publish --provenance --access public
+
+      # Tag the published commit and create the GitHub Release from the
+      # matching CHANGELOG.md section. Skipped if the release already exists
+      # (e.g. created by hand), so re-runs are safe.
+      - name: GitHub Release
+        if: steps.check.outputs.skip == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          TAG="v$VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::Release $TAG already exists; skipping."
+            exit 0
+          fi
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { f = 1; next }
+            /^## \[/ { f = 0 }
+            f
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::warning::No CHANGELOG.md section for $VERSION; using a placeholder."
+            echo "See CHANGELOG.md." > release-notes.md
+          fi
+          printf '\n**Install / upgrade:** `npm install -g %s@%s`\n' \
+            "${{ steps.check.outputs.package }}" "$VERSION" >> release-notes.md
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" \
+            --notes-file release-notes.md --latest
 
       - name: Summary
         if: steps.check.outputs.skip == 'false'
