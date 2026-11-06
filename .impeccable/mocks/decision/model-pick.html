@@ -1,0 +1,49 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1440px;height:900px;overflow:hidden}
+body{background:#fff;color:#111;font-family:Barlow,sans-serif;font-size:15px;font-variant-numeric:tabular-nums}
+.band{background:#FFD200;height:96px;display:flex;align-items:center;padding:0 32px;gap:28px}
+.band h1{font-family:'Barlow Condensed';font-weight:700;font-size:44px;letter-spacing:-.01em}
+.band .sub{font-size:14px;line-height:1.3}
+.band nav{margin-left:auto;display:flex;gap:4px}
+.band nav a{padding:10px 14px;background:#111;color:#FFD200;font-weight:700;text-decoration:none}
+.band nav a.off{background:transparent;color:#111;border:2px solid #111}
+.wrap{display:grid;grid-template-columns:1fr 380px;height:804px}
+table{border-collapse:collapse;width:100%;margin:24px 0 0 32px;width:calc(100% - 64px)}
+th{font-family:'Barlow Condensed';font-weight:700;font-size:15px;text-align:left;padding:8px;border-bottom:3px solid #111;text-transform:uppercase}
+th.grp{border-bottom:1px solid #111;color:#0050A0}
+td{padding:14px 8px;border-bottom:1px solid #ddd;font-size:15px}
+td.p{font-weight:700;font-size:20px;font-family:'Barlow Condensed'}
+td.m{color:#555;font-size:13px}
+.s{font-weight:700}.pv{color:#0050A0;font-weight:700}
+tr.alt td{background:#FFF8D6}
+.notice{border-left:3px solid #111;padding:24px;background:#F6F6F2;display:flex;flex-direction:column;gap:14px}
+.notice .tag{background:#111;color:#FFD200;padding:4px 8px;font-weight:700;align-self:flex-start;font-family:'Barlow Condensed';font-size:16px}
+.notice h2{font-family:'Barlow Condensed';font-size:32px;line-height:1}
+.notice li{list-style:none;padding:6px 0;border-bottom:1px solid #ddd}
+.btn{font:inherit;font-weight:700;padding:10px 16px;border:2px solid #111;background:#111;color:#fff}
+.btn.o{background:#fff;color:#111}
+.foot{margin:20px 32px;font-size:13px;color:#444;display:flex;gap:24px}
+</style></head><body>
+<div class="band"><h1>cchost</h1><div class="sub">Shared pool<br><b>~/.claude</b></div>
+<nav><a href="#">Profiles</a><a class="off" href="#">Doctor · 3 notes</a><a class="off" href="#">Log</a><a class="off" href="#">+ Add profile</a></nav></div>
+<div class="wrap"><div>
+<table>
+<tr><th></th><th></th><th class="grp">Projects</th><th class="grp" colspan="3">Tools</th><th class="grp" colspan="3">Config</th></tr>
+<tr><th>Profile</th><th>Login · endpoint</th><th>projects</th><th>skills</th><th>agents</th><th>commands</th><th>mcp.json</th><th>settings</th><th>CLAUDE.md</th></tr>
+<tr><td class="p">p1</td><td class="m">t•••.com · subscription</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td></tr>
+<tr><td class="p">p1-api</td><td class="m">— · api.anthropic.com</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td></tr>
+<tr class="alt"><td class="p">work</td><td class="m">i•••.in · subscription</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="pv">○ ¹</td><td class="pv">○ ¹</td><td class="pv">○ ¹</td></tr>
+<tr><td class="p">work-pb</td><td class="m">p•••.in · subscription</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td></tr>
+<tr><td class="p">work-pk</td><td class="m">p•••.in · subscription</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td><td class="s">●</td></tr>
+</table>
+<div class="foot"><span>● shared with ~/.claude</span><span>○ private to the profile</span><span>¹ unlinked by you</span><span>– missing</span></div>
+</div>
+<div class="notice"><span class="tag">SERVICE NOTICE</span><h2>Unlink tools for work</h2>
+<ul><li>skills/ — copy 32 items in, then unlink</li><li>agents/ — copy 4 items in, then unlink</li><li>commands/ — copy 0 items in, then unlink</li></ul>
+<p style="color:#444">Preview only. Nothing has changed yet.</p>
+<div style="display:flex;gap:8px;margin-top:auto"><button class="btn">Apply</button><button class="btn o">Cancel</button></div></div>
+</div></body></html>

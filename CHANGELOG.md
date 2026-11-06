@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **`cchost ui`: a local web view.** One page shows every profile, the state
+  of its 7 resources, its login and endpoint, the shared pool and doctor
+  results, and lets you add and remove profiles, share or unshare groups, copy
+  from `~/.claude/` and apply doctor fixes. Every change is previewed per
+  resource before it runs and reported step by step afterwards (Activity).
+  Zero dependencies; served on `127.0.0.1` with a per-run token, Host-header
+  check, strict CSP, and no endpoint tokens ever sent to the page.
+
 - **`cchost add <profile> --private[=projects,tools,config]`** creates a
   profile whose chosen resource groups (or all 7) start private and empty
   instead of shared. Nothing from `~/.claude/` is copied in, unlike

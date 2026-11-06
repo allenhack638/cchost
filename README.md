@@ -42,7 +42,14 @@ cchost use work             # launch Claude under it (prompts for login on first
 cchost use work --resume    # resume the last conversation
 cchost list                 # see all profiles
 cchost remove old-profile   # delete a profile
+cchost ui                   # see and change everything in your browser
 ```
+
+## Web view
+
+`cchost ui` opens a local page that shows every profile, what each one shares with `~/.claude/`, its login and endpoint, and the doctor results. You can add and remove profiles, switch a group between shared and private, copy from `~/.claude/` and apply doctor fixes from the page. Every change shows a per-resource preview first (the same result as `--dry-run`) and, once applied, lists each step it took; the Activity view keeps the history for the session.
+
+The page runs on `127.0.0.1` only and needs the random token in the link `cchost ui` prints. Endpoint tokens are never sent to the page and emails are masked. `--port=N` picks a port; `--no-open` prints the link without opening a browser. Ctrl+C stops it.
 
 ## Commands
 
@@ -56,6 +63,7 @@ cchost remove old-profile   # delete a profile
 | `cchost link <profile> [--projects\|--tools\|--config] [--dry-run]` | Link a profile's resources to `~/.claude/`. Defaults to all 7 when no flag is passed. |
 | `cchost unlink <profile> [--projects\|--tools\|--config] [--dry-run]` | Break the link and make those resources private to the profile. Non-destructive. |
 | `cchost remove <profile> [--force]` | Delete a profile. Requires typing the profile name. `--force` required when private resources exist. |
+| `cchost ui [--port=N] [--no-open]` | Open the local web view: see every profile and change sharing, profiles and doctor fixes with a preview first. See [Web view](#web-view). |
 | `cchost doctor [--fix [--force]] [--json]` | Diagnose environment, storage, and platform issues. `--fix` applies safe auto-fixes; `--force` is required for destructive ones. |
 | `cchost help [command]` | Print usage. `cchost help sharing` is a task guide to linking, unlinking, and copying. |
 
