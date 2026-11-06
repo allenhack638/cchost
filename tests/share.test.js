@@ -633,3 +633,76 @@ describe('healProjectsLegacy', () => {
     expect(fs.readFileSync(path.join(projects, 'D--myapp', 'l.jsonl'), 'utf8')).toBe('L');
   });
 });
+
+describe('resourceState and --dry-run', () => {
+  let tmpHome;
+  let originalHomedir;
+
+  beforeEach(() => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-share-dry-'));
+    originalHomedir = os.homedir;
+    os.homedir = () => tmpHome;
+  });
+
+  afterEach(() => {
+    os.homedir = originalHomedir;
+    fs.rmSync(tmpHome, { recursive: true, force: true });
+  });
+
+  // Snapshot every path under a dir (with link targets) to prove nothing changed.
+  function snapshot(root) {
+    const out = [];
+    const walk = (p) => {
+      let st;
+      try { st = fs.lstatSync(p); } catch { return; }
+      if (st.isSymbolicLink()) { out.push(`${p} -> ${fs.readlinkSync(p)}`); return; }
+      out.push(p);
+      if (st.isDirectory()) for (const e of fs.readdirSync(p).sort()) walk(path.join(p, e));
+    };
+    walk(root);
+    return out;
+  }
+
+  it('reports shared, private, empty, and missing resources', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    share.shareLink('work', { projects: true });
+    fs.mkdirSync(path.join(pdir, 'skills', 'mine'), { recursive: true });
+    fs.mkdirSync(path.join(pdir, 'agents'));
+    fs.writeFileSync(path.join(pdir, 'CLAUDE.md'), '# private');
+
+    expect(share.resourceState(pdir, 'projects')).toBe('shared');
+    expect(share.resourceState(pdir, 'skills')).toBe('private');
+    expect(share.resourceState(pdir, 'agents')).toBe('empty');
+    expect(share.resourceState(pdir, 'commands')).toBe('missing');
+    expect(share.resourceState(pdir, 'CLAUDE.md')).toBe('private');
+  });
+
+  it('link --dry-run predicts the real statuses and changes nothing', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(path.join(pdir, 'skills', 'mine'), { recursive: true });
+    const before = snapshot(tmpHome);
+
+    const dry = share.shareLink('work', { dryRun: true });
+
+    expect(snapshot(tmpHome)).toEqual(before);
+    expect(fs.existsSync(path.join(tmpHome, '.claude'))).toBe(false);
+    const real = share.shareLink('work');
+    expect(dry.map((r) => [r.resource, r.status])).toEqual(real.map((r) => [r.resource, r.status]));
+  });
+
+  it('unlink --dry-run counts pool items and changes nothing', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    share.shareLink('work');
+    fs.mkdirSync(path.join(tmpHome, '.claude', 'skills', 'a'), { recursive: true });
+    fs.mkdirSync(path.join(tmpHome, '.claude', 'skills', 'b'), { recursive: true });
+    const before = snapshot(tmpHome);
+
+    const dry = share.shareUnlink('work', { tools: true, dryRun: true });
+
+    expect(snapshot(tmpHome)).toEqual(before);
+    expect(dry.find((r) => r.resource === 'skills')).toMatchObject({ status: 'unlinked', items: 2 });
+    expect(share.isSharedResource(pdir, 'skills')).toBe(true);
+  });
+});

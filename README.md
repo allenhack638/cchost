@@ -48,13 +48,13 @@ cchost remove old-profile   # delete a profile
 | `cchost add <profile>` | Create a subscription profile. Logs in via Anthropic OAuth on first `cchost use`. Auto-shares all 7 resources with `~/.claude/`. |
 | `cchost add <profile> --custom [...]` | Create or edit a custom-endpoint profile. Interactive wizard, or `--base-url=URL --token=TOKEN [--model=…]`. See [Custom endpoints](#custom-endpoints). |
 | `cchost use <profile> [...args]` | Launch Claude under that profile. Extra args are forwarded to `claude`. |
-| `cchost list [<profile>] [--json] [--reveal]` | List all profiles or show one in detail. Emails and tokens are masked by default; `--reveal` prints them in full. |
-| `cchost copy default <profile> [--force]` | Seed an unlinked profile resource from `~/.claude/`. No-op for fully-shared profiles. |
-| `cchost link <profile> [--projects\|--tools\|--config]` | Link a profile's resources to `~/.claude/`. Defaults to all 7 when no flag is passed. |
-| `cchost unlink <profile> [--projects\|--tools\|--config]` | Break the link and make those resources private to the profile. Non-destructive. |
+| `cchost list [<profile>] [--json] [--reveal]` | List all profiles, or show one in detail including the state of each of its 7 resources. Emails and tokens are masked by default; `--reveal` prints them in full. |
+| `cchost copy default <profile> [--force] [--dry-run]` | Seed an unlinked profile resource from `~/.claude/`. No-op for fully-shared profiles. |
+| `cchost link <profile> [--projects\|--tools\|--config] [--dry-run]` | Link a profile's resources to `~/.claude/`. Defaults to all 7 when no flag is passed. |
+| `cchost unlink <profile> [--projects\|--tools\|--config] [--dry-run]` | Break the link and make those resources private to the profile. Non-destructive. |
 | `cchost remove <profile> [--force]` | Delete a profile. Requires typing the profile name. `--force` required when private resources exist. |
 | `cchost doctor [--fix [--force]] [--json]` | Diagnose environment, storage, and platform issues. `--fix` applies safe auto-fixes; `--force` is required for destructive ones. |
-| `cchost help [command]` | Print usage. |
+| `cchost help [command]` | Print usage. `cchost help sharing` is a task guide to linking, unlinking, and copying. |
 
 Sample `cchost list` output:
 
@@ -86,7 +86,9 @@ Sharing uses POSIX symlinks on Linux/macOS and directory junctions on Windows (n
 > execute hooks and MCP servers. For a work/personal split, unlink the resources
 > that must not cross over before first use, or use a separate OS account.
 
-To break sharing for a single profile:
+To see exactly what a profile shares, run `cchost list <profile>` — it prints each resource as `shared`, `private`, `empty`, `missing`, or `foreign-link`. `cchost help sharing` walks through the common tasks.
+
+To break sharing for a single profile (add `--dry-run` to any of these to preview first):
 
 ```bash
 cchost unlink work --tools     # private skills/agents/commands
@@ -137,22 +139,25 @@ On launch, `cchost use` prints a one-line endpoint banner to stderr:
 ### macOS
 
 Claude Code stores OAuth credentials in the login **Keychain**, not in
-`<profile>/.credentials.json`. Two things follow:
+`<profile>/.credentials.json`. Claude Code namespaces the Keychain entry by
+the exact `CLAUDE_CONFIG_DIR` path (verified with Claude Code 2.1.319):
 
-- `cchost list` shows `true*` on macOS when `.claude.json` records an account
-  but no `.credentials.json` exists; the token itself is in the Keychain. The
-  `true*` marker is an inference, not a live token check, and does not prove
-  which account the Keychain entry belongs to.
-- Isolation between subscription (OAuth) profiles on macOS has not been verified
-  against two real accounts. Claude Code's Keychain item is shared per macOS
-  login user; if it is not namespaced per `CLAUDE_CONFIG_DIR`, profiles may share
-  one login. Tracked upstream at
-  [anthropics/claude-code#20553](https://github.com/anthropics/claude-code/issues/20553).
+```
+Claude Code-credentials-<first 8 hex of sha256(path)>
+```
 
-If you need guaranteed separation on macOS today, use **custom-endpoint
-profiles** (each has its own token in `.cc-env.json`) or separate macOS user
-accounts. Do not treat the `LoggedIn` column as proof of which account a
-profile will use.
+So each profile gets its own Keychain entry. Two consequences:
+
+- `cchost list` infers the login from `.claude.json`; it does not read the
+  Keychain secret. Treat `LoggedIn` as a login hint, not proof of a live token.
+- The entry is keyed by the exact path string. Renaming, moving, or copying a
+  profile — or addressing it through a different path spelling or symlinked
+  home — changes the key and looks like a logout. Run `claude` under the new
+  path to log in again.
+
+If you need guaranteed account separation on macOS, **custom-endpoint profiles**
+(each has its own token in `.cc-env.json`) or separate macOS user accounts are
+still the most explicit option.
 
 ### Windows and Linux
 

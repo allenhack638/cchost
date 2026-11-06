@@ -21,9 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`, and
   `ANTHROPIC_BASE_URL` values the profile does not set itself, with a short
   notice listing what was removed.
-- **macOS login visibility.** `cchost list` marks an inferred Keychain login as
-  `true*` instead of `false`, exposes `credentialSource` in `--json`, and
-  `cchost doctor` explains the Keychain isolation caveat.
+- **macOS login visibility.** `cchost list` reports an inferred Keychain login
+  as `true` instead of `false`, exposes `credentialSource` in `--json`, and
+  `cchost doctor` explains that Keychain entries are namespaced by the profile's
+  exact `CLAUDE_CONFIG_DIR` path.
+- **See what a profile shares.** `cchost list <profile>` prints each of the 7
+  resources as `shared`, `private`, `empty`, `missing`, or `foreign-link`;
+  `--json` adds a `resources` object.
+- **`--dry-run`** on `cchost link`, `unlink`, and `copy` prints what would
+  change without touching the filesystem.
+- **`cchost help sharing`**: a task-oriented guide to what is shared and how to
+  make a resource private, share it again, or copy into a profile.
 
 ### Changed
 
@@ -42,8 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `foreign-link` instead of claiming it is already linked.
 - `cchost doctor --fix` prints and uses the post-fix results; `--json --fix`
   is supported again and emits one post-fix JSON report (fix logs go to stderr).
-- `cchost doctor` warns about macOS Keychain sharing only when at least two
-  logged-in subscription profiles exist, and the warning says what to do.
+- `cchost doctor` no longer warns that macOS subscription profiles may share
+  one Keychain login; it explains that entries are namespaced by the exact
+  profile path (renaming or moving a profile requires a new login), and stays
+  silent when no profile uses a Keychain login.
 - `cchost help migrate` prints command-specific help.
 - `.cc-env.json` is created user-only; optional non-string fields are ignored
   instead of making the profile unusable.
@@ -52,14 +62,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Known limitations
 
-- **macOS subscription profiles are not verified in isolation.** Claude Code
-  stores OAuth tokens in the login Keychain, not `<profile>/.credentials.json`.
-  `cchost list` now shows `true*` when a login is inferred from `.claude.json`,
-  but that does not prove the token is live or which account it belongs to.
-  Subscription isolation must be tested with two real accounts before the
-  platform is claimed as fully supported; the v0.4.4 note reflected CI coverage
-  only. See the upstream report at
-  https://github.com/anthropics/claude-code/issues/20553.
+- **macOS Keychain entries are keyed by the exact profile path.** Claude Code
+  (verified with 2.1.319) stores each profile's OAuth token under a service
+  name derived from the `CLAUDE_CONFIG_DIR` string, so renaming, moving, or copying a profile — or
+  accessing it through a different path spelling or symlinked home — requires a
+  fresh login. `cchost list` infers the login from `.claude.json`; it does not
+  read the Keychain secret or verify that the token is still live.
 
 ## [0.4.4] - 2026-06-19
 

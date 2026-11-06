@@ -69,6 +69,20 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
     expect(res.stdout).not.toMatch(/ARGS:\[[^\]]*"e2e"/);
   });
 
+  // On macOS Claude Code names the Keychain entry after sha256 of this exact
+  // string. Any change in spelling (trailing slash, realpath of a symlinked
+  // home) silently looks like a logout, so pin it byte-for-byte.
+  it('passes CLAUDE_CONFIG_DIR as the exact profile path (no realpath, no trailing slash)', () => {
+    const profileDir = path.join(tmpHome, '.claude-profiles', 'e2e');
+    fs.mkdirSync(profileDir, { recursive: true });
+
+    const res = runCc(['use', 'e2e'], { home: tmpHome });
+
+    expect(res.status).toBe(0);
+    const line = res.stdout.split(/\r?\n/).find((l) => l.startsWith('CLAUDE_CONFIG_DIR:'));
+    expect(line).toBe(`CLAUDE_CONFIG_DIR:${profileDir}`);
+  });
+
   it('does not leak parent CLAUDE_CONFIG_DIR into child', () => {
     const profileDir = path.join(tmpHome, '.claude-profiles', 'inner');
     fs.mkdirSync(profileDir, { recursive: true });

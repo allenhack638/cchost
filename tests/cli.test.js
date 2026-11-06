@@ -375,3 +375,64 @@ describe('cc — v0.4.1 surface', () => {
     expect(captured).toMatch(/\b\d\/7\b/);
   });
 });
+
+describe('cchost list <profile> resources, --dry-run, help sharing', () => {
+  let tmpHome;
+  let originalHomedir;
+  let originalLog;
+  let originalWrite;
+  let out;
+
+  beforeEach(() => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-cli-res-'));
+    originalHomedir = os.homedir;
+    os.homedir = () => tmpHome;
+    out = '';
+    originalLog = console.log;
+    console.log = (...a) => { out += a.join(' ') + '\n'; };
+    originalWrite = process.stdout.write;
+    process.stdout.write = (chunk) => { out += String(chunk); return true; };
+  });
+
+  afterEach(() => {
+    os.homedir = originalHomedir;
+    console.log = originalLog;
+    process.stdout.write = originalWrite;
+    fs.rmSync(tmpHome, { recursive: true, force: true });
+  });
+
+  it('list <profile> --json reports the state of each resource', async () => {
+    await cli.run(['add', 'work']);
+    await cli.run(['unlink', 'work', '--config']);
+    out = '';
+    await cli.run(['list', 'work', '--json']);
+    const obj = JSON.parse(out);
+    expect(obj.shared).toBe(4);
+    expect(obj.resources).toMatchObject({
+      projects: 'shared',
+      skills: 'shared',
+      'settings.json': 'empty',
+    });
+  });
+
+  it('link, unlink, and copy accept --dry-run and say so', async () => {
+    await cli.run(['add', 'work']);
+    for (const argv of [
+      ['link', 'work', '--dry-run'],
+      ['unlink', 'work', '--dry-run'],
+      ['copy', 'default', 'work', '--dry-run'],
+    ]) {
+      out = '';
+      await expect(cli.run(argv)).resolves.toBe(0);
+      expect(out).toMatch(/Dry run — nothing will be changed/);
+    }
+    expect(fs.lstatSync(path.join(tmpHome, '.claude-profiles', 'work', 'skills')).isSymbolicLink())
+      .toBe(true);
+  });
+
+  it('help sharing prints the task guide', async () => {
+    await cli.run(['help', 'sharing']);
+    expect(out).toMatch(/what profiles share/);
+    expect(out).toMatch(/cchost unlink work --config/);
+  });
+});

@@ -51,6 +51,19 @@ describe('cc copy default <profile>', () => {
     expect(fs.existsSync(path.join(pdir, 'projects', '.credentials.json'))).toBe(false);
   });
 
+  it('--dry-run reports the same counts as a real copy and writes nothing', () => {
+    seedDefault();
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+
+    const dry = copyLib.copy('default', 'work', { dryRun: true });
+
+    expect(fs.existsSync(pdir)).toBe(false);
+    const real = copyLib.copy('default', 'work');
+    expect(dry.copied).toBe(real.copied);
+    expect(dry.copied).toBeGreaterThan(0);
+    expect(dry.results).toEqual(real.results);
+  });
+
   it('rejects "shared" as destination in v0.4', () => {
     seedDefault();
     expect(() => copyLib.copy('default', 'shared')).toThrow(/v0\.4/);

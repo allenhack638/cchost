@@ -431,30 +431,30 @@ describe('cchost doctor — macOS Keychain note', () => {
     }
   }
 
-  it('warns only when two logged-in subscription profiles share the Keychain', async () => {
+  it('reports namespaced Keychain entries without warning about sharing', async () => {
     await withTmpHome(async (home) => {
       addProfile(home, 'one');
       expect(doctor.checkMacKeychain('darwin').status).toBe('ok');
       addProfile(home, 'two');
       const mac = doctor.checkMacKeychain('darwin');
-      expect(mac.status).toBe('warn');
-      expect(mac.message).toMatch(/separate macOS users|custom-endpoint/i);
+      expect(mac.status).toBe('ok');
+      expect(mac.message).toMatch(/namespaced by CLAUDE_CONFIG_DIR/);
       expect(doctor.checkMacKeychain('linux')).toBeNull();
     });
   });
 
-  it('does not warn for an endpoint-only setup or a logged-out profile', async () => {
+  it('stays silent for an endpoint-only setup or a logged-out profile', async () => {
     await withTmpHome(async (home) => {
       addProfile(home, 'endpoint-a', { endpoint: true });
       addProfile(home, 'endpoint-b', { endpoint: true });
       fs.mkdirSync(path.join(home, '.claude-profiles', 'logged-out'), { recursive: true });
-      expect(doctor.checkMacKeychain('darwin').status).toBe('ok');
+      expect(doctor.checkMacKeychain('darwin')).toBeNull();
     });
   });
 
-  it('is ok with no profiles', async () => {
+  it('stays silent with no profiles', async () => {
     await withTmpHome(async () => {
-      expect(doctor.checkMacKeychain('darwin').status).toBe('ok');
+      expect(doctor.checkMacKeychain('darwin')).toBeNull();
     });
   });
 });
