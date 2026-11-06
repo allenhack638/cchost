@@ -184,6 +184,29 @@ describe('cc doctor --fix', () => {
     // Fix progress belongs on stderr, never in the JSON document.
     expect(err).toMatch(/Fixing:|Nothing auto-fixable/);
   });
+
+  it('never re-shares resources made private on purpose', async () => {
+    const originalLog = console.log;
+    console.log = () => {};
+    try {
+      await withTmpHome(async (home) => {
+        await cli.run(['add', 'client', '--private']);
+        const pdir = path.join(home, '.claude-profiles', 'client');
+        const checks = doctor.runChecks().filter((c) => c.name.startsWith('"client"'));
+        const resourceChecks = checks.filter((c) => !c.name.includes('.claude.json'));
+        expect(resourceChecks).toHaveLength(7);
+        for (const c of resourceChecks) expect(c).toMatchObject({ status: 'ok', message: 'private by choice' });
+
+        await cli.run(['doctor', '--fix']);
+        for (const d of ['projects', 'skills', 'agents', 'commands']) {
+          expect(fs.lstatSync(path.join(pdir, d)).isSymbolicLink()).toBe(false);
+        }
+        expect(fs.existsSync(path.join(pdir, 'settings.json'))).toBe(false);
+      });
+    } finally {
+      console.log = originalLog;
+    }
+  });
 });
 
 // ── Individual check functions ────────────────────────────────────────────────

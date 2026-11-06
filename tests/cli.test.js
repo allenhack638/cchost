@@ -411,8 +411,51 @@ describe('cchost list <profile> resources, --dry-run, help sharing', () => {
     expect(obj.resources).toMatchObject({
       projects: 'shared',
       skills: 'shared',
-      'settings.json': 'empty',
+      // unlink records the choice, so an empty file still reads as private.
+      'settings.json': 'private',
     });
+  });
+
+  it('add --private starts the chosen groups private and empty, records them, and shares the rest', async () => {
+    await cli.run(['add', 'client', '--private=projects,config']);
+    const pdir = path.join(tmpHome, '.claude-profiles', 'client');
+    expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(false);
+    expect(fs.readdirSync(path.join(pdir, 'projects'))).toEqual([]);
+    expect(fs.existsSync(path.join(pdir, 'settings.json'))).toBe(false);
+    expect(fs.lstatSync(path.join(pdir, 'skills')).isSymbolicLink()).toBe(true);
+    expect(JSON.parse(fs.readFileSync(path.join(pdir, '.cc-private.json'), 'utf8')).private)
+      .toEqual(['projects', 'mcp.json', 'settings.json', 'CLAUDE.md']);
+
+    out = '';
+    await cli.run(['list', 'client', '--json']);
+    expect(JSON.parse(out).resources).toMatchObject({
+      projects: 'private',
+      skills: 'shared',
+      'mcp.json': 'private',
+    });
+  });
+
+  it('add --private with no value makes all 7 private and links nothing', async () => {
+    await cli.run(['add', 'solo', '--private']);
+    const pdir = path.join(tmpHome, '.claude-profiles', 'solo');
+    for (const d of ['projects', 'skills', 'agents', 'commands']) {
+      expect(fs.lstatSync(path.join(pdir, d)).isDirectory()).toBe(true);
+      expect(fs.lstatSync(path.join(pdir, d)).isSymbolicLink()).toBe(false);
+    }
+    expect(fs.existsSync(path.join(tmpHome, '.claude'))).toBe(false);
+  });
+
+  it('add --private rejects unknown or empty groups', async () => {
+    await expect(cli.run(['add', 'x', '--private=foo'])).rejects.toThrow(/Unknown --private group "foo"/);
+    await expect(cli.run(['add', 'x', '--private='])).rejects.toThrow(/needs at least one/);
+    expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', 'x'))).toBe(false);
+  });
+
+  it('link removes resources from the private record', async () => {
+    await cli.run(['add', 'client', '--private=config']);
+    await cli.run(['link', 'client', '--config']);
+    const pdir = path.join(tmpHome, '.claude-profiles', 'client');
+    expect(fs.existsSync(path.join(pdir, '.cc-private.json'))).toBe(false);
   });
 
   it('link, unlink, and copy accept --dry-run and say so', async () => {
