@@ -28,8 +28,11 @@ npm install -g cchost
 Requires Node.js 18+ and Claude Code 2.1.140+ (`npm install -g @anthropic-ai/claude-code`).
 
 `cchost` is the primary command. The same binary is also installed as `cc` for
-backwards compatibility, but `cc` is the standard C compiler on macOS and
-Linux — prefer `cchost` in scripts, build files, and daily use.
+backwards compatibility. Because `cc` is also the C compiler on macOS and
+Linux, `cc` only acts as cchost for cchost commands (`cc use work`, `cc list`,
+…); anything else (`cc -c foo.c`, `cc --version`) is passed to the real
+compiler further down `PATH`, so builds keep working. Prefer `cchost` in
+scripts and daily use; `cchost --version` prints cchost's version.
 
 ## Quickstart
 
@@ -45,7 +48,7 @@ cchost remove old-profile   # delete a profile
 
 | Command | What it does |
 | --- | --- |
-| `cchost add <profile>` | Create a subscription profile. Logs in via Anthropic OAuth on first `cchost use`. Auto-shares all 7 resources with `~/.claude/`. |
+| `cchost add <profile> [--private[=groups]]` | Create a subscription profile. Logs in via Anthropic OAuth on first `cchost use`. Auto-shares all 7 resources with `~/.claude/`, or starts the `--private` ones empty and unshared. |
 | `cchost add <profile> --custom [...]` | Create or edit a custom-endpoint profile. Interactive wizard, or `--base-url=URL --token=TOKEN [--model=…]`. See [Custom endpoints](#custom-endpoints). |
 | `cchost use <profile> [...args]` | Launch Claude under that profile. Extra args are forwarded to `claude`. |
 | `cchost list [<profile>] [--json] [--reveal]` | List all profiles, or show one in detail including the state of each of its 7 resources. Emails and tokens are masked by default; `--reveal` prints them in full. |
@@ -76,7 +79,7 @@ On Windows and Linux, anything that authenticates a profile stays per-profile an
 | `projects/` | ✓ | `--projects` |
 | `skills/`, `agents/`, `commands/` | ✓ | `--tools` |
 | `mcp.json`, `settings.json`, `CLAUDE.md` | ✓ | `--config` |
-| `.credentials.json`, `.claude.json`, `.cc-env.json` | never | — |
+| `.credentials.json`, `.claude.json`, `.cc-env.json`, `.cc-private.json` | never | — |
 | `sessions/`, `plugins/` | never | — |
 
 Sharing uses POSIX symlinks on Linux/macOS and directory junctions on Windows (no admin or Developer Mode required). File resources fall back to a hard link on Windows when symlink creation would require elevation. Note that `mcp.json` and `settings.json` can execute arbitrary code through MCP servers and hooks — if a profile needs an isolated copy of either, run `cchost unlink <profile> --config`.
@@ -85,6 +88,8 @@ Sharing uses POSIX symlinks on Linux/macOS and directory junctions on Windows (n
 > contains full conversation transcripts, and `settings.json` / `mcp.json` can
 > execute hooks and MCP servers. For a work/personal split, unlink the resources
 > that must not cross over before first use, or use a separate OS account.
+
+To create a profile that starts private instead, use `cchost add <profile> --private` (all 7) or `--private=projects,tools,config` (just those groups). Private resources start empty — nothing from `~/.claude/` is copied in — and are recorded in `<profile>/.cc-private.json` so `cchost doctor --fix` never re-shares them.
 
 To see exactly what a profile shares, run `cchost list <profile>` — it prints each resource as `shared`, `private`, `empty`, `missing`, or `foreign-link`. `cchost help sharing` walks through the common tasks.
 

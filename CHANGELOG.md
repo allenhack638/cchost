@@ -5,6 +5,34 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **`cchost add <profile> --private[=projects,tools,config]`** creates a
+  profile whose chosen resource groups (or all 7) start private and empty
+  instead of shared. Nothing from `~/.claude/` is copied in, unlike
+  `cchost unlink`. Works with `--custom`.
+- **Private-by-choice record.** `add --private` and `cchost unlink` record
+  private resources in `<profile>/.cc-private.json`; `cchost link` removes
+  them. `cchost doctor` reports these as `private by choice` and `--fix` no
+  longer re-shares an empty or absent private resource. Profiles without the
+  file behave as before.
+
+### Changed
+
+- **`cc` passes compiler calls to the real C compiler.** When the legacy `cc`
+  alias is run with anything other than a cchost command (`cc -c foo.c`,
+  `cc --version`, …), it runs the next `cc` on `PATH` that isn't cchost, so
+  `make`, `node-gyp`, and configure scripts work even when npm's bin directory
+  comes before `/usr/bin`. cchost commands (`cc use work`) and bare `cc` are
+  unchanged. Use `cchost --version` for cchost's own version.
+
+### CI
+
+- Releases now create the `vX.Y.Z` tag and GitHub Release (notes from this
+  changelog) right after the npm publish. Actions updated to v7.
+
 ## [0.5.0] - 2026-11-07
 
 ### Added
