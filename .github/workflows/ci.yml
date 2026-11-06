@@ -44,18 +44,18 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org
           cache: npm
 
       - name: Install
         run: npm ci
 
-      # Trusted Publishing (OIDC) requires npm >= 11.5.1; Node 20 LTS ships
-      # with an older npm by default. Upgrading the global npm only affects
-      # this job's runner.
+      # Trusted Publishing (OIDC) requires npm >= 11.5.1. Pin the major: npm@latest
+      # moved to 12, which refuses to install on older Node and broke a release.
+      # Upgrading the global npm only affects this job's runner.
       - name: Upgrade npm to a Trusted-Publishing-capable version
-        run: npm install -g npm@latest
+        run: npm install -g npm@^11.5.1
 
       # Skip publish (without failing) when package.json's version is already on npm.
       # Lets you push docs/CI tweaks to master without bumping the version every time.
