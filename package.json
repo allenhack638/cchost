@@ -1,6 +1,6 @@
 {
   "name": "cchost",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "description": "Multi-account profile manager for Claude Code — switch accounts, share skills/agents/projects, route to custom endpoints. Works on Windows, Linux, and macOS.",
   "keywords": [
     "claude",
@@ -26,6 +26,7 @@
     "url": "git+https://github.com/allenhack638/cchost.git"
   },
   "bin": {
+    "cchost": "bin/cc.js",
     "cc": "bin/cc.js"
   },
   "engines": {

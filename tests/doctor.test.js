@@ -269,3 +269,68 @@ describe('doctor.runChecks — individual checks', () => {
     }
   });
 });
+
+describe('cchost doctor — PATH shadow check', () => {
+  const originalPath = process.env.PATH;
+  const originalWinPath = process.env.Path;
+  let tmpDirs = [];
+
+  function tmpDir() {
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-path-'));
+    tmpDirs.push(d);
+    return d;
+  }
+
+  function writeBin(dir, name) {
+    const file = path.join(dir, process.platform === 'win32' ? `${name}.cmd` : name);
+    fs.writeFileSync(file, '');
+    return file;
+  }
+
+  function setPath(dirs) {
+    const value = dirs.join(path.delimiter);
+    process.env.PATH = value;
+    process.env.Path = value;
+  }
+
+  afterEach(() => {
+    process.env.PATH = originalPath;
+    process.env.Path = originalWinPath;
+    for (const d of tmpDirs) fs.rmSync(d, { recursive: true, force: true });
+    tmpDirs = [];
+  });
+
+  it('ignores the system C compiler at /usr/bin/cc', () => {
+    if (process.platform === 'win32' || !fs.existsSync('/usr/bin/cc')) return;
+    const dir = tmpDir();
+    writeBin(dir, 'cchost');
+    setPath(['/usr/bin', dir]);
+    const result = doctor.checkCcShadow();
+    expect(result.status).toBe('ok');
+    expect(result.message).toContain(dir);
+  });
+
+  it('counts cchost and cc symlinks from one install as a single entry', () => {
+    if (process.platform === 'win32') return;
+    const dir = tmpDir();
+    const target = path.join(dir, 'cc.js');
+    fs.writeFileSync(target, '');
+    fs.symlinkSync(target, path.join(dir, 'cchost'));
+    fs.symlinkSync(target, path.join(dir, 'cc'));
+    setPath([dir]);
+    const result = doctor.checkCcShadow();
+    expect(result.status).toBe('ok');
+    expect(result.message).toContain(path.join(dir, 'cchost'));
+  });
+
+  it('warns when two separate cchost installs are on PATH', () => {
+    const a = tmpDir();
+    const b = tmpDir();
+    writeBin(a, 'cchost');
+    writeBin(b, 'cchost');
+    setPath([a, b]);
+    const result = doctor.checkCcShadow();
+    expect(result.status).toBe('warn');
+    expect(result.message).toMatch(/multiple/i);
+  });
+});

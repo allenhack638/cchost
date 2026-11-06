@@ -5,10 +5,21 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.5.0] - 2026-11-06
+
+### Added
+
+- **`cchost` command.** The CLI now installs as both `cchost` (primary) and
+  `cc` (legacy alias). `cc` is the system C compiler on macOS and Linux, so
+  docs, help, and new scripts use `cchost`; the alias stays for backwards
+  compatibility.
 
 ### Changed
 
+- All README examples, help text, and error hints now use `cchost`.
+- `cchost doctor` no longer reports `/usr/bin/cc` (the system compiler) as a
+  duplicate install, and counts the `cchost` + `cc` shims from a single npm
+  install as one entry.
 - README now separates **credential** isolation from the default shared pool.
   `projects/` (full session transcripts) and `settings.json` / `mcp.json`
   (code-executing config) are shared across profiles by default, and are
@@ -18,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **macOS subscription profiles are not verified in isolation.** Claude Code
   stores OAuth tokens in the login Keychain, not `<profile>/.credentials.json`,
-  so `cc list`'s `LoggedIn` column can report `false` for an authenticated
+  so `cchost list`'s `LoggedIn` column can report `false` for an authenticated
   profile. Subscription isolation must be tested with two real accounts before
   the platform is claimed as fully supported; the v0.4.4 note reflected CI
   coverage only. See the upstream report at

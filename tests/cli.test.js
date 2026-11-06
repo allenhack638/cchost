@@ -126,11 +126,11 @@ describe('cc use — refuses to launch missing profile', () => {
   });
 
   it('errors with a helpful message when the profile does not exist', async () => {
-    await expect(cli.run(['use', 'ghost'])).rejects.toThrow(/does not exist.*cc add ghost/i);
+    await expect(cli.run(['use', 'ghost'])).rejects.toThrow(/does not exist.*cchost add ghost/i);
   });
 
   it('errors when no profile is given', async () => {
-    await expect(cli.run(['use'])).rejects.toThrow(/Usage: cc use/);
+    await expect(cli.run(['use'])).rejects.toThrow(/Usage: cchost use/);
   });
 });
 
@@ -193,7 +193,7 @@ describe('cc unknown action', () => {
     const code = await cli.run(['env', 'kimi']);
     expect(code).toBe(2);
     expect(err).toMatch(/removed in v0\.3\.1/);
-    expect(err).toMatch(/cc add <profile> --custom/);
+    expect(err).toMatch(/cchost add <profile> --custom/);
   });
 });
 
@@ -336,7 +336,7 @@ describe('cc — v0.4.1 surface', () => {
     const code = await cli.run(['migrate', 'default', 'work']);
     expect(code).toBe(0);
     expect(stderr).toMatch(/deprecated/i);
-    expect(stderr).toMatch(/cc copy/);
+    expect(stderr).toMatch(/cchost copy/);
     // Pool content reached the profile via the forwarded copy
     expect(fs.existsSync(path.join(pdir, 'projects', 'X', 'p.txt'))).toBe(true);
   });
