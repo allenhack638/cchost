@@ -3,20 +3,36 @@
 Deferred work for cchost. Ordered by priority. Feature ideas are gated on real
 usage — do not build them on spec alone.
 
-## v0.5 feature candidates — gated on real usage
+## Feature candidates — gated on real usage
 
-- [ ] Plugin sharing via `cc link --include-plugins` — `plugins/` was
-      deliberately excluded from v0.2 sharing because it carries auth tokens.
-      A future opt-in flag could share it for users who accept that trade-off.
-- [ ] `cc mcp copy <src> <dest>` — per-entry MCP server copy, so individual
+- [ ] `cchost mcp copy <src> <dest>` — per-entry MCP server copy, so individual
       servers can be moved between profiles without copying the whole `mcp.json`.
+      Fits the web view: list a profile's servers and copy single ones across.
 - [ ] Selective `settings.json` merging — merge specific keys between profiles
-      instead of the all-or-nothing file copy `cc migrate` does today.
-- [ ] Update-available banner — startup check that notifies when a newer cchost
-      version is on npm. Use the existing `~/.claude-profiles/.cc-cache.json`
-      pattern; keep it non-blocking and respect `NO_COLOR`.
+      instead of the all-or-nothing file copy `cchost migrate` does today.
+- [ ] Plugin sharing via `cchost link --include-plugins` — `plugins/` was
+      deliberately excluded from sharing because it carries auth tokens.
+- [ ] Locking so two sessions can't use one profile at once — deferred until
+      someone hits it.
 
 ## Done
+
+### v0.6.1 — 2026-11-08
+- [x] `cchost link --backup`; identical private copies re-share directly.
+- [x] Daily update notice (CLI + web view), off with `CCHOST_NO_UPDATE_CHECK=1`.
+- [x] Web view polish: account menu, new logo/favicon, stable toggles, legend, rail.
+- [x] CI on Node 20, 22 and 24.
+
+### v0.6.0 — 2026-11-07
+- [x] `cchost ui` web view with sign-in, previews, activity and doctor fixes.
+- [x] `cchost add --private`; private-by-choice recorded in `.cc-private.json`.
+- [x] `cc` forwards compiler calls to the real C compiler.
+- [x] CI creates the GitHub Release.
+
+### v0.5.0 — 2026-11-07
+- [x] `cchost` command name (`cc` kept as alias), inherited-auth warnings,
+      endpoint env isolation, Keychain login detection, `--dry-run`, `help sharing`.
+
 
 - [x] `cc --version` / `cc -v` flag — prints the installed version from package.json.
 - [x] `cc doctor` / `cc doctor --fix [--force]` — environment, storage, and

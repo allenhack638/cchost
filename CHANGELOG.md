@@ -5,6 +5,43 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] - 2026-11-08
+
+### Added
+
+- **`cchost link --backup` and "Share with backup".** Sharing a resource that
+  has its own content no longer dead-ends: the profile's copy is renamed to
+  `<name>.cchost-backup-<time>` and the resource is linked. Nothing is deleted
+  or merged. A private copy that is still identical to `~/.claude/` is
+  re-shared directly, so private → shared round trips just work.
+- **Update notice.** A once-a-day background check against npm; the CLI
+  prints one line after a command and the web view shows "Update to x.y.z"
+  with a copy-the-command button. Off with `CCHOST_NO_UPDATE_CHECK=1`, in CI,
+  or with `NO_UPDATE_NOTIFIER`.
+- **Web view account menu.** The sidebar footer is now the account (avatar,
+  user, session end) with a menu for theme and sign out.
+- **New logo and favicon**: the pool hub, a shared centre linked to three
+  profiles.
+
+### Changed
+
+- **Smoother sidebar.** Collapsing only narrows the column and fades labels;
+  icons never move. Hover tooltips in the rail, `[` to toggle, and windows of
+  1100px or less get the rail automatically without forgetting your choice.
+- **Clearer legend.** Each state is shown as a miniature of its badge with a
+  one-line meaning; Foreign link appears only when a profile has one.
+- CI tests on Node 20, 22 and 24.
+
+### Fixed
+
+- Switching a group with private content to Shared left Apply disabled with
+  "No changes needed"; it now says why and offers Share with backup.
+- The sharing toggles, previews and panel no longer jump when you switch or
+  cancel; a slow or superseded preview can no longer overwrite a newer one,
+  and one group's toggle no longer cancels another group's preview.
+- The Add profile hint showed `&lt;name&gt;` instead of `<name>`.
+- A malformed path such as `//` returned a server error instead of 404.
+
 ## [0.6.0] - 2026-11-07
 
 ### Added

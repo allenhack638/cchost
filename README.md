@@ -72,7 +72,7 @@ In Doctor, every issue with an automatic fix has its own **Fix** button with a p
 | `cchost use <profile> [...args]` | Launch Claude under that profile. Extra args are forwarded to `claude`. |
 | `cchost list [<profile>] [--json] [--reveal]` | List all profiles, or show one in detail including the state of each of its 7 resources. Emails and tokens are masked by default; `--reveal` prints them in full. |
 | `cchost copy default <profile> [--force] [--dry-run]` | Seed an unlinked profile resource from `~/.claude/`. No-op for fully-shared profiles. |
-| `cchost link <profile> [--projects\|--tools\|--config] [--dry-run]` | Link a profile's resources to `~/.claude/`. Defaults to all 7 when no flag is passed. |
+| `cchost link <profile> [--projects\|--tools\|--config] [--backup] [--dry-run]` | Link a profile's resources to `~/.claude/`. Defaults to all 7 when no flag is passed. `--backup` shares resources that have their own content by keeping that content as a backup file. |
 | `cchost unlink <profile> [--projects\|--tools\|--config] [--dry-run]` | Break the link and make those resources private to the profile. Non-destructive. |
 | `cchost remove <profile> [--force]` | Delete a profile. Requires typing the profile name. `--force` required when private resources exist. |
 | `cchost ui [--port=N] [--no-open] [--session=8h]` | Open the local web view: see every profile and change sharing, profiles and doctor fixes with a preview first. See [Web view](#web-view). |
@@ -123,7 +123,7 @@ cchost unlink work             # all 7 private
 cchost link work --tools       # re-share
 ```
 
-`cchost unlink` is non-destructive — pool content is copied into the profile before the link is broken. `cchost link` refuses to overwrite existing private content; remove or relocate the private resource manually, then re-run.
+`cchost unlink` is non-destructive — pool content is copied into the profile before the link is broken. `cchost link` re-shares a private copy that is still identical to `~/.claude/`, but refuses to overwrite one that has changed. Add `--backup` to share it anyway: the profile's copy is renamed to `<name>.cchost-backup-<time>` in the profile folder, then linked. Nothing is deleted or merged. The web view offers the same choice as **Share with backup**.
 
 Use `cchost copy default <profile>` to seed an unlinked resource from the current `~/.claude/`. For fully-shared profiles this is a no-op.
 
@@ -192,6 +192,10 @@ the `LoggedIn` column reflects the profile's own credential file.
 ## Security
 
 `~/.claude-profiles/<profile>/` holds real OAuth credentials and API keys. Treat it like `~/.ssh`: don't commit it, don't share it, don't sync it to public cloud storage. The shipped `.gitignore` excludes profile directories. `cchost copy` and `cchost link` never touch credential files (`.credentials.json`, `.claude.json`, `.cc-env.json`); each profile keeps its own auth state. On macOS, OAuth tokens are stored in the login Keychain instead — see [Platform notes](#platform-notes).
+
+## Update notice
+
+Once a day, cchost checks npm for a newer version in the background (it never delays a command). When one exists, the CLI prints one line after a command and the web view shows **Update to x.y.z** in the sidebar. Turn it off with `CCHOST_NO_UPDATE_CHECK=1`; it is also off when `CI` or `NO_UPDATE_NOTIFIER` is set.
 
 ## Troubleshooting
 
