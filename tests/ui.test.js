@@ -5,6 +5,7 @@ import http from 'node:http';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import uiServer from '../lib/ui/server.js';
 import cli from '../lib/cli.js';
+import update from '../lib/update.js';
 
 // Raw http.request so tests control the Host header (fetch forbids it).
 function request(port, { method = 'GET', path: p = '/', headers = {}, body } = {}) {
@@ -145,6 +146,12 @@ describe('cchost ui server', () => {
     expect((await post('/api/apply', body, { Origin: 'http://evil.example' })).status).toBe(403);
     expect((await post('/api/apply', body, { 'Content-Type': 'text/plain' })).status).toBe(415);
     expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', 'work'))).toBe(true);
+  });
+
+  it('includes an available update in the state', async () => {
+    update.writeCache({ checkedAt: Date.now(), latest: '99.0.0' });
+    const res = await request(port, { path: '/api/state', headers: auth() });
+    expect(res.json.update).toMatchObject({ latest: '99.0.0' });
   });
 
   it('reports state without endpoint tokens', async () => {

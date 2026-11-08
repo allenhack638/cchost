@@ -57,6 +57,11 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .nav a .count.warn { color: var(--warn); }
 .nav a .count.err { color: var(--err); }
 .side-foot { margin-top: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding-top: 10px; border-top: 1px solid var(--border); }
+.row.update-row { min-height: 44px; color: var(--shared-fg); }
+.row.update-row[hidden] { display: none; }
+.row.update-row > .fold { display: grid; line-height: 1.3; }
+.row.update-row b { font-size: 13px; font-weight: 600; }
+.row.update-row span span { font-size: 12px; color: var(--text-3); }
 .row .kbd { margin-left: auto; font: 500 11px/1 var(--mono); color: var(--text-3); border: 1px solid var(--border); border-radius: 5px; padding: 3px 5px; }
 .row.account { min-height: 44px; padding-left: 8px; gap: 10px; }
 .row.account[aria-expanded="true"] { background: var(--surface-2); color: var(--text); }
@@ -389,6 +394,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   .side-foot { grid-column: 2; grid-row: 1; margin: 0; padding: 0; border-top: none; display: flex; align-items: center; gap: 2px; }
   .side-foot .fold, .collapse-row { display: none; }
   .side-foot .row.account { width: auto; min-height: 36px; padding: 0 6px; }
+  .side-foot .row.update-row { width: auto; min-height: 36px; padding: 0 9px; }
   .top, .content { padding-left: 16px; padding-right: 16px; }
   .cards { grid-template-columns: minmax(0, 1fr); }
   .check { grid-template-columns: 20px minmax(0, 1fr); }
@@ -455,6 +461,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
   <symbol id="i-updown" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></symbol>
+  <symbol id="i-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
   <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
   <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></symbol>
@@ -473,6 +480,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       <a class="row" href="#activity" data-view="activity" data-tip="Activity"><svg class="i"><use href="#i-history"/></svg><span class="fold">Activity</span><span class="count fold" id="count-activity"></span></a>
     </nav>
     <div class="side-foot">
+      <button class="row update-row" id="update" type="button" data-act="copy-update" hidden><svg class="i"><use href="#i-arrow-up"/></svg><span class="fold"><b id="update-text"></b><span>Copy update command</span></span></button>
       <button class="row collapse-row" id="collapse" type="button" data-act="collapse" aria-expanded="true" aria-keyshortcuts="[" data-tip="Collapse sidebar  ["><svg class="i collapse-i"><use href="#i-panel"/></svg><span class="fold">Collapse sidebar</span><span class="kbd fold" aria-hidden="true">[</span></button>
       <button class="row account" id="account" type="button" data-act="account" aria-haspopup="menu" aria-expanded="false" aria-controls="account-menu" data-tip="Account">
         <span class="avatar" id="avatar" aria-hidden="true">C</span>
@@ -557,6 +565,16 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     return json;
   }
 
+  const UPDATE_CMD = 'npm install -g cchost@latest';
+  function renderUpdate() {
+    const u = data && data.update;
+    const row = $('#update');
+    row.hidden = !u;
+    if (!u) return;
+    $('#update-text').textContent = `Update to ${u.latest}`;
+    row.dataset.tip = `cchost ${u.latest} is available`;
+    row.setAttribute('aria-label', `cchost ${u.latest} is available, you have ${u.current}. Copy the update command`);
+  }
   async function loadState() {
     try {
       const next = await api('/api/state');
@@ -568,6 +586,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       data = next;
       if (!changed) return;
       $('#count-profiles').textContent = data.profiles.length || '';
+      renderUpdate();
       if (view === 'profiles' || view === 'pool') render();
       refreshOpenPanel();
     } catch (err) {
@@ -1147,6 +1166,11 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       const done = () => { toast('Command copied', false); announce('Command copied to the clipboard.'); };
       if (navigator.clipboard) navigator.clipboard.writeText(cmd).then(done, () => toast(cmd, false));
       else toast(cmd, false);
+    }
+    if (act === 'copy-update') {
+      const done = () => { toast(`Copied: ${UPDATE_CMD}`, false); announce('Update command copied. Run it in a terminal, then restart cchost ui.'); };
+      if (navigator.clipboard) navigator.clipboard.writeText(UPDATE_CMD).then(done, () => toast(UPDATE_CMD, false));
+      else toast(UPDATE_CMD, false);
     }
     if (act === 'account') { toggleMenu(); return; }
     if (act === 'logout') {

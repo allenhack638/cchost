@@ -25,6 +25,7 @@ function runCc(args, { home, extraEnv = {} }) {
     // Strip any inherited override so we don't pick up the dev's real one.
     CLAUDE_CONFIG_DIR: undefined,
     NO_COLOR: '1',
+    CCHOST_NO_UPDATE_CHECK: '1',
   };
   // node strips undefined values from env
   return spawnSync(process.execPath, [ccBin, ...args], {
