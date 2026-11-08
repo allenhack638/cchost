@@ -92,6 +92,62 @@ describe('shareLink — v0.4.1 (7 resources)', () => {
     expect(fs.readFileSync(path.join(pdir, 'mcp.json'), 'utf8')).toBe('{"private":1}');
   });
 
+  it('backup: keeps private content as a backup file, then links', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(path.join(pdir, 'skills'), { recursive: true });
+    fs.writeFileSync(path.join(pdir, 'mcp.json'), '{"private":1}');
+    fs.writeFileSync(path.join(pdir, 'skills', 'mine.md'), 'x');
+
+    const preview = share.shareLink('work', { config: true, tools: true, backup: true, dryRun: true });
+    expect(preview.find((r) => r.resource === 'mcp.json')).toMatchObject({ status: 'linked', backup: expect.stringMatching(/^mcp\.json\.cchost-backup-\d{8}-\d{6}$/) });
+    expect(fs.lstatSync(path.join(pdir, 'mcp.json')).isSymbolicLink()).toBe(false);
+
+    const results = share.shareLink('work', { config: true, tools: true, backup: true });
+    const mcp = results.find((r) => r.resource === 'mcp.json');
+    const skills = results.find((r) => r.resource === 'skills');
+    expect(mcp.status).toBe('linked');
+    expect(skills.status).toBe('linked');
+    expect(fs.readFileSync(path.join(pdir, mcp.backup), 'utf8')).toBe('{"private":1}');
+    expect(fs.readFileSync(path.join(pdir, skills.backup, 'mine.md'), 'utf8')).toBe('x');
+    expect(share.isSharedResource(pdir, 'mcp.json')).toBe(true);
+    expect(share.isSharedResource(pdir, 'skills')).toBe(true);
+  });
+
+  it('links a private copy that is identical to the pool without a backup', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    share.shareLink('work', { config: true, tools: true });
+    fs.writeFileSync(path.join(tmpHome, '.claude', 'CLAUDE.md'), '# pool');
+    fs.writeFileSync(path.join(tmpHome, '.claude', 'skills', 'a.md'), 'a');
+    share.shareUnlink('work', { config: true, tools: true });
+
+    const results = share.shareLink('work', { config: true, tools: true });
+    for (const r of results) expect(r.status).toBe('linked');
+    expect(results.find((r) => r.resource === 'CLAUDE.md').identical).toBe(true);
+    expect(share.isSharedResource(pdir, 'skills')).toBe(true);
+    expect(fs.readdirSync(pdir).some((f) => f.includes('cchost-backup'))).toBe(false);
+
+    share.shareUnlink('work', { config: true });
+    fs.writeFileSync(path.join(pdir, 'CLAUDE.md'), '# changed');
+    expect(share.shareLink('work', { config: true }).find((r) => r.resource === 'CLAUDE.md').status).toBe('refused');
+  });
+
+  it('backup: never overwrites an earlier backup with the same name', () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(pdir, { recursive: true });
+    fs.writeFileSync(path.join(pdir, 'CLAUDE.md'), 'first');
+    const [first] = share.shareLink('work', { config: true, backup: true }).filter((r) => r.resource === 'CLAUDE.md');
+    fs.unlinkSync(path.join(pdir, 'CLAUDE.md'));
+    fs.writeFileSync(path.join(pdir, 'CLAUDE.md'), 'second');
+    fs.renameSync(path.join(pdir, first.backup), path.join(pdir, `${first.backup}.keep`));
+    fs.writeFileSync(path.join(pdir, first.backup), 'squatter');
+    const [second] = share.shareLink('work', { config: true, backup: true }).filter((r) => r.resource === 'CLAUDE.md');
+    expect(second.status).toBe('linked');
+    expect(fs.readFileSync(path.join(pdir, second.backup), 'utf8')).toBe('second');
+    expect(fs.readFileSync(path.join(pdir, `${first.backup}.keep`), 'utf8')).toBe('first');
+    expect(fs.readFileSync(path.join(pdir, first.backup), 'utf8')).toBe('squatter');
+  });
+
   it('empty private dir is safely replaced by a symlink', () => {
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(path.join(pdir, 'projects'), { recursive: true }); // empty

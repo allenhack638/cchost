@@ -282,11 +282,11 @@ The palette is a cool zinc neutral range with a single saturated blue. Amber, re
 
 ## Layout
 
-The shell is a two-column grid: a 240px sticky sidebar (wordmark, Profiles, Shared pool, Doctor and Activity with right-aligned counts, then the pool path and theme switch pinned to the bottom) and a flexible main column. The main column starts with a 60px sticky header containing the title, the "Read from disk" sync note, a reload icon button and the view's primary action. The header is translucent (88% canvas with an 8px backdrop blur) and has a hairline bottom border. Content is padded 24px 32px 64px and capped at 1280px.
+The shell is a two-column grid: a 240px sticky sidebar (logo and wordmark; Profiles, Shared pool, Doctor and Activity with right-aligned counts; then, pinned to the bottom under a hairline, the Collapse row and the account row) and a flexible main column. The main column starts with a 60px sticky header containing the title, the "Read from disk" sync note, a reload icon button and the view's primary action. The header is translucent (88% canvas with an 8px backdrop blur) and has a hairline bottom border. Content is padded 24px 32px 64px and capped at 1280px.
 
-Profile cards fill an auto-fill grid with a 320px minimum and a 16px gap. Inside a card, rows are 14px apart, resource groups sit in a 64px label column next to wrapping badges with a 6px gap, and the actions sit under a hairline. Change lines use an 18px icon, 110px name, 1fr text grid. The right-hand panel is `min(480px, 100vw)` with 24px side padding and sections separated by hairlines.
+Profile cards fill an auto-fill grid with a 400px minimum (so a card's config badges stay on one line) and a 16px gap. Inside a card, rows are 14px apart, resource groups sit in a 64px label column next to wrapping badges with a 6px gap, and the actions sit under a hairline. Change lines use an 18px icon, 110px name, 1fr text grid. The right-hand panel is `min(480px, 100vw)` with 24px side padding and sections separated by hairlines.
 
-Spacing follows a 4px rhythm (4, 8, 12, 16, 24, 32), with 6, 10 and 14px used for gaps inside components. At 860px and below the sidebar becomes a wrapping top bar: the nav scrolls horizontally, the pool path is hidden, the theme switch moves right and page padding drops to 16px.
+Spacing follows a 4px rhythm (4, 8, 12, 16, 24, 32), with 6, 10 and 14px used for gaps inside components. Windows of 1100px and below get the 64px rail automatically (the saved choice is kept and returns when the window widens). At 860px and below the sidebar becomes a top bar: logo, then theme and sign-out icons on the right, the four nav items on a second row, and page padding drops to 16px.
 
 ## Elevation & Depth
 
@@ -302,7 +302,7 @@ The system is nearly flat. Depth comes from the three tonal neutrals and hairlin
 
 ## Shapes
 
-Corners are softly rounded and get larger as the container gets larger: 5px on inner segments and theme buttons, 6px on buttons, inputs, badges and nav items, 8px on segmented tracks, the theme switch, plans, choice cards, the danger box, banners and toasts,, 10px on cards, tables, activity entries and empty states, and 3px on the 10px legend swatches. Pills and chips are fully round (999px). Borders are 1px throughout. Dashed borders always mean absence or "nothing here yet": missing badges, empty states, the plan hint and dividers between sharing rows. Icons are 16px stroked line glyphs (1.75 stroke, round caps), shrunk to 12px at stroke 2 inside badges.
+Corners are softly rounded and get larger as the container gets larger: 5px on inner segments and theme buttons, 6px on buttons, inputs, badges and nav items, 8px on segmented tracks, the theme switch, plans, choice cards, the danger box, banners and toasts,, 10px on cards, tables, activity entries and empty states. Pills and chips are fully round (999px). Borders are 1px throughout. Dashed borders always mean absence or "nothing here yet": missing badges, empty states, the plan hint and dividers between sharing rows. Icons are 16px stroked line glyphs (1.75 stroke, round caps), shrunk to 12px at stroke 2 inside badges.
 
 ## Components
 
@@ -318,6 +318,9 @@ Restrained and solid. Every button is 32px tall.
 
 ### Badges (resource state)
 The core signature. A 24px rounded rectangle (6px radius) with a 1px border, a 12px state icon and the resource label at 12px/500. The variants are shared (blue, link icon), private and empty (amber, lock icon), missing (transparent, dashed grey, minus icon) and foreign-link (red, alert icon). State is also written into screen-reader text and the title attribute. After a change, the affected badges pulse once with a 4px Action Blue ring that fades out over 1.6s.
+
+### Legend
+A key under the profile count, in a two-column grid (one column at 760px and below): a 22×20 icon-only copy of each badge, the term at 550 in ink, and its meaning in tertiary ink. Shared, Private and Missing always show; Foreign link appears only when some profile has one.
 
 ### Pills and Chips
 - **Login pill:** fully round, 2px 8px, 12px/550, with a 6px current-colour dot. Neutral for "Not logged in", Success Green for "Logged in", Selection Tint for "Endpoint".
@@ -337,13 +340,13 @@ The core signature. A 24px rounded rectangle (6px radius) with a 1px border, a 1
 - **Choice cards:** two-column radio cards (8px radius) whose checked state is a blue border plus a 1px blue ring. Checkboxes use the primary accent colour.
 
 ### Navigation
-Sidebar links are 7px 8px with a 6px radius, a 16px icon, 500 weight and secondary ink. Hover fills to Recess. The current page uses the Selection Tint. Counts sit right-aligned at 12px and switch to `warn` or `err` when doctor reports issues. The theme switch is a bordered three-option segmented control (System / Light / Dark) whose pressed option uses the Selection Tint.
+Every sidebar entry, nav or footer, is one **row**: 34px tall, 0 12px padding, 6px radius, a 16px icon, 500 weight and secondary ink. Hover fills to Recess and the current page uses the Selection Tint. Counts sit right-aligned at 12px and switch to `warn` or `err` when doctor reports issues. Collapse sidebar shows its `[` shortcut in a 5px-radius key cap. The account row (44px) holds a 24px neutral initial avatar, the user in 13px/600 ink and "Session ends …" in 12px tertiary, and an up-down chevron. It opens the **account menu**: a floating Surface menu (10px radius, toast shadow, 140ms scale-in) with the user header (hidden when the account row is visible right under it), a Theme segmented control (System, Light, Dark, each with its monitor, sun or moon icon; checked option lifted onto Surface in blue) and Sign out. It sits flush above the account row in the sidebar, beside the avatar in the rail, and below the avatar in the top bar. Arrow keys move through it; Esc, Tab or an outside click closes it and focus returns to the account row.
 
 ### Segmented control
 A Recess track with a firm border, 7px radius and 2px padding. Segments are 4px 10px, 12.5px/550. A pressed segment is lifted onto Surface with blue text and the rest shadow. When it is the pending target of a change, it is filled Action Blue. "Now: shared" is shown below in tertiary ink.
 
 ### Plan (preview and result)
-A signature component. An 8px bordered block on Recess with a section-weight header (an info icon and the action name, plus a right-aligned tag such as "nothing changed yet"), then a list of change lines, then a sticky footer on Surface with a change count, Cancel, and Apply. Preview lines show a blue arrow, the mono resource name and a plain description. Unchanged lines are tertiary with a minus icon, and warn and error lines take their state colour. After Apply, the same block becomes the result. The header turns green, change lines get green checks, and the lines rise into place (4px, 420ms, `cubic-bezier(0.16, 1, 0.3, 1)`, 70ms stagger). A failed plan turns the header red.
+A signature component. An 8px bordered block on Recess with a section-weight header (an info icon and the action name, plus a right-aligned tag such as "nothing changed yet"), then a list of change lines, then a sticky footer on Surface with a change count, Cancel, and Apply. Preview lines show a blue arrow, the mono resource name and a plain description. Unchanged lines are tertiary with a minus icon, and warn and error lines take their state colour. When sharing is refused because a resource has its own content, the footer says so ("3 resources have their own content"), a short note explains the trade, and the action becomes **Share with backup**, which previews renaming each private copy to `<name>.cchost-backup-<time>` before linking; Apply is never left disabled without a reason. After Apply, the same block becomes the result. The header turns green, change lines get green checks, and the lines rise into place (4px, 420ms, `cubic-bezier(0.16, 1, 0.3, 1)`, 70ms stagger). A failed plan turns the header red.
 
 ### Panel, Toast, Banner
 - **Panel:** a right-hand dialog that slides in over 320ms on the same ease. The header is 20px 24px 16px with a 17px title and a close icon button.
@@ -352,7 +355,8 @@ A signature component. An 8px bordered block on Recess with a section-weight hea
 
 ### Sidebar rail and sign-in
 
-- **Collapsible sidebar:** the panel-left button folds the 240px sidebar into a 64px icon rail (`grid-template-columns` transition, 260ms). Labels fade out and become tooltips; counts hide; the theme switch hides; Sign out stays. The choice is remembered per browser. Below 860px the sidebar is a top bar and does not collapse.
+- **Logo:** the pool hub. A 24-unit blue tile (6 radius, Action Blue) with a filled white centre for `~/.claude` linked by three 70% spokes to three white profile dots. It is the sidebar and sign-in mark at 22px and the favicon (an inline SVG data URI with literal colours). It is the only place blue appears as a solid tile.
+- **Collapsible sidebar:** the Collapse row (or the `[` key, ignored while typing or with the panel open) folds the 240px sidebar into a 64px icon rail with a 240ms `grid-template-columns` transition. Nothing re-lays out: every icon sits at x=24 in both states, so only the column narrows, labels fade (100ms out; 160ms in after a 60ms wait) In the rail, hovering or keyboard-focusing an icon shows a tooltip in an inverted chip beside it (a fixed element, so the rail's clipping can't cut it). The stored state is applied before transitions are enabled, so a reload never animates. Reduced motion makes every part of it instant.
 - **Sign-in page:** one 380px card on the page ground, the wordmark, an h1 "Sign in", username and password fields, a full-width primary button and a hairline-separated hint. Errors show in `err-fg` under the password with a short horizontal shake (none under reduced motion). It reads the same `tokens.css` as the app.
 
 ## Do's and Don'ts

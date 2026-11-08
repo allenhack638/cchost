@@ -129,6 +129,11 @@ describe('cchost ui server', () => {
     expect(res.status).toBe(403);
   });
 
+  it('answers malformed paths with 404, not a server error', async () => {
+    const res = await request(port, { method: 'GET', path: '//', headers: auth() });
+    expect(res.status).toBe(404);
+  });
+
   it('requires a session and the X-CCHost header on the API', async () => {
     expect((await request(port, { path: '/api/state', headers: { ...host(), 'X-CCHost': '1' } })).status).toBe(401);
     expect((await request(port, { path: '/api/state', headers: { ...host(), Cookie: cookie } })).status).toBe(403);
@@ -163,6 +168,24 @@ describe('cchost ui server', () => {
 
     const activity = await request(port, { path: '/api/activity', headers: auth() });
     expect(activity.json.activity).toHaveLength(1);
+  });
+
+  it('flags private content on share, then shares it with a backup', async () => {
+    const pdir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.unlinkSync(path.join(pdir, 'CLAUDE.md'));
+    fs.writeFileSync(path.join(pdir, 'CLAUDE.md'), '# work only');
+    const plain = await post('/api/preview', { action: 'link', profile: 'work', groups: ['config'] });
+    const held = plain.json.lines.find((l) => l.resource === 'CLAUDE.md');
+    expect(held).toMatchObject({ kind: 'warn', code: 'private-content' });
+    expect(plain.json.lines.some((l) => l.kind === 'change')).toBe(false);
+
+    const withBackup = await post('/api/preview', { action: 'link', profile: 'work', groups: ['config'], backup: true });
+    expect(withBackup.json.lines.find((l) => l.resource === 'CLAUDE.md')).toMatchObject({ kind: 'change' });
+    const applied = await post('/api/apply', { action: 'link', profile: 'work', groups: ['config'], backup: true });
+    expect(applied.json.entry).toMatchObject({ ok: true, title: 'Share config (with backup) · work' });
+    const backups = fs.readdirSync(pdir).filter((f) => f.startsWith('CLAUDE.md.cchost-backup-'));
+    expect(backups).toHaveLength(1);
+    expect(fs.readFileSync(path.join(pdir, backups[0]), 'utf8')).toBe('# work only');
   });
 
   it('refuses to remove a profile without the typed name', async () => {
