@@ -51,13 +51,14 @@ cchost add <name> --existing --dry-run --json
 cchost add <profile> --dry-run --json
 cchost add <profile> --private=projects,config --dry-run --json
 cchost add <profile> --custom --base-url=<url> --dry-run --json
-cchost mcp copy <name> pool --dry-run --json
+cchost mcp copy default pool --dry-run --json
 ```
 
-Apply the same commands without `--dry-run` (keep `--json`). Check every
-result's `ok`; if one fails, stop and explain it.
+`default` means the existing account, named or not. Apply the same commands
+without `--dry-run` (keep `--json`), in this order. Check every result's
+`ok`; if one fails, stop and explain it.
 
-`mcp copy <name> pool` shares the servers with every profile that shares
+`mcp copy default pool` shares the servers with every profile that shares
 config (`mcp.json`): cchost writes them into each one's `.claude.json`.
 
 ### Hand over the human steps

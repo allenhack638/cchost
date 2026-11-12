@@ -5,6 +5,50 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-11-13
+
+### Added
+
+- **Set up by your AI agent.** Say *"Set up cchost for me"* to Claude Code or
+  any agent. `cchost agent [topic]` prints guides written for agents, and two
+  skills, `cchost-setup` and `cchost-manage`, point at them. Install the
+  skills with `cchost skill install`, or as a Claude Code plugin from this
+  repo's marketplace.
+- **MCP servers across profiles.** `cchost mcp list|copy|remove|sync`, and an
+  MCP servers view in `cchost ui`: every server against every profile, Copy
+  and Remove with a preview, project-only servers included.
+- **Shared MCP servers now load.** Profiles that share `mcp.json` (and your
+  existing account) get the pool's servers written into their `.claude.json`.
+  cchost tracks the copies it made and never touches servers you added.
+- **Your existing account as a profile.** `cchost add <name> --existing`
+  names the account plain `claude` uses. Nothing is moved or logged out;
+  `cchost use <name>` runs it, and removing it only forgets the name.
+- **`cchost status [--json]`**: everything at a glance with suggested next
+  steps.
+- **Backups and undo.** Every change to a JSON config file is saved first;
+  `cchost backups`, `cchost restore <id>`, and Restore in the web view.
+- **`cchost token <profile>`** sets an endpoint token with hidden input.
+- **`--json` and `--dry-run` on every changing command**, `remove --yes`,
+  `doctor --fix --dry-run`, and documented exit codes.
+- Doctor checks for MCP sync, pool file permissions, the existing account's
+  name, and the agent skills.
+
+### Changed
+
+- An endpoint profile can be created without a token
+  (`--custom --base-url=URL`); set it with `cchost token`. `--token=` still
+  works but warns that it stays in shell history.
+- `cchost remove` without a terminal refuses unless `--yes` is given
+  (piping the name in no longer works), so scripts and agents never hang on
+  a prompt.
+- `--reveal` only works when output goes to a terminal.
+- Profiles created with `cchost add` get the pool's MCP servers right away.
+
+### Fixed
+
+- Folders starting with a dot in `~/.claude-profiles` (such as backups) were
+  listed as profiles.
+
 ## [0.6.1] - 2026-11-08
 
 ### Added

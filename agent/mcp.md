@@ -6,7 +6,7 @@ Claude Code reads MCP servers from each account's `.claude.json`:
 - **local scope:** only in one project folder
 
 cchost manages both. Targets are profile names, the name of the existing
-account, or `pool`.
+account (or `default` for it, named or not), or `pool`.
 
 **The pool** (`~/.claude/mcp.json`) is the shared list. Every profile that
 shares `mcp.json` gets the pool's servers written into its user scope, and so

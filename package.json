@@ -1,6 +1,6 @@
 {
   "name": "cchost",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Multi-account profile manager for Claude Code — switch accounts, share skills/agents/projects, route to custom endpoints. Works on Windows, Linux, and macOS.",
   "keywords": [
     "claude",

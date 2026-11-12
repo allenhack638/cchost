@@ -5,9 +5,6 @@ usage — do not build them on spec alone.
 
 ## Feature candidates — gated on real usage
 
-- [ ] `cchost mcp copy <src> <dest>` — per-entry MCP server copy, so individual
-      servers can be moved between profiles without copying the whole `mcp.json`.
-      Fits the web view: list a profile's servers and copy single ones across.
 - [ ] Selective `settings.json` merging — merge specific keys between profiles
       instead of the all-or-nothing file copy `cchost migrate` does today.
 - [ ] Plugin sharing via `cchost link --include-plugins` — `plugins/` was
@@ -16,6 +13,15 @@ usage — do not build them on spec alone.
       someone hits it.
 
 ## Done
+
+### v0.7.0 — 2026-11-13
+- [x] `cchost mcp list|copy|remove|sync` and the MCP servers web view; pool
+      servers synced into sharing profiles.
+- [x] `cchost add --existing`, `cchost status`, backups/restore, `cchost token`.
+- [x] Agent guides (`cchost agent`), `cchost-setup` / `cchost-manage` skills,
+      `cchost skill install`, plugin marketplace.
+- [x] `--json`/`--dry-run` on every changing command; terminal-only
+      `--reveal`, `token` and typed-name `remove`.
 
 ### v0.6.1 — 2026-11-08
 - [x] `cchost link --backup`; identical private copies re-share directly.

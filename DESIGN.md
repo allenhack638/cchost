@@ -325,6 +325,7 @@ A key under the profile count, in a two-column grid (one column at 760px and bel
 ### Pills and Chips
 - **Login pill:** fully round, 2px 8px, 12px/550, with a 6px current-colour dot. Neutral for "Not logged in", Success Green for "Logged in", Selection Tint for "Endpoint".
 - **Chip:** fully round, Recess fill, hairline border, 12px. Used in the pool and doctor tables.
+- **Existing account pill:** Recess fill, secondary ink, no dot, set beside the profile name on the card of the account plain `claude` uses. That card has no sharing groups (it is the pool) and offers MCP servers and Forget name instead of Manage sharing and Remove.
 
 ### Cards / Containers
 - **Corner Style:** 10px.
@@ -337,7 +338,7 @@ A key under the profile count, in a two-column grid (one column at 760px and bel
 - **Style:** 34px tall, 0 10px padding, 6px radius, firm hairline border, Surface fill. Labels are 13px/550 and help text is 12.5px tertiary ink.
 - **Focus:** 2px focus outline with no offset, and the border turns to focus blue.
 - **Error:** `err` border plus a 12.5px `err-fg` message.
-- **Choice cards:** two-column radio cards (8px radius) whose checked state is a blue border plus a 1px blue ring. Checkboxes use the primary accent colour.
+- **Choice cards:** two-column radio cards (8px radius; a third, "My existing account", wraps onto its own row when offered) whose checked state is a blue border plus a 1px blue ring. Checkboxes use the primary accent colour.
 
 ### Navigation
 Every sidebar entry, nav or footer, is one **row**: 34px tall, 0 12px padding, 6px radius, a 16px icon, 500 weight and secondary ink. Hover fills to Recess and the current page uses the Selection Tint. Counts sit right-aligned at 12px and switch to `warn` or `err` when doctor reports issues. Collapse sidebar shows its `[` shortcut in a 5px-radius key cap. The account row (44px) holds a 24px neutral initial avatar, the user in 13px/600 ink and "Session ends …" in 12px tertiary, and an up-down chevron. It opens the **account menu**: a floating Surface menu (10px radius, toast shadow, 140ms scale-in) with the user header (hidden when the account row is visible right under it), a Theme segmented control (System, Light, Dark, each with its monitor, sun or moon icon; checked option lifted onto Surface in blue) and Sign out. It sits flush above the account row in the sidebar, beside the avatar in the rail, and below the avatar in the top bar. Arrow keys move through it; Esc, Tab or an outside click closes it and focus returns to the account row.
@@ -347,6 +348,15 @@ A Recess track with a firm border, 7px radius and 2px padding. Segments are 4px 
 
 ### Plan (preview and result)
 A signature component. An 8px bordered block on Recess with a section-weight header (an info icon and the action name, plus a right-aligned tag such as "nothing changed yet"), then a list of change lines, then a sticky footer on Surface with a change count, Cancel, and Apply. Preview lines show a blue arrow, the mono resource name and a plain description. Unchanged lines are tertiary with a minus icon, and warn and error lines take their state colour. When sharing is refused because a resource has its own content, the footer says so ("3 resources have their own content"), a short note explains the trade, and the action becomes **Share with backup**, which previews renaming each private copy to `<name>.cchost-backup-<time>` before linking; Apply is never left disabled without a reason. After Apply, the same block becomes the result. The header turns green, change lines get green checks, and the lines rise into place (4px, 420ms, `cubic-bezier(0.16, 1, 0.3, 1)`, 70ms stagger). A failed plan turns the header red.
+
+### MCP servers view
+A matrix table: one row per server (name in 600 ink, its masked command or URL in 12px mono tertiary, ellipsised), one column per target (Pool first, then every account; the existing account is starred with a footnote), and a right-aligned Copy… / Remove… pair. Each cell is a 12px/550 mark with an icon: **Has it** (green check), **From pool** (blue link: synced by cchost), **Shared** (blue folder, in the Pool column), **Differs** (amber alert: same name, different config, compared through a per-run keyed fingerprint so no values reach the page) and a tertiary dash when absent. The table scrolls sideways inside its rounded frame when there are many accounts. Project-only servers follow as a separate list: name, account and project path, command, Copy…. When profiles that share `mcp.json` are missing pool servers, a callout above the table names them and offers **Sync pool…**. Copy and Remove open the panel with a target list (radios for the source, checkboxes for destinations, each with its current mark) and the usual Plan preview.
+
+### Callout
+A Surface strip with a hairline border and 10px radius above a view's content, with secondary text (key words in ink 600) and one button on the right. Used for "name your existing account" on Profiles and for pool drift on MCP servers. At most one per view.
+
+### Backups
+Listed under Activity: a table of rows with a friendly title ("MCP copy from work"), its age, the files in 12px mono tertiary, and **Restore…**, which previews the files to be put back before applying.
 
 ### Panel, Toast, Banner
 - **Panel:** a right-hand dialog that slides in over 320ms on the same ease. The header is 20px 24px 16px with a 17px title and a close icon button.

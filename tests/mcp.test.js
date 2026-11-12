@@ -179,6 +179,16 @@ describe('pool sync', () => {
   });
 });
 
+describe('default target', () => {
+  it('is the existing account before and after it has a name', () => {
+    write(path.join(home, '.claude.json'), { mcpServers: { db: { command: 'db' } } });
+    makeProfile('w', { shareMcp: false });
+    expect(mcp.copy({ from: 'default', to: ['w'] }, { dryRun: true })[0].text).toBe('copy to w');
+    profiles.setAlias('me');
+    expect(mcp.resolveTarget('default').name).toBe('me');
+  });
+});
+
 describe('describe / listAll', () => {
   it('lists pool and profiles with scopes and no secrets', () => {
     makeProfile('w', { shareMcp: false });
