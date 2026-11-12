@@ -221,6 +221,49 @@ describe('cchost ui server', () => {
     expect(p.resources.skills).toBe('shared');
   });
 
+  it('lists MCP servers with secrets masked, and copies them through preview and apply', async () => {
+    const SECRET = 'SENTINEL-mcp-secret-0123456789abc';
+    const f = path.join(tmpHome, '.claude-profiles', 'kimi', '.claude.json');
+    fs.writeFileSync(f, JSON.stringify({ mcpServers: { db: { command: 'db', args: ['--api-key', SECRET], env: { K: SECRET }, headers: { A: SECRET } } } }));
+    const list = await request(port, { path: '/api/mcp', headers: auth() });
+    expect(list.status).toBe(200);
+    expect(list.text).not.toContain(SECRET);
+    const kimi = list.json.targets.find((t) => t.target === 'kimi');
+    expect(kimi.servers[0]).toMatchObject({ name: 'db', envKeys: ['K'], headerKeys: ['A'] });
+    expect(kimi.servers[0].fp).toMatch(/^[0-9a-f]{12}$/);
+
+    const body = { action: 'mcp-copy', from: 'kimi', to: ['work'], servers: ['db'] };
+    const prev = await post('/api/preview', body);
+    expect(prev.json.lines[0]).toMatchObject({ kind: 'change', text: 'copy to work' });
+    expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', 'work', '.claude.json'))).toBe(false);
+    const res = await post('/api/apply', body);
+    expect(res.json.entry).toMatchObject({ ok: true, title: 'Copy db · kimi → work' });
+    expect(res.text).not.toContain(SECRET);
+    const work = JSON.parse(fs.readFileSync(path.join(tmpHome, '.claude-profiles', 'work', '.claude.json'), 'utf8'));
+    expect(work.mcpServers.db.env.K).toBe(SECRET);
+
+    const backups = await request(port, { path: '/api/backups', headers: auth() });
+    expect(backups.json.backups[0].files).toEqual(['~/.claude-profiles/work/.claude.json']);
+    const undo = await post('/api/apply', { action: 'restore', id: backups.json.backups[0].id });
+    expect(undo.json.entry.ok).toBe(true);
+    expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', 'work', '.claude.json'))).toBe(false);
+  });
+
+  it('names the existing account and refuses sharing changes on it', async () => {
+    fs.writeFileSync(path.join(tmpHome, '.claude.json'), JSON.stringify({ oauthAccount: { emailAddress: 'me@example.com' } }));
+    let st = await request(port, { path: '/api/state', headers: auth() });
+    expect(st.json.existing).toMatchObject({ found: true, loggedIn: true, name: null, email: 'm*********.com' });
+    const res = await post('/api/apply', { action: 'add', name: 'personal', existing: true });
+    expect(res.json.entry.ok).toBe(true);
+    const me = res.json.state.profiles.find((p) => p.name === 'personal');
+    expect(me).toMatchObject({ alias: true, shared: 7 });
+    const link = await post('/api/preview', { action: 'link', profile: 'personal' });
+    expect(link.status).toBe(409);
+    const rm = await post('/api/apply', { action: 'remove', profile: 'personal', confirm: 'personal' });
+    expect(rm.json.entry.ok).toBe(true);
+    expect(fs.existsSync(path.join(tmpHome, '.claude.json'))).toBe(true);
+  });
+
   it('fixes one named doctor issue, and needs confirmation for unsafe fixes', async () => {
     // A missing resource link is a safe fix; a corrupt .claude.json needs --force.
     fs.rmSync(path.join(tmpHome, '.claude-profiles', 'work', 'skills'));

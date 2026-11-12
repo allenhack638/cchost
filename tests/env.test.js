@@ -2,6 +2,18 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+const stdoutTTY = process.stdout.isTTY;
+const noColor = process.env.NO_COLOR;
+const asTerminal = () => {
+  process.stdout.isTTY = true;
+  process.env.NO_COLOR = '1';
+};
+afterEach(() => {
+  process.stdout.isTTY = stdoutTTY;
+  if (noColor === undefined) delete process.env.NO_COLOR;
+  else process.env.NO_COLOR = noColor;
+});
 import envLib from '../lib/env.js';
 import cli from '../lib/cli.js';
 
@@ -249,11 +261,15 @@ describe('env config — library', () => {
       expect(raw).toEqual({ base_url: 'https://api.moonshot.ai/anthropic', auth_token: 'sk-test', model: 'kimi-k2.5' });
     });
 
-    it('errors and writes nothing when --token is missing on creation', async () => {
+    it('creates the config with the token left for `cchost token` when --token is missing', async () => {
       const d = profileDir('endp');
-      await expect(
-        envLib.runConfigure('endp', d, { base_url: 'https://x' }),
-      ).rejects.toThrow(/--base-url and --token/);
+      await envLib.runConfigure('endp', d, { base_url: 'https://x' });
+      expect(JSON.parse(fs.readFileSync(path.join(d, '.cc-env.json'), 'utf8'))).toEqual({ base_url: 'https://x' });
+    });
+
+    it('errors and writes nothing when --base-url is missing on creation', async () => {
+      const d = profileDir('endp2');
+      await expect(envLib.runConfigure('endp2', d, { auth_token: 'sk' })).rejects.toThrow(/requires --base-url/);
       expect(fs.existsSync(path.join(d, '.cc-env.json'))).toBe(false);
     });
 
@@ -416,10 +432,10 @@ describe('cc add --custom — CLI surface', () => {
     expect(fs.existsSync(ccEnvPath('kimi'))).toBe(true);
   });
 
-  it('creating a custom profile requires --base-url and --token', async () => {
+  it('creating a custom profile requires --base-url', async () => {
     await expect(
       cli.run(['add', 'kimi', '--custom', '--model=kimi-k2.5']),
-    ).rejects.toThrow(/--base-url and --token/);
+    ).rejects.toThrow(/requires --base-url/);
     // The freshly-created profile directory is cleaned up — add --custom is atomic.
     expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', 'kimi'))).toBe(false);
   });
@@ -544,6 +560,7 @@ describe('cc list — Endpoint column and detail view', () => {
   });
 
   it('cc list <profile> --reveal prints the full token and a warning', async () => {
+    asTerminal();
     await cli.run([
       'add', 'kimi', '--custom', '--base-url=https://x', '--token=sk-abcdefghijklmnop',
     ]);
@@ -565,9 +582,15 @@ describe('cc list — Endpoint column and detail view', () => {
   });
 
   it('cc list --reveal without a profile name reveals emails in the table', async () => {
+    asTerminal();
     await cli.run(['add', 'work']);
     // Should not throw — --reveal is valid on the table too in v0.4.1.
     await expect(cli.run(['list', '--reveal'])).resolves.toBeDefined();
+  });
+
+  it('cc list --reveal refuses when stdout is not a terminal', async () => {
+    process.stdout.isTTY = false;
+    await expect(cli.run(['list', '--reveal'])).rejects.toThrow(/only works in a terminal/);
   });
 
   it('cc list <profile> --json --reveal together is rejected', async () => {
@@ -658,6 +681,7 @@ describe('cc list — email masking', () => {
   });
 
   it('cc list --reveal (table) shows full emails', async () => {
+    asTerminal();
     await cli.run(['add', 'work']);
     writeEmail('work', 'info@vpatrol.co.in');
     captured = '';
@@ -692,6 +716,7 @@ describe('cc list — email masking', () => {
   });
 
   it('cc list <profile> --reveal shows the full email', async () => {
+    asTerminal();
     await cli.run(['add', 'work']);
     writeEmail('work', 'info@vpatrol.co.in');
     captured = '';
@@ -716,6 +741,7 @@ describe('cc list — email masking', () => {
   });
 
   it('cc list --reveal also reveals the API token on endpoint profiles', async () => {
+    asTerminal();
     await cli.run([
       'add', 'kimi', '--custom', '--base-url=https://x', '--token=sk-abcdefghijklmnop',
     ]);
@@ -725,6 +751,7 @@ describe('cc list — email masking', () => {
   });
 
   it('an empty email column still renders as "-" with --reveal', async () => {
+    asTerminal();
     await cli.run(['add', 'fresh']);
     captured = '';
     await cli.run(['list', '--reveal']);

@@ -1,0 +1,14 @@
+{
+  "name": "cchost",
+  "description": "cchost: run Claude Code under several accounts, with skills for AI agents to set it up and manage it.",
+  "owner": {
+    "name": "Allen Benny"
+  },
+  "plugins": [
+    {
+      "name": "cchost",
+      "source": "./",
+      "description": "Skills for setting up and managing cchost, the multi-account manager for Claude Code."
+    }
+  ]
+}

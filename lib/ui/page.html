@@ -197,6 +197,44 @@ main { min-width: 0; }
 .badge.missing { background: var(--missing-bg); color: var(--missing-fg); border-color: var(--missing-bd); border-style: dashed; }
 .badge.foreign-link { background: var(--foreign-bg); color: var(--foreign-fg); border-color: var(--foreign-bd); }
 .badge.changed { animation: changed 1.6s var(--ease); }
+.badge.pool { background: var(--shared-bg); color: var(--shared-fg); border-color: var(--shared-bd); }
+.pill.me { background: var(--surface-2); color: var(--text-2); }
+.pill.me::before { display: none; }
+.callout { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.callout p { flex: 1 1 320px; color: var(--text-2); }
+.callout p b { color: var(--text); font-weight: 600; }
+.table-wrap { overflow-x: auto; border-radius: 10px; }
+.matrix th, .matrix td { white-space: nowrap; }
+.matrix th.t, .matrix td.cell { text-align: center; }
+.matrix td { vertical-align: middle; }
+.matrix tbody th { padding: 12px 16px; background: none; border-bottom: 1px solid var(--border); font-size: inherit; color: inherit; font-weight: inherit; text-align: left; vertical-align: middle; }
+.matrix tbody tr:last-child th { border-bottom: 0; }
+.local-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 16px; }
+.local-row .where { font-size: 12.5px; color: var(--text-3); }
+.local-row .sub { max-width: 70ch; }
+a.btn { text-decoration: none; }
+.mcp-name b { font-weight: 600; }
+.mcp-name .sub { display: block; max-width: 34ch; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+.mark { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 550; }
+.mark svg.i { width: 14px; height: 14px; }
+.mark.has { color: var(--ok); }
+.mark.pool { color: var(--shared-fg); }
+.mark.differs { color: var(--warn); }
+.mark.none { color: var(--text-3); font-weight: 400; }
+.row-actions.end { justify-content: flex-end; }
+.local-list { display: grid; gap: 10px; margin-top: 24px; }
+.local-list h2 { font-size: 13.5px; font-weight: 600; }
+.local-list > p { color: var(--text-2); font-size: 13px; }
+.targets { display: grid; gap: 8px; }
+.targets label { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: center; cursor: pointer; }
+.targets input { margin: 0; accent-color: var(--primary); }
+.targets .mark { justify-self: end; }
+.backups { margin-top: 28px; display: grid; gap: 10px; }
+.backups h2 { font-size: 13.5px; font-weight: 600; }
+.backups > p { color: var(--text-2); font-size: 13px; }
+.backup-row { display: flex; align-items: center; gap: 12px; }
+.backup-row .what { flex: 1; min-width: 0; }
+.backup-row .what code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text-3); }
 @keyframes changed {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 0%, transparent); }
   20% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 35%, transparent); }
@@ -464,6 +502,8 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   <symbol id="i-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
   <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+  <symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></symbol>
   <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></symbol>
 </svg>
 
@@ -476,6 +516,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     <nav class="nav">
       <a class="row" href="#profiles" data-view="profiles" data-tip="Profiles"><svg class="i"><use href="#i-users"/></svg><span class="fold">Profiles</span><span class="count fold" id="count-profiles"></span></a>
       <a class="row" href="#pool" data-view="pool" data-tip="Shared pool"><svg class="i"><use href="#i-folder"/></svg><span class="fold">Shared pool</span></a>
+      <a class="row" href="#mcp" data-view="mcp" data-tip="MCP servers"><svg class="i"><use href="#i-plug"/></svg><span class="fold">MCP servers</span><span class="count fold" id="count-mcp"></span></a>
       <a class="row" href="#doctor" data-view="doctor" data-tip="Doctor"><svg class="i"><use href="#i-shield"/></svg><span class="fold">Doctor</span><span class="count fold" id="count-doctor"></span></a>
       <a class="row" href="#activity" data-view="activity" data-tip="Activity"><svg class="i"><use href="#i-history"/></svg><span class="fold">Activity</span><span class="count fold" id="count-activity"></span></a>
     </nav>
@@ -533,8 +574,9 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     empty: 'private, empty',
     missing: 'missing',
     'foreign-link': 'links outside ~/.claude',
+    pool: 'this account is the shared pool',
   };
-  const STATE_ICON = { shared: 'link', private: 'lock', empty: 'lock', missing: 'minus', 'foreign-link': 'alert' };
+  const STATE_ICON = { shared: 'link', private: 'lock', empty: 'lock', missing: 'minus', 'foreign-link': 'alert', pool: 'folder' };
   const GROUP_TEXT = { projects: 'Projects', tools: 'Tools', config: 'Config' };
   const GROUP_HELP = {
     projects: 'Session history (projects/)',
@@ -546,6 +588,8 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   let data = null;
   let doctor = null;
   let activity = [];
+  let mcp = null;
+  let backups = [];
   let lastSync = 0;
   let view = 'profiles';
   let changedBadges = new Set();
@@ -603,6 +647,27 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     }
     updateDoctorCount();
     if (view === 'doctor') render();
+  }
+  async function loadMcp() {
+    try {
+      const next = await api('/api/mcp');
+      const changed = JSON.stringify(next) !== JSON.stringify(mcp);
+      mcp = next;
+      const n = mcp.drift.length;
+      const el = $('#count-mcp');
+      el.textContent = n || '';
+      el.className = 'count fold' + (n ? ' warn' : '');
+      if (changed && view === 'mcp') render();
+    } catch (err) {
+      mcp = { error: err.message, targets: [], drift: [] };
+      if (view === 'mcp') render();
+    }
+  }
+  async function loadBackups() {
+    try {
+      backups = (await api('/api/backups')).backups;
+    } catch { backups = []; }
+    if (view === 'activity') render();
   }
   async function loadActivity() {
     activity = (await api('/api/activity')).activity;
@@ -670,7 +735,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       render.t = setTimeout(() => el.classList.remove('enter'), 700);
       renderedView = view;
     }
-    const titles = { profiles: 'Profiles', pool: 'Shared pool', doctor: 'Doctor', activity: 'Activity' };
+    const titles = { profiles: 'Profiles', pool: 'Shared pool', mcp: 'MCP servers', doctor: 'Doctor', activity: 'Activity' };
     $('#title').textContent = titles[view];
     $('#top-add').hidden = view !== 'profiles';
     document.title = `${titles[view]} · cchost`;
@@ -679,6 +744,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     });
     if (view === 'profiles') el.innerHTML = viewProfiles();
     if (view === 'pool') el.innerHTML = viewPool();
+    if (view === 'mcp') el.innerHTML = viewMcp();
     if (view === 'doctor') el.innerHTML = viewDoctor();
     if (view === 'activity') el.innerHTML = viewActivity();
   }
@@ -696,7 +762,10 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   }
   function viewProfiles() {
     if (!data) return '<p class="muted">Reading profiles…</p>';
-    const head = `<div class="toolbar">
+    const ex = data.existing || {};
+    const callout = ex.found && ex.loggedIn && !ex.name ? `<div class="callout"><p>You already use Claude Code${ex.email ? ` as <b>${esc(ex.email)}</b>` : ''} with plain <code>claude</code>. Give that account a name to see it here and start it with <code>cchost use</code>. Nothing is moved or copied.</p>
+      <button class="btn" type="button" data-act="name-existing">${icon('plus')}Name this account</button></div>` : '';
+    const head = callout + `<div class="toolbar">
       <p>${data.profiles.length} profile${data.profiles.length === 1 ? '' : 's'} in <code>${esc(data.profilesDir)}</code></p>
       <dl class="legend" aria-label="What the badge colours mean">${legendItems()}</dl>
     </div>`;
@@ -705,7 +774,15 @@ details.check-group[open]::details-content, details.entry[open]::details-content
         <p>A profile is a separate Claude Code login with its own settings. Each one can share skills, settings and history with <code>~/.claude</code>, or keep them private.</p>
         <button class="btn primary" type="button" data-act="add">${icon('plus')}Add your first profile</button></div>`;
     }
-    return head + `<div class="cards">${data.profiles.map((p, i) => `
+    return head + `<div class="cards">${data.profiles.map((p, i) => p.alias ? `
+      <article class="card" style="--i:${i}" aria-label="${esc(p.name)}, your existing account">
+        <div class="card-head"><div><h2>${esc(p.name)} <span class="pill me">Existing account</span></h2><p class="meta">${metaOf(p)} · plain <code>claude</code></p></div>${loginPill(p)}</div>
+        <p class="muted">Lives in <code>~/.claude</code>, which is the shared pool itself, so every resource is the pool's. Start it with <code>claude</code> or <code>cchost use ${esc(p.name)}</code>.</p>
+        <div class="card-actions">
+          <a class="btn" href="#mcp">${icon('plug')}MCP servers</a>
+          <button class="btn quiet" type="button" data-act="remove" data-profile="${esc(p.name)}">${icon('x')}Forget name</button>
+        </div>
+      </article>` : `
       <article class="card" style="--i:${i}" aria-label="${esc(p.name)}">
         <div class="card-head"><div><h2>${esc(p.name)}</h2><p class="meta">${metaOf(p)}</p></div>${loginPill(p)}</div>
         <div class="groups">${groupsOf(p)}</div>
@@ -719,12 +796,66 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   function viewPool() {
     if (!data) return '<p class="muted">Reading profiles…</p>';
     const rows = data.resources.map((r) => {
-      const by = (st) => data.profiles.filter((p) => p.resources[r.id] === st || (st === 'private' && p.resources[r.id] === 'empty'));
+      const by = (st) => data.profiles.filter((p) => !p.alias && (p.resources[r.id] === st || (st === 'private' && p.resources[r.id] === 'empty')));
       const chips = (list) => list.length ? `<div class="chips">${list.map((p) => `<span class="chip">${esc(p.name)}</span>`).join('')}</div>` : '<span class="muted">—</span>';
       return `<tr><td data-label="Resource"><code>~/.claude/${esc(r.label)}</code></td><td data-label="Group">${GROUP_TEXT[r.group]}</td><td data-label="Shared by">${chips(by('shared'))}</td><td data-label="Private in">${chips(by('private'))}</td></tr>`;
     }).join('');
     return `<div class="toolbar"><p>Everything in <code>~/.claude</code> is visible to every profile that shares it. Changes made in one sharing profile show up in all of them.</p></div>
       <table class="table stack"><thead><tr><th>Resource</th><th>Group</th><th>Shared by</th><th>Private in</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  function targetLabel(t) {
+    if (t.kind === 'pool') return 'Pool';
+    return t.target;
+  }
+  function serverIn(t, name) { return t.servers.find((s) => s.scope !== 'local' && s.name === name); }
+  function referenceFp(name) {
+    const pool = mcp.targets.find((t) => t.kind === 'pool');
+    const inPool = pool && serverIn(pool, name);
+    if (inPool) return inPool.fp;
+    const counts = {};
+    for (const t of mcp.targets) { const s = serverIn(t, name); if (s) counts[s.fp] = (counts[s.fp] || 0) + 1; }
+    return Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+  }
+  function serverSummary(s) {
+    const what = s.url || [s.command, ...(s.args || [])].filter(Boolean).join(' ');
+    const secrets = s.envKeys.length + s.headerKeys.length;
+    return `${what}${secrets ? ` · ${secrets} secret${secrets === 1 ? '' : 's'} hidden` : ''}`;
+  }
+  function markFor(t, name) {
+    const s = serverIn(t, name);
+    if (!s) return { cls: 'none', text: '—', title: `Not in ${targetLabel(t)}` };
+    if (s.fp !== referenceFp(name)) return { cls: 'differs', icon: 'alert', text: 'Differs', title: `${targetLabel(t)} has its own, different "${name}"` };
+    if (t.kind === 'pool') return { cls: 'pool', icon: 'folder', text: 'Shared', title: 'In the pool: profiles that share mcp.json get it' };
+    if (s.fromPool) return { cls: 'pool', icon: 'link', text: 'From pool', title: `${targetLabel(t)} got it from the pool` };
+    return { cls: 'has', icon: 'check', text: 'Has it', title: `${targetLabel(t)} has it` };
+  }
+  function viewMcp() {
+    if (!mcp) return '<p class="muted">Reading MCP servers…</p>';
+    if (mcp.error) return `<div class="banner">${icon('xcircle')}${esc(mcp.error)}</div>`;
+    const ts = mcp.targets;
+    const names = [...new Set(ts.flatMap((t) => t.servers.filter((s) => s.scope !== 'local').map((s) => s.name)))].sort();
+    const drift = mcp.drift.length ? `<div class="callout"><p><b>${mcp.drift.length} profile${mcp.drift.length === 1 ? ' is' : 's are'} missing pool servers:</b> ${mcp.drift.map((d) => `${esc(d.profile)} (${d.servers.map(esc).join(', ')})`).join('; ')}.</p>
+      <button class="btn primary" type="button" data-act="mcp-sync">${icon('refresh')}Sync pool…</button></div>` : '';
+    const intro = `<div class="toolbar"><p>Claude Code reads MCP servers from each account. Servers in the <b>pool</b> go to every profile that shares <code>mcp.json</code>. Secrets in env and headers are never shown here.</p></div>`;
+    if (!names.length && !ts.some((t) => t.servers.length)) {
+      return drift + intro + `<div class="empty"><h2>No MCP servers yet</h2><p>Add one in any profile with <code>claude mcp add</code>, then copy it to other profiles or into the pool here.</p></div>`;
+    }
+    const cols = ts.map((t) => `<th class="t" scope="col">${esc(targetLabel(t))}${t.alias ? '<span class="sr"> (existing account)</span>*' : ''}</th>`).join('');
+    const rows = names.map((name) => {
+      const ref = ts.map((t) => serverIn(t, name)).find((s) => s && s.fp === referenceFp(name));
+      const cells = ts.map((t) => { const m = markFor(t, name); return `<td class="cell"><span class="mark ${m.cls}" title="${esc(m.title)}">${m.icon ? icon(m.icon) : ''}${m.text}<span class="sr">: ${esc(m.title)}</span></span></td>`; }).join('');
+      return `<tr><th scope="row"><span class="mcp-name"><b>${esc(name)}</b><span class="sub" title="${esc(ref ? serverSummary(ref) : '')}">${esc(ref ? serverSummary(ref) : '')}</span></span></th>${cells}
+        <td><span class="row-actions end"><button class="btn" type="button" data-act="mcp-copy" data-server="${esc(name)}">${icon('copy')}Copy…</button><button class="btn ghost" type="button" data-act="mcp-remove" data-server="${esc(name)}">${icon('trash')}Remove…</button></span></td></tr>`;
+    }).join('');
+    const table = names.length ? `<div class="table-wrap"><table class="table matrix"><thead><tr><th scope="col">Server</th>${cols}<th scope="col"><span class="sr">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${ts.some((t) => t.alias) ? '<p class="muted" style="margin-top:8px;font-size:12.5px">* your existing account (plain <code>claude</code>)</p>' : ''}` : '';
+    const locals = ts.filter((t) => t.kind !== 'pool' && t.servers.some((s) => s.scope === 'local'));
+    const localHtml = locals.length ? `<div class="local-list"><h2>Project servers</h2><p>These only load inside one project folder.</p>
+      <table class="table"><tbody>${locals.flatMap((t) => t.servers.filter((s) => s.scope === 'local').map((s) => `
+        <tr><td><div class="local-row"><div class="mcp-name"><b>${esc(s.name)}</b><div class="where">${esc(t.target)} · <code>${esc(s.project)}</code></div><span class="sub" title="${esc(serverSummary(s))}">${esc(serverSummary(s))}</span></div>
+          <button class="btn" type="button" data-act="mcp-copy" data-server="${esc(s.name)}" data-from="${esc(t.target)}" data-project="${esc(s.project)}">${icon('copy')}Copy…</button></div></td></tr>`)).join('')}</tbody></table></div>` : '';
+    return drift + intro + table + localHtml;
   }
 
   function viewDoctor() {
@@ -761,15 +892,29 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       }).join('')}`;
   }
 
+  function backupTitle(op) {
+    let m;
+    if ((m = /^mcp-copy-(.+)$/.exec(op))) return `MCP copy from ${m[1]}`;
+    if ((m = /^mcp-remove-(.+)$/.exec(op))) return `MCP remove ${m[1]}`;
+    if (op === 'mcp-sync') return 'MCP sync with the pool';
+    if (/^restore-/.test(op)) return 'Before a restore';
+    return op;
+  }
+  function viewBackups() {
+    if (!backups.length) return '';
+    return `<div class="backups"><h2>Backups</h2><p>cchost saves a config file before every change it makes to it, here or in the terminal. The newest 30 are kept.</p>
+      <table class="table"><tbody>${backups.map((b) => `<tr><td><div class="backup-row"><div class="what"><b>${esc(backupTitle(b.op))}</b> <span class="muted">${esc(relTime(b.createdAt))}</span><code>${esc(b.files.join(', '))}</code></div>
+        <button class="btn" type="button" data-act="restore" data-id="${esc(b.id)}">${icon('undo')}Restore…</button></div></td></tr>`).join('')}</tbody></table></div>`;
+  }
   function viewActivity() {
     if (!activity.length) {
-      return `<div class="empty"><h2>No changes yet</h2><p>Every change you apply here is listed with each step it took, so you can see exactly what happened on disk. The list lasts until <code>cchost ui</code> stops.</p></div>`;
+      return `<div class="empty"><h2>No changes yet</h2><p>Every change you apply here is listed with each step it took, so you can see exactly what happened on disk. The list lasts until <code>cchost ui</code> stops.</p></div>` + viewBackups();
     }
     return `<div class="entries">${activity.map((e, i) => `
       <details class="entry"${i === 0 ? ' open' : ''}>
         <summary><span class="status ${e.ok ? 'ok' : 'error'}">${icon(e.ok ? 'check' : 'xcircle')}</span><b>${esc(e.title)}</b><span class="when">${esc(relTime(e.at))}</span></summary>
         ${linesHtml(e.lines, true, false)}
-      </details>`).join('')}</div>`;
+      </details>`).join('')}</div>` + viewBackups();
   }
 
   // --- Panel --------------------------------------------------------------
@@ -831,10 +976,11 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     const changes = plan.lines.filter((l) => l.kind === 'change').length;
     const blocked = plan.lines.some((l) => l.kind === 'error');
     const confirmName = plan.body.action === 'remove';
+    const forget = confirmName && profileByName(plan.body.profile) && profileByName(plan.body.profile).alias;
     const held = plan.body.action === 'link' && !plan.body.backup
       ? plan.lines.filter((l) => l.code === 'private-content').length : 0;
     const warns = plan.lines.filter((l) => l.kind === 'warn').length;
-    const note = confirmName ? 'This cannot be undone'
+    const note = forget ? 'Only the name is removed' : confirmName ? 'This cannot be undone'
       : held ? `${held === 1 ? '1 resource has its' : `${held} resources have their`} own content${changes ? `; ${changes} other change${changes === 1 ? '' : 's'} ready` : ''}`
       : changes ? `${changes} change${changes === 1 ? '' : 's'}`
       : warns ? 'Nothing can change — see the warnings above'
@@ -848,7 +994,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
         <button class="btn" type="button" data-act="plan-cancel">Cancel</button>
         ${held ? `<button class="btn${changes ? '' : ' primary'}" type="button" data-act="plan-backup" ${plan.stale ? 'disabled' : ''}>${icon('copy')}Share with backup</button>` : ''}
         ${held && !changes ? '' : `<button class="btn ${confirmName ? 'danger solid' : 'primary'}" type="button" data-act="plan-apply" ${plan.applying || plan.stale || blocked || (!changes && !confirmName) || (confirmName && panelState.confirm !== panelState.profile) ? 'disabled' : ''}>
-          ${plan.applying ? icon('loader', 'spin') + 'Applying…' : confirmName ? 'Remove profile' : held ? `Apply ${changes}` : 'Apply'}
+          ${plan.applying ? icon('loader', 'spin') + 'Applying…' : forget ? 'Forget name' : confirmName ? 'Remove profile' : held ? `Apply ${changes}` : 'Apply'}
         </button>`}
       </div></div>`;
   }
@@ -917,6 +1063,8 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       toast(res.entry.ok ? `${res.entry.title} — done` : `${res.entry.title} — finished with errors`);
       render();
       loadDoctor();
+      loadMcp();
+      loadBackups();
     } catch (err) {
       panelState.plan = { error: err.message };
     }
@@ -975,6 +1123,9 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     }
     if (t === 'remove') panel.innerHTML = panelRemove();
     if (t === 'fix') panel.innerHTML = panelFix();
+    if (t === 'mcp-copy') panel.innerHTML = panelMcpCopy();
+    if (t === 'mcp-remove') panel.innerHTML = panelMcpRemove();
+    if (t === 'simple') panel.innerHTML = head(esc(panelState.title), panelState.sub || '') + `<div class="panel-body"><div class="section">${panelState.note ? `<p>${esc(panelState.note)}</p>` : ''}${planBox()}</div></div>`;
   }
 
   function head(title, sub) {
@@ -1017,6 +1168,14 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     const p = profileByName(panelState.profile);
     const name = panelState.profile;
     const done = panelState.plan && panelState.plan.done;
+    if (p && p.alias || (done && !p && panelState.alias)) {
+      panelState.alias = true;
+      return head(`Forget the name ${esc(name)}`, 'Your existing account') + `<div class="panel-body">
+      <div class="section"><p>cchost stops calling your existing account <b>${esc(name)}</b>. The account itself, in <code>~/.claude</code> and <code>~/.claude.json</code>, is not touched: plain <code>claude</code> keeps working.</p>
+      ${done ? '' : `<div class="field"><label for="confirm-name">Type <b>${esc(name)}</b> to confirm</label>
+        <input class="input" id="confirm-name" autocomplete="off" spellcheck="false" value="${esc(panelState.confirm || '')}" autofocus></div>`}
+      ${planBox()}</div></div>`;
+    }
     return head(`Remove ${esc(name)}`, p ? metaOf(p) : '') + `<div class="panel-body">
       <div class="section"><p>This permanently deletes <code>~/.claude-profiles/${esc(name)}</code>: its login, sessions and anything private. Shared content in <code>~/.claude</code> stays for the other profiles.</p>
       ${done ? '' : `<div class="field"><label for="confirm-name">Type <b>${esc(name)}</b> to confirm</label>
@@ -1028,7 +1187,9 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     const f = panelState.form;
     const nameErr = Boolean(panelState.plan && panelState.plan.error && /name/i.test(panelState.plan.error));
     const e = f.endpoint;
-    return head('Add profile', 'Creates a new Claude Code login under ~/.claude-profiles') + `<div class="panel-body">
+    const ex = data.existing || {};
+    const canName = ex.found && !ex.name;
+    return head('Add profile', f.existing ? 'Names the account you already use with plain claude' : 'Creates a new Claude Code login under ~/.claude-profiles') + `<div class="panel-body">
       <div class="section">
         <div class="field"><label for="f-name">Name</label>
           <input class="input" id="f-name" value="${esc(f.name)}" placeholder="work" autocomplete="off" spellcheck="false" autofocus required
@@ -1036,8 +1197,9 @@ details.check-group[open]::details-content, details.entry[open]::details-content
           <span class="help" id="f-name-help">Used as <code>cchost use ${f.name ? esc(f.name) : '&lt;name&gt;'}</code>. No spaces or slashes.</span></div>
         <div class="field"><span class="label">Login</span>
           <div class="choice" role="radiogroup" aria-label="Login type">
-            <label><input type="radio" name="f-kind" value="subscription" ${!f.custom ? 'checked' : ''}><b>Anthropic subscription</b><span>Log in with your Claude account on first use.</span></label>
+            <label><input type="radio" name="f-kind" value="subscription" ${!f.custom && !f.existing ? 'checked' : ''}><b>Anthropic subscription</b><span>Log in with your Claude account on first use.</span></label>
             <label><input type="radio" name="f-kind" value="endpoint" ${f.custom ? 'checked' : ''}><b>Custom endpoint</b><span>Any Anthropic-compatible API with a token.</span></label>
+            ${canName ? `<label><input type="radio" name="f-kind" value="existing" ${f.existing ? 'checked' : ''}><b>My existing account</b><span>The one plain <code>claude</code> uses${ex.email ? ` (${esc(ex.email)})` : ''}. Nothing is moved.</span></label>` : ''}
           </div></div>
         ${f.custom ? `
         <div class="field"><label for="f-url">Base URL</label><input class="input" id="f-url" value="${esc(e.base_url)}" placeholder="https://api.moonshot.ai/anthropic" autocomplete="off" spellcheck="false"></div>
@@ -1045,12 +1207,12 @@ details.check-group[open]::details-content, details.entry[open]::details-content
           <span class="help">Stored in the profile with user-only permissions. Never shown again here.</span></div>
         <div class="field"><label for="f-model">Model <span class="muted">(optional)</span></label><input class="input" id="f-model" value="${esc(e.model)}" placeholder="kimi-k2.5" autocomplete="off" spellcheck="false"></div>` : ''}
       </div>
-      <div class="section"><h3>Sharing</h3><p>Unchecked groups start private and empty — nothing is copied in.</p>
+      ${f.existing ? `<div class="section">${panelState.plan ? planBox() : '<p class="plan-hint">Enter a name to see what will happen.</p>'}</div></div>` : `<div class="section"><h3>Sharing</h3><p>Unchecked groups start private and empty — nothing is copied in.</p>
         <div class="checks">${Object.keys(data.groups).map((g) => `
           <label><input type="checkbox" data-share="${g}" ${f.share[g] ? 'checked' : ''}><span><b>Share ${GROUP_TEXT[g].toLowerCase()}</b><span>${esc(GROUP_HELP[g])}</span></span></label>`).join('')}
         </div>
         ${panelState.plan ? planBox() : `<p class="plan-hint">${f.custom ? 'Enter a name, base URL and token' : 'Enter a name'} to see exactly what will be created.</p>`}
-      </div></div>`;
+      </div></div>`}`;
   }
 
   function panelFix() {
@@ -1063,10 +1225,76 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     return head(title, sub) + `<div class="panel-body"><div class="section">${note}${planBox()}</div></div>`;
   }
 
+  // --- MCP panels ---------------------------------------------------------------
+  function openMcpCopy(server, from, project) {
+    const scope = project ? 'local' : 'user';
+    const has = (t) => (scope === 'local' ? t.servers.some((s) => s.scope === 'local' && s.name === server && s.project === project) : Boolean(serverIn(t, server)));
+    const sources = mcp.targets.filter(has);
+    const src = from || (sources.find((t) => t.kind !== 'pool') || sources[0] || {}).target;
+    openPanel({ type: 'mcp-copy', form: { server, from: src, scope, project: project || null, to: {}, force: false } });
+  }
+  function mcpCopyBody() {
+    const f = panelState.form;
+    const body = { action: 'mcp-copy', from: f.from, to: Object.keys(f.to).filter((k) => f.to[k]), servers: [f.server], scope: f.scope, force: f.force };
+    if (f.project) body.project = f.project;
+    return body;
+  }
+  function panelMcpCopy() {
+    const f = panelState.form;
+    const local = f.scope === 'local';
+    const sources = mcp.targets.filter((t) => (local ? t.servers.some((s) => s.scope === 'local' && s.name === f.server && s.project === f.project) : serverIn(t, f.server)));
+    const dests = mcp.targets.filter((t) => t.target !== f.from && !(local && t.kind === 'pool'));
+    const srcHtml = sources.length > 1 ? `<div class="field"><span class="label">Copy from</span><div class="targets" role="radiogroup" aria-label="Copy from">${sources.map((t) => `
+      <label><input type="radio" name="cp-from" value="${esc(t.target)}" ${t.target === f.from ? 'checked' : ''}><span>${esc(targetLabel(t))}${t.alias ? ' <span class="muted">(existing account)</span>' : ''}</span>${local ? '' : (() => { const m = markFor(t, f.server); return `<span class="mark ${m.cls}">${m.icon ? icon(m.icon) : ''}${m.text}</span>`; })()}</label>`).join('')}</div></div>`
+      : `<p>From <b>${esc(f.from === 'pool' ? 'the pool' : f.from)}</b>${local ? ` · project <code>${esc(f.project)}</code>` : ''}.</p>`;
+    const destHtml = `<div class="field"><span class="label">Copy to</span><div class="targets">${dests.map((t) => {
+      const m = local ? null : markFor(t, f.server);
+      const help = t.kind === 'pool' ? ' <span class="muted">— every profile that shares mcp.json</span>' : t.alias ? ' <span class="muted">(existing account)</span>' : '';
+      return `<label><input type="checkbox" data-to="${esc(t.target)}" ${f.to[t.target] ? 'checked' : ''}><span>${esc(targetLabel(t))}${help}</span>${m ? `<span class="mark ${m.cls}">${m.icon ? icon(m.icon) : ''}${m.text}</span>` : ''}</label>`;
+    }).join('')}</div></div>`;
+    const anyTo = Object.values(f.to).some(Boolean);
+    return head(`Copy ${esc(f.server)}`, local ? 'Project server' : 'MCP server') + `<div class="panel-body"><div class="section">
+      ${srcHtml}${destHtml}
+      <div class="checks"><label><input type="checkbox" id="cp-force" ${f.force ? 'checked' : ''}><span><b>Replace a different server with the same name</b><span>Off: a profile that has its own "${esc(f.server)}" keeps it.</span></span></label></div>
+      ${panelState.plan ? planBox() : `<p class="plan-hint">${anyTo ? 'Working out what would change…' : 'Pick where to copy it to see exactly what will change.'}</p>`}
+      </div></div>`;
+  }
+  let mcpTimer = null;
+  function mcpCopyInput(el) {
+    const f = panelState.form;
+    if (el.name === 'cp-from') { f.from = el.value; delete f.to[el.value]; renderPanelKeepFocus(); }
+    if (el.dataset.to) f.to[el.dataset.to] = el.checked;
+    if (el.id === 'cp-force') f.force = el.checked;
+    clearTimeout(mcpTimer);
+    mcpTimer = setTimeout(() => {
+      if (!panelState || panelState.type !== 'mcp-copy') return;
+      const body = mcpCopyBody();
+      if (!body.to.length) { panelState.plan = null; renderPanelKeepFocus(); return; }
+      preview(body, `Copy ${f.server} to ${body.to.map((x) => (x === 'pool' ? 'the pool' : x)).join(', ')}`);
+    }, 150);
+  }
+  function openMcpRemove(server) {
+    const have = mcp.targets.filter((t) => serverIn(t, server));
+    openPanel({ type: 'mcp-remove', server, target: have.length === 1 ? have[0].target : null });
+    if (have.length === 1) previewMcpRemove();
+  }
+  function previewMcpRemove() {
+    preview({ action: 'mcp-remove', target: panelState.target, server: panelState.server }, `Remove ${panelState.server} from ${panelState.target === 'pool' ? 'the pool' : panelState.target}`);
+  }
+  function panelMcpRemove() {
+    const have = mcp.targets.filter((t) => serverIn(t, panelState.server));
+    return head(`Remove ${esc(panelState.server)}`, 'MCP server') + `<div class="panel-body"><div class="section">
+      <div class="field"><span class="label">Remove from</span><div class="targets" role="radiogroup" aria-label="Remove from">${have.map((t) => `
+        <label><input type="radio" name="rm-target" value="${esc(t.target)}" ${panelState.target === t.target ? 'checked' : ''}><span>${esc(targetLabel(t))}${t.kind === 'pool' ? ' <span class="muted">— also removes the copies the pool gave profiles</span>' : t.alias ? ' <span class="muted">(existing account)</span>' : ''}</span></label>`).join('')}</div></div>
+      ${panelState.plan ? planBox() : '<p class="plan-hint">Pick where to remove it from to see what will change.</p>'}
+      </div></div>`;
+  }
+
   // Add form → preview, debounced as the user types.
   let addTimer = null;
   function addBody() {
     const f = panelState.form;
+    if (f.existing) return { action: 'add', name: f.name.trim(), existing: true };
     const body = { action: 'add', name: f.name.trim(), private: Object.keys(f.share).filter((g) => !f.share[g]) };
     if (f.custom) body.endpoint = { base_url: f.endpoint.base_url, auth_token: f.endpoint.auth_token, model: f.endpoint.model };
     return body;
@@ -1104,8 +1332,20 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       openPanel({ type: 'remove', profile: name, confirm: '' });
       preview({ action: 'remove', profile: name }, `Remove ${name}`);
     }
-    if (act === 'add') {
-      openPanel({ type: 'add', form: { name: '', custom: false, endpoint: { base_url: '', auth_token: '', model: '' }, share: { projects: true, tools: true, config: true } } });
+    if (act === 'add' || act === 'name-existing') {
+      openPanel({ type: 'add', form: { name: '', custom: false, existing: act === 'name-existing', endpoint: { base_url: '', auth_token: '', model: '' }, share: { projects: true, tools: true, config: true } } });
+    }
+    if (act === 'mcp-copy') openMcpCopy(t.dataset.server, t.dataset.from, t.dataset.project);
+    if (act === 'mcp-remove') openMcpRemove(t.dataset.server);
+    if (act === 'mcp-sync') {
+      openPanel({ type: 'simple', title: 'Sync pool MCP servers', sub: 'Writes the pool\'s servers into every profile that shares mcp.json' });
+      preview({ action: 'mcp-sync' }, 'Sync pool MCP servers');
+    }
+    if (act === 'restore') {
+      const id = t.dataset.id;
+      const b = backups.find((x) => x.id === id);
+      openPanel({ type: 'simple', title: 'Restore backup', sub: b ? `${esc(backupTitle(b.op))} · ${esc(relTime(b.createdAt))}` : esc(id), note: 'Puts these files back as they were before that change. The files as they are now are backed up first, so this can be undone too.' });
+      preview({ action: 'restore', id }, 'Restore backup');
     }
     if (act === 'close') closePanel();
     if (act === 'set-group') {
@@ -1141,7 +1381,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       previewSeq++;
       const wasRemoveDone = panelState.type === 'remove' && panelState.plan && panelState.plan.done;
       panelState.plan = null;
-      if (panelState.type === 'remove' || panelState.type === 'fix') { closePanel(); return; }
+      if (['remove', 'fix', 'simple', 'mcp-remove'].includes(panelState.type)) { closePanel(); return; }
       if (wasRemoveDone) { closePanel(); return; }
       const back = panelState.returnFocus;
       renderPanel();
@@ -1189,13 +1429,15 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       if (btn && panelState.plan && !panelState.plan.applying) btn.disabled = el.value !== panelState.profile;
       return;
     }
+    if (panelState.type === 'mcp-copy') { mcpCopyInput(el); return; }
+    if (panelState.type === 'mcp-remove' && el.name === 'rm-target') { panelState.target = el.value; previewMcpRemove(); return; }
     if (panelState.type !== 'add') return;
     const f = panelState.form;
     if (el.id === 'f-name') f.name = el.value;
     if (el.id === 'f-url') f.endpoint.base_url = el.value;
     if (el.id === 'f-token') f.endpoint.auth_token = el.value;
     if (el.id === 'f-model') f.endpoint.model = el.value;
-    if (el.name === 'f-kind') { f.custom = el.value === 'endpoint'; renderPanelKeepFocus(); }
+    if (el.name === 'f-kind') { f.custom = el.value === 'endpoint'; f.existing = el.value === 'existing'; renderPanelKeepFocus(); }
     if (el.dataset.share) f.share[el.dataset.share] = el.checked;
     schedulePreviewAdd();
   });
@@ -1343,15 +1585,20 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   // --- Routing & refresh ------------------------------------------------------
   function route() {
     const v = (location.hash || '#profiles').slice(1);
-    view = ['profiles', 'pool', 'doctor', 'activity'].includes(v) ? v : 'profiles';
+    view = ['profiles', 'pool', 'mcp', 'doctor', 'activity'].includes(v) ? v : 'profiles';
     render();
+    if (view === 'mcp') loadMcp();
+    if (view === 'activity') loadBackups();
     if (view === 'doctor' && !Array.isArray(doctor)) loadDoctor();
     if (view === 'activity') loadActivity();
   }
   window.addEventListener('hashchange', route);
   setInterval(() => {
     renderSync();
-    if (document.visibilityState === 'visible' && !(panelState && panelState.busy) && Date.now() - lastSync > 5000) loadState();
+    if (document.visibilityState === 'visible' && !(panelState && panelState.busy) && Date.now() - lastSync > 5000) {
+      loadState();
+      if (view === 'mcp' && !panelState) loadMcp();
+    }
   }, 1000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadState(); });
 
@@ -1359,6 +1606,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   loadSession();
   loadState();
   loadDoctor();
+  loadMcp();
 })();
 </script>
 </body>

@@ -35,6 +35,9 @@
   "files": [
     "bin",
     "lib",
+    "agent",
+    "skills",
+    ".claude-plugin",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
