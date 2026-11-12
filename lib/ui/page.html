@@ -214,7 +214,7 @@ main { min-width: 0; }
 .local-row .sub { max-width: 70ch; }
 a.btn { text-decoration: none; }
 .mcp-name b { font-weight: 600; }
-.mcp-name .sub { display: block; max-width: 34ch; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+.mcp-name .sub { display: block; max-width: 34ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 12px; color: var(--text-3); }
 .mark { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 550; }
 .mark svg.i { width: 14px; height: 14px; }
 .mark.has { color: var(--ok); }
@@ -846,7 +846,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       const ref = ts.map((t) => serverIn(t, name)).find((s) => s && s.fp === referenceFp(name));
       const cells = ts.map((t) => { const m = markFor(t, name); return `<td class="cell"><span class="mark ${m.cls}" title="${esc(m.title)}">${m.icon ? icon(m.icon) : ''}${m.text}<span class="sr">: ${esc(m.title)}</span></span></td>`; }).join('');
       return `<tr><th scope="row"><span class="mcp-name"><b>${esc(name)}</b><span class="sub" title="${esc(ref ? serverSummary(ref) : '')}">${esc(ref ? serverSummary(ref) : '')}</span></span></th>${cells}
-        <td><span class="row-actions end"><button class="btn" type="button" data-act="mcp-copy" data-server="${esc(name)}">${icon('copy')}Copy…</button><button class="btn ghost" type="button" data-act="mcp-remove" data-server="${esc(name)}">${icon('trash')}Remove…</button></span></td></tr>`;
+        <td><span class="row-actions end"><button class="btn" type="button" data-act="mcp-copy" data-server="${esc(name)}">${icon('copy')}Copy…</button><button class="btn ghost icon" type="button" data-act="mcp-remove" data-server="${esc(name)}" aria-label="Remove ${esc(name)}…" title="Remove ${esc(name)}…">${icon('trash')}</button></span></td></tr>`;
     }).join('');
     const table = names.length ? `<div class="table-wrap"><table class="table matrix"><thead><tr><th scope="col">Server</th>${cols}<th scope="col"><span class="sr">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>
       ${ts.some((t) => t.alias) ? '<p class="muted" style="margin-top:8px;font-size:12.5px">* your existing account (plain <code>claude</code>)</p>' : ''}` : '';
