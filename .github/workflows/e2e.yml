@@ -1,0 +1,56 @@
+name: E2E
+
+on:
+  push:
+    branches: [next]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: e2e (${{ matrix.os }}, claude ${{ matrix.claude }}, node ${{ matrix.node }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        claude: [npm, native]
+        node: [22]
+        include:
+          - { os: ubuntu-latest, claude: npm, node: 20 }
+          - { os: windows-latest, claude: npm, node: 20 }
+          - { os: windows-latest, claude: native, node: 24 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install Claude Code (npm)
+        if: matrix.claude == 'npm'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install Claude Code (native, unix)
+        if: matrix.claude == 'native' && runner.os != 'Windows'
+        shell: bash
+        run: |
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install Claude Code (native, windows)
+        if: matrix.claude == 'native' && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          irm https://claude.ai/install.ps1 | iex
+          "$env:USERPROFILE\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Claude version
+        run: claude --version
+
+      - name: End-to-end
+        run: node e2e/run.js ${{ matrix.claude }}

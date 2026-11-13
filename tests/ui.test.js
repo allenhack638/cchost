@@ -243,7 +243,7 @@ describe('cchost ui server', () => {
     expect(work.mcpServers.db.env.K).toBe(SECRET);
 
     const backups = await request(port, { path: '/api/backups', headers: auth() });
-    expect(backups.json.backups[0].files).toEqual(['~/.claude-profiles/work/.claude.json']);
+    expect(backups.json.backups[0].files).toEqual([path.join('~', '.claude-profiles', 'work', '.claude.json')]);
     const undo = await post('/api/apply', { action: 'restore', id: backups.json.backups[0].id });
     expect(undo.json.entry.ok).toBe(true);
     expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', 'work', '.claude.json'))).toBe(false);
@@ -251,6 +251,8 @@ describe('cchost ui server', () => {
 
   it('names the existing account and refuses sharing changes on it', async () => {
     fs.writeFileSync(path.join(tmpHome, '.claude.json'), JSON.stringify({ oauthAccount: { emailAddress: 'me@example.com' } }));
+    fs.mkdirSync(path.join(tmpHome, '.claude'), { recursive: true });
+    fs.writeFileSync(path.join(tmpHome, '.claude', '.credentials.json'), '{}');
     let st = await request(port, { path: '/api/state', headers: auth() });
     expect(st.json.existing).toMatchObject({ found: true, loggedIn: true, name: null, email: 'm*********.com' });
     const res = await post('/api/apply', { action: 'add', name: 'personal', existing: true });

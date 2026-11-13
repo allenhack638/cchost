@@ -49,6 +49,7 @@ beforeEach(() => {
   process.stdout.isTTY = false;
   fs.mkdirSync(path.join(home, '.claude'), { recursive: true });
   write(path.join(home, '.claude.json'), { oauthAccount: { emailAddress: 'me@example.com' }, mcpServers: { db: { command: 'db', env: { K: SECRET } } } });
+  write(path.join(home, '.claude', '.credentials.json'), { claudeAiOauth: {} });
 });
 
 afterEach(() => {
