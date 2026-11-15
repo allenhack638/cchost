@@ -45,6 +45,10 @@ Resuming opens an interactive Claude session, which is the person's job:
 
 `open` only resolves sessions inside the scope you would search.
 
+`cchost open` with no id lists the 10 most recent conversations in the scope
+(at a terminal the person picks one by number). Use it when the person wants
+to "continue where I left off here" without remembering words to search for.
+
 ## Index
 
 The first search reads session files once into

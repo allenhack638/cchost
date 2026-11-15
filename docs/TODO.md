@@ -9,10 +9,14 @@ usage — do not build them on spec alone.
       instead of the all-or-nothing file copy `cchost migrate` does today.
 - [ ] Plugin sharing via `cchost link --include-plugins` — `plugins/` was
       deliberately excluded from sharing because it carries auth tokens.
+- [ ] Shell completion (zsh, bash, PowerShell): commands, flags, profiles, recent session ids.
 - [ ] Locking so two sessions can't use one profile at once — deferred until
       someone hits it.
 
 ## Done
+
+### v0.8.2 — 2026-11-15
+- [x] Short `cchost` home screen; `cchost go` account picker with pin offer; `cchost open` recent conversations; multi-account find; find output and web view polish.
 
 ### v0.8.0 — 2026-11-15
 - [x] Folder pins: `cchost pin|unpin|pins|which|go`, `.cchost` suggestions, pins in the web view.

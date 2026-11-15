@@ -5,7 +5,17 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.8.2] - 2026-11-15
+
+### Added
+
+- `cchost go` in a folder with no pin lists your accounts, opens the one you
+  pick and offers to pin the folder, so next time it goes straight in. Scripts
+  and agents keep the old behaviour.
+- `cchost open` with no id lists the folder's recent conversations, from every
+  account it may see; at a terminal pick one by number (Enter for the newest).
+- `cchost status` lists pinned folders; the home screen says when the current
+  folder isn't pinned.
 
 ### Changed
 

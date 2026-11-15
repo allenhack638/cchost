@@ -199,3 +199,131 @@ describe('folder spellings', () => {
     }
   });
 });
+
+describe('interactive go and open', () => {
+  const FIXTURES = path.resolve(__dirname, '..', 'test-fixtures');
+  let answers;
+  let realPrompt;
+  let realPath;
+  let inTTY;
+  let outTTY;
+
+  beforeEach(() => {
+    realPrompt = cli.io.prompt;
+    answers = [];
+    cli.io.prompt = async () => (answers.length ? answers.shift() : '');
+    realPath = process.env.PATH;
+    process.env.PATH = `${FIXTURES}${path.delimiter}${realPath}`;
+    if (process.platform !== 'win32') fs.chmodSync(path.join(FIXTURES, 'claude'), 0o755);
+    inTTY = process.stdin.isTTY;
+    outTTY = process.stdout.isTTY;
+    process.env.NO_COLOR = '1';
+    process.stdin.isTTY = true;
+    process.stdout.isTTY = true;
+  });
+
+  afterEach(() => {
+    cli.io.prompt = realPrompt;
+    process.env.PATH = realPath;
+    delete process.env.NO_COLOR;
+    process.stdin.isTTY = inTTY;
+    process.stdout.isTTY = outTTY;
+  });
+
+  it('go with no pin lists accounts, launches the pick and pins on yes', async () => {
+    cwd = mk('src', 'fresh');
+    answers = ['2', ''];
+    const r = await run('go', '--version');
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('No pin for');
+    expect(r.out).toMatch(/1 {2}p1/);
+    expect(r.out).toMatch(/2 {2}work/);
+    expect(r.out).toContain('pinned');
+    expect(pins.list()).toMatchObject([{ dir: cwd, profile: 'work' }]);
+  });
+
+  it('declining the pin still launches, and cancelling changes nothing', async () => {
+    cwd = mk('src', 'fresh');
+    answers = ['1', 'n'];
+    expect((await run('go')).code).toBe(0);
+    expect(pins.list()).toEqual([]);
+    answers = ['q'];
+    const c = await run('go');
+    expect(c.code).toBe(1);
+    expect(c.out).toContain('Cancelled');
+    answers = ['9'];
+    expect((await run('go')).code).toBe(1);
+  });
+
+  it('Enter picks the existing account, and home folders are never offered a pin', async () => {
+    fs.writeFileSync(path.join(home, '.claude.json'), '{}');
+    await run('add', 'me', '--existing', '--json');
+    cwd = home;
+    answers = [''];
+    const r = await run('go');
+    expect(r.code).toBe(0);
+    expect(r.out).toMatch(/me.*\(Enter\)/);
+    expect(r.out).not.toContain('Pin ');
+    expect(pins.list()).toEqual([]);
+  });
+
+  it('a declined .cchost suggestion falls through to the picker', async () => {
+    cwd = mk('clone');
+    fs.writeFileSync(path.join(cwd, '.cchost'), 'work\n');
+    answers = ['n', '1', 'y'];
+    expect((await run('go')).code).toBe(0);
+    expect(pins.list()).toMatchObject([{ dir: cwd, profile: 'p1' }]);
+  });
+
+  it('without a terminal go keeps the old behaviour and never prompts', async () => {
+    process.stdin.isTTY = false;
+    cwd = mk('src', 'fresh');
+    answers = ['1', 'y'];
+    await expect(run('go')).rejects.toThrow(/No pin for this folder/);
+    expect(answers).toHaveLength(2);
+  });
+
+  it('open with no id lists recent conversations, and picks one at a terminal', async () => {
+    const proj = mk('src', 'proj');
+    const id = 'feed1234-0000-4000-8000-000000000001';
+    const dir = path.join(home, '.claude', 'projects', proj.replace(/[^a-zA-Z0-9]/g, '-'));
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, `${id}.jsonl`), `${[
+      { type: 'user', cwd: proj, sessionId: id, timestamp: new Date(Date.now() - 2 * 86400e3).toISOString(), message: { role: 'user', content: 'migrate the billing tables' } },
+      { type: 'assistant', cwd: proj, sessionId: id, timestamp: new Date(Date.now() - 2 * 86400e3).toISOString(), message: { role: 'assistant', content: [{ type: 'text', text: 'done' }] } },
+    ].map((l) => JSON.stringify(l)).join('\n')}\n`);
+    fs.writeFileSync(path.join(home, '.claude-profiles', 'work', 'history.jsonl'), `${JSON.stringify({ display: 'x', timestamp: 1, project: proj, sessionId: id })}\n`);
+    cwd = proj;
+    process.stdin.isTTY = false;
+    process.stdout.isTTY = false;
+    const list = await run('open');
+    expect(list.code).toBe(0);
+    expect(list.out).toContain('Recent conversations');
+    expect(list.out).toContain('feed1234  migrate the billing tables');
+    expect(list.out).toContain('work · 2d ago');
+    expect(list.out).toContain('cchost open feed1234');
+    process.stdin.isTTY = true;
+    process.stdout.isTTY = true;
+    answers = [''];
+    expect((await run('open')).code).toBe(0);
+    answers = ['q'];
+    expect((await run('open')).code).toBe(1);
+    cwd = mk('src', 'empty');
+    expect((await run('open')).out).toContain('No conversations yet');
+  });
+
+  it('home screen hints at go in an unpinned project, shows the pin when pinned', async () => {
+    cwd = mk('src', 'proj');
+    expect((await run()).out).toContain('not pinned · cchost go asks which account');
+    pins.pin('work', cwd);
+    expect((await run()).out).toMatch(/Here +.*→ work/);
+    cwd = home;
+    expect((await run()).out).not.toContain('Here');
+  });
+
+  it('status lists pins', async () => {
+    const d = mk('src', 'proj');
+    pins.pin('work', d);
+    expect((await run('status')).out).toContain(`Pinned folders:\n  ${path.join('~', 'src', 'proj')} → work`);
+  });
+});

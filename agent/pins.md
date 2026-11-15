@@ -36,8 +36,9 @@ with `cchost pin <profile>` after they agree. Never create or edit a
 ## Launch
 
 `cchost go [...claude args]` runs Claude in the current folder under the
-pinned profile. Without a pin it uses the named existing account, or stops
-and says how to pin.
+pinned profile. Without a pin, at a terminal, it lists the accounts, launches
+the one the person picks and offers to pin the folder. Without a terminal it
+uses the named existing account, or stops and says how to pin.
 
 Pins do not change what is shared. A profile that shares `projects/` still
 sees every conversation in the pool through `claude --resume`. To keep a

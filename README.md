@@ -201,7 +201,7 @@ cchost which                         # what go and find do here, and why
 cchost pins                          # every pin
 ```
 
-Pins live in `~/.claude-profiles/.cchost.json`, never in the folder. The deepest pin wins. Without a pin, `cchost go` uses your named existing account. A repo can ship a one-line `.cchost` file naming a profile: it is only a suggestion, and `cchost go` asks once before pinning (answer `never` to ignore it). It can't set endpoints, tokens or arguments. Pins don't change sharing: to keep a profile's history apart, `cchost unlink <profile> --projects`.
+Pins live in `~/.claude-profiles/.cchost.json`, never in the folder. The deepest pin wins. In a folder with no pin, `cchost go` lists your accounts, opens the one you pick and offers to pin the folder to it, so the next `cchost go` goes straight in (in scripts it uses your named existing account). A repo can ship a one-line `.cchost` file naming a profile: it is only a suggestion, and `cchost go` asks once before pinning (answer `never` to ignore it). It can't set endpoints, tokens or arguments. Pins don't change sharing: to keep a profile's history apart, `cchost unlink <profile> --projects`.
 
 ## Find any conversation
 
@@ -211,6 +211,7 @@ cchost find "rate limit" --since=2w
 cchost find deploy --profile=work,p1      # only these accounts
 cchost open 4f57                       # resume it, in its folder, as that account
 cchost open 4f57 --fork                # branch off instead
+cchost open                            # pick from this folder's recent conversations
 ```
 
 `find` searches what you typed and what Claude answered, across every account on this machine. It only sees the folder you run it in: inside a pinned folder, that folder under the pinned account; in another project folder, that folder under every account; from your home folder, nothing. `--global` lifts those limits and works only at a terminal, never from an agent or a script. `--profile` and `--project` narrow a scope, never widen it. `open` resolves only sessions inside the same scope. The web view has a **Find** page that searches everything, with toggles to pick one or several accounts.

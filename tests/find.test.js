@@ -425,7 +425,10 @@ describe('open — resolution', () => {
     pins.pin('work', projA);
     cwd = projA;
     await expect(run('open', 'bbbb')).rejects.toThrow(/in this scope/);
-    await expect(run('open')).rejects.toMatchObject({ exitCode: 2 });
+    const bare = await run('open');
+    expect(bare.code).toBe(0);
+    expect(bare.out).toContain('cchost open aaaa1111');
+    expect(bare.out).not.toContain('bbbb');
     cwd = home;
     await expect(run('open', 'aaaa1111')).rejects.toThrow(/No search scope/);
     await expect(run('open', 'aaaa1111', '--global')).rejects.toMatchObject({ exitCode: 2 });
