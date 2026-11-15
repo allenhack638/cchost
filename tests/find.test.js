@@ -137,7 +137,7 @@ describe('find — scope', () => {
     const r = await json('find', 'redis', '--json');
     expect(r.code).toBe(0);
     expect(r.data.scope).toMatchObject({ root: projA, accounts: ['work'], source: 'pin' });
-    expect(r.data.results.map((x) => x.id)).toEqual([A1.split('/').pop().slice(0, -6)]);
+    expect(r.data.results.map((x) => x.id)).toEqual([path.basename(A1, '.jsonl')]);
     expect(r.data.results[0]).toMatchObject({ where: 'prompt', accounts: ['work'], title: 'Redis cache fix', branch: 'main' });
     expect(r.data.results[0].snippet).toContain('redis cache bug');
     const files = indexFiles();
