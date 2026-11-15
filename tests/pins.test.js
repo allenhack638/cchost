@@ -324,6 +324,14 @@ describe('interactive go and open', () => {
   it('status lists pins', async () => {
     const d = mk('src', 'proj');
     pins.pin('work', d);
-    expect((await run('status')).out).toContain(`Pinned folders:\n  ${path.join('~', 'src', 'proj')} → work`);
+    expect((await run('status')).out).toMatch(new RegExp(`Pinned +${path.join('~', 'src', 'proj').replace(/[\\]/g, '\\\\')} → work`));
+  });
+});
+
+describe('friendly paths', () => {
+  it('add and remove print ~ paths, not absolute ones', async () => {
+    const added = await run('add', 'newp');
+    expect(added.out).toContain(`Created profile "newp" at ${path.join('~', '.claude-profiles', 'newp')}.`);
+    expect(added.out).not.toContain(home);
   });
 });

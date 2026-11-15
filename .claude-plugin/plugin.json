@@ -1,7 +1,7 @@
 {
   "name": "cchost",
   "description": "Skills for setting up and managing cchost, the multi-account manager for Claude Code.",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "author": { "name": "Allen Benny" },
   "homepage": "https://github.com/allenhack638/cchost",
   "license": "MIT"

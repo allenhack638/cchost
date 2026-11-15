@@ -366,7 +366,7 @@ async function pinsAndFind() {
   check('open with no id lists recent conversations in scope', recent.code === 0 && /aaaa1111/.test(recent.out) && !/bbbb1111/.test(recent.out), recent.out);
   const home1 = run('cchost', [], { cwd: A });
   check('home screen shows the pin for this folder', home1.code === 0 && /Here .*→ work/.test(home1.out) && /cchost --help/.test(home1.out), home1.out);
-  check('status lists pins', /Pinned folders:/.test(cchost('status').out));
+  check('status lists pins', /Pinned +~.* → work/.test(cchost('status').out), cchost('status').out);
   check('unpin', jsonIn(A, 'unpin').data?.ok && json('pins').data?.length === 0);
   check('pin again for removal check', jsonIn(A, 'pin', 'work').data?.ok);
   check('doctor still clean', json('doctor').data?.summary?.error === 0);

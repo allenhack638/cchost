@@ -5,6 +5,16 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.3] - 2026-11-15
+
+### Changed
+
+- `cchost status` is laid out as a readable screen: aligned profile columns,
+  login state in colour, shared MCP servers, pins, skills and doctor at a
+  glance, and next steps written for people ("Log in to work: …").
+- `cchost add` and `cchost remove` show `~/.claude-profiles/<name>` instead of
+  the full absolute path.
+
 ## [0.8.2] - 2026-11-15
 
 ### Added
