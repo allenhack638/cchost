@@ -216,6 +216,8 @@ main { min-width: 0; }
 .hit-title { font-weight: 550; }
 .hit-snip { color: var(--text-2); font-size: 13px; line-height: 1.45; }
 .hit-snip b { color: var(--text); font-weight: 600; }
+.hit-snip mark { background: var(--warn-bg); color: var(--text); border-radius: 3px; padding: 0 2px; }
+.kbd { font-family: var(--mono); font-size: 11px; padding: 1px 5px; border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; color: var(--text-2); }
 .hit-cmd { display: flex; align-items: center; gap: 8px; }
 .callout { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
 .callout p { flex: 1 1 320px; color: var(--text-2); }
@@ -750,7 +752,11 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     const s = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
     if (s < 60) return 'just now';
     if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const d = new Date(iso);
+    if (s < 86400 && d.toDateString() === new Date().toDateString()) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (s < 2 * 86400) return 'yesterday';
+    if (s < 14 * 86400) return `${Math.round(s / 86400)} days ago`;
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
   }
 
   // --- Views --------------------------------------------------------------
@@ -864,6 +870,12 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     findState.focusAcct = undefined;
     if (el) el.focus({ preventScroll: true });
   }
+  function marked(text, terms) {
+    const list = (terms || []).filter(Boolean).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    if (!list.length) return esc(text);
+    const re = new RegExp(`(${list.join('|')})`, 'gi');
+    return String(text).split(re).map((part, i) => (i % 2 ? `<mark>${esc(part)}</mark>` : esc(part))).join('');
+  }
   function viewFind() {
     const r = findState.result;
     const names = data ? data.profiles.map((p) => p.name) : [];
@@ -876,14 +888,15 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     if (findState.error) return form + `<div class="callout"><p>${esc(findState.error)}</p></div>`;
     if (!r) {
       return form + `<div class="empty"><h2>Every conversation, every account</h2>
-        <p>Searches what you typed and what Claude answered, across all your profiles, on this machine only. Tool output is never indexed. Resume a result with <code>cchost open &lt;id&gt;</code> in your terminal. The first search reads your session files once.</p></div>`;
+        <p>Searches what you typed and what Claude answered, across all your profiles, on this machine only. Tool output is never indexed. Resume a result with <code>cchost open &lt;id&gt;</code> in your terminal. The first search reads your session files once.</p>
+        <p class="muted">Press <span class="kbd">/</span> anywhere to search.</p></div>`;
     }
-    const meta = `<div class="toolbar"><p>${r.total} match${r.total === 1 ? '' : 'es'} in ${r.sessions} session${r.sessions === 1 ? '' : 's'} · ${esc(r.scope.text)}${r.total > r.results.length ? ` · showing ${r.results.length}` : ''}</p></div>`;
+    const meta = `<div class="toolbar"><p>${r.total} match${r.total === 1 ? '' : 'es'} in ${r.sessions} conversation${r.sessions === 1 ? '' : 's'} · ${esc(r.scope.text)}${r.total > r.results.length ? ` · showing ${r.results.length}` : ''}</p></div>`;
     if (!r.total) return form + meta + `<div class="empty"><h2>Nothing matched</h2><p>Every word has to appear in the same message. Try fewer words.</p></div>`;
     return form + meta + `<ol class="hits">${r.results.map((h) => `<li class="hit">
-      <div class="hit-head"><code class="hit-id" title="${esc(h.id)}">${esc(h.id.slice(0, 8))}</code><span class="muted">${esc((h.lastSeen || '').slice(0, 10))}</span>${h.accounts.length ? h.accounts.map((a) => `<span class="pill">${esc(a)}</span>`).join('') : '<span class="pill warn">unknown account</span>'}<span class="muted">${esc(h.short || '')}</span>${h.branch ? `<span class="muted">(${esc(h.branch)})</span>` : ''}</div>
+      <div class="hit-head"><code class="hit-id" title="${esc(h.id)}">${esc(h.id.slice(0, 8))}</code><span class="muted" title="${esc(h.lastSeen || '')}">${esc(h.lastSeen ? relTime(h.lastSeen) : '')}</span>${h.accounts.length ? h.accounts.map((a) => `<span class="pill">${esc(a)}</span>`).join('') : '<span class="pill warn">unknown account</span>'}<span class="muted">${esc(h.short || '')}</span>${h.branch ? `<span class="muted">(${esc(h.branch)})</span>` : ''}</div>
       ${h.title && !h.snippet.startsWith(h.title.replace(/…$/, '')) ? `<div class="hit-title">${esc(h.title)}</div>` : ''}
-      <div class="hit-snip"><b>${h.where === 'prompt' ? 'you' : 'claude'}:</b> ${esc(h.snippet)}</div>
+      <div class="hit-snip"><b>${h.where === 'prompt' ? 'you' : 'claude'}:</b> ${marked(h.snippet, r.query)}</div>
       <div class="hit-cmd"><code>cchost open ${esc(h.id.slice(0, 8))}</code> <button class="btn quiet" type="button" data-act="copy-text" data-text="cchost open ${esc(h.id.slice(0, 8))}">${icon('copy')}Copy</button></div></li>`).join('')}</ol>`;
   }
 
@@ -1566,6 +1579,14 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
       else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
     }
+  });
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key !== '/' || ev.metaKey || ev.ctrlKey || ev.altKey || panelState) return;
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(tag)) return;
+    ev.preventDefault();
+    if (view !== 'find') location.hash = '#find';
+    setTimeout(() => { const q = document.querySelector('#find-form [name="q"]'); if (q) { q.focus(); q.select(); } }, view === 'find' ? 0 : 60);
   });
   document.addEventListener('submit', (ev) => {
     const f = ev.target;

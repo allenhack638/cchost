@@ -146,7 +146,8 @@ describe('find — scope', () => {
     for (const f of files) noSecrets(fs.readFileSync(f, 'utf8'));
     noSecrets(r.out);
     const text = await run('find', 'redis');
-    expect(text.out).toContain(`scope: ${path.join('~', 'src', 'proj-a')} and subfolders · account work`);
+    expect(text.out).toContain(`${path.join('~', 'src', 'proj-a')} and subfolders · account work`);
+    expect(text.out).toContain('cchost open aaaa1111');
     expect(text.out).toContain('aaaa1111');
     expect(text.out).not.toContain('presage');
     noSecrets(text.out);
@@ -375,10 +376,10 @@ describe('find — query', () => {
     const lim = await json('find', 'redis', '--global', '-n=1', '--json');
     expect(lim.data.results).toHaveLength(1);
     expect(lim.data.total).toBe(3);
-    expect((await run('find', 'redis', '--global', '-n=1')).out).toContain('showing 1');
+    expect((await run('find', 'redis', '--global', '-n=1')).out.replace(/\x1b\[[0-9;]*m/g, '')).toContain('top 1; more with -n=3');
     const reply = await json('find', 'idempotency', '--global', '--json');
     expect(reply.data.results[0]).toMatchObject({ where: 'reply' });
-    expect((await run('find', 'idempotency', '--global')).out).toContain('claude: Use idempotency keys');
+    expect((await run('find', 'idempotency', '--global')).out.replace(/\x1b\[[0-9;]*m/g, '')).toMatch(/claude +Use idempotency keys/);
   });
 
   it('--since filters by last activity and rejects nonsense', async () => {

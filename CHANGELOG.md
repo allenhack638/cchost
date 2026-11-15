@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `cchost find --profile` takes several accounts (`--profile=work,p1`); the web
   view's Find page picks accounts with toggles instead of a dropdown.
 - Dropdowns in the web view match the text fields.
+- `cchost find` output is easier to scan: matches highlighted, times like
+  "2d ago", and the exact `cchost open <id>` to run next. The web view's Find
+  page highlights matches too, shows relative dates, and `/` jumps to search
+  from anywhere.
 
 ## [0.8.1] - 2026-11-15
 
