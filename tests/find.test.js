@@ -249,6 +249,7 @@ describe('find — index content', () => {
       extras: [
         { type: 'user', isSidechain: true, cwd: projA, sessionId: 'f', timestamp: '2026-11-02T00:00:00Z', message: { role: 'user', content: 'subagent prompt kafka-side' } },
         { type: 'user', isMeta: true, cwd: projA, sessionId: 'f', timestamp: '2026-11-02T00:00:00Z', message: { role: 'user', content: 'meta kafka-meta' } },
+        { type: 'user', isCompactSummary: true, isVisibleInTranscriptOnly: true, cwd: projA, sessionId: 'f', timestamp: '2026-11-02T00:00:00Z', message: { role: 'user', content: 'This session is being continued. kafka-summary' } },
         'not json',
       ],
     });
@@ -261,7 +262,7 @@ describe('find — index content', () => {
     expect(rec.cwd).toBe(projA);
     expect(rec.started < rec.lastSeen).toBe(true);
     expect(rec.accounts).toEqual({ work: expect.any(Number) });
-    expect(JSON.stringify(rec)).not.toMatch(/kafka-side|kafka-meta|tool_use|tool_result|thinking/);
+    expect(JSON.stringify(rec)).not.toMatch(/kafka-side|kafka-meta|kafka-summary|tool_use|tool_result|thinking/);
     noSecrets(JSON.stringify(rec));
   });
 
@@ -279,6 +280,20 @@ describe('find — index content', () => {
     await find.refresh(pins.scope(projA));
     const r = await json('find', 'redis', '--json');
     expect(r.data.results.find((x) => x.id.startsWith('aaaa')).accounts.sort()).toEqual(['p1', 'work']);
+  });
+
+  it('rebuilds extracts written by an older index format', async () => {
+    cwd = projA;
+    await find.refresh(pins.scope(projA));
+    const file = indexFiles().find((f) => f.includes('aaaa1111'));
+    const rec = JSON.parse(fs.readFileSync(file, 'utf8'));
+    delete rec.v;
+    rec.prompts = [{ t: null, text: 'stale compact summary text' }];
+    fs.writeFileSync(file, JSON.stringify(rec));
+    const r = await find.refresh(pins.scope(projA));
+    expect(r.indexed).toBe(1);
+    expect((await json('find', 'stale', 'compact', '--json')).data.total).toBe(0);
+    expect(JSON.parse(fs.readFileSync(file, 'utf8')).v).toBe(2);
   });
 
   it('index --global prunes extracts of deleted sessions and reports per-account sizes', async () => {
@@ -371,7 +386,7 @@ describe('open — resolution', () => {
     expect(find.resolveOpen(s, 'aaaa1111')).toMatchObject({ id: expect.stringMatching(/^aaaa1111/), account: 'work', cwd: projA });
     expect(() => find.resolveOpen(s, 'bbbb')).toThrow(/No session starting with "bbbb" in this scope/);
     expect(() => find.resolveOpen(s, 'aaaa2222')).toThrow(/No session/);
-    expect(() => find.resolveOpen(s, 'zz')).toThrow(/first 4\+ characters/);
+    expect(() => find.resolveOpen(s, 'zz')).toThrow(/is not a session id/);
     tty(true);
     const g = { root: null, profiles: null, source: 'global', confirmed: true };
     await find.refresh(g);

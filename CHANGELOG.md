@@ -5,6 +5,16 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.1] - 2026-11-15
+
+### Fixed
+
+- `cchost find` no longer matches Claude Code's compaction summaries, which
+  recap a whole session and showed up as something you typed. Existing search
+  indexes rebuild themselves on the next search.
+- `cchost open` with an invalid id says so, instead of asking for more
+  characters.
+
 ## [0.8.0] - 2026-11-15
 
 ### Added
