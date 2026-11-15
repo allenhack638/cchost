@@ -26,6 +26,7 @@ cchost find <words...> --json          # every word in the same message
 cchost find '"exact phrase"' --json
 cchost find <words> --since=2w --json  # 12h, 30d, 2w, 6m or a date
 cchost find <words> -n=50 --json       # more results (default 20)
+cchost find <words> --profile=work,p1 --json   # only these accounts (inside the scope)
 ```
 
 Each result has `id`, `title`, `short` (folder), `accounts`, `lastSeen`,

@@ -208,11 +208,12 @@ Pins live in `~/.claude-profiles/.cchost.json`, never in the folder. The deepest
 ```bash
 cchost find redis webhook              # every word in the same message
 cchost find "rate limit" --since=2w
+cchost find deploy --profile=work,p1      # only these accounts
 cchost open 4f57                       # resume it, in its folder, as that account
 cchost open 4f57 --fork                # branch off instead
 ```
 
-`find` searches what you typed and what Claude answered, across every account on this machine. It only sees the folder you run it in: inside a pinned folder, that folder under the pinned account; in another project folder, that folder under every account; from your home folder, nothing. `--global` lifts those limits and works only at a terminal, never from an agent or a script. `--profile` and `--project` narrow a scope, never widen it. `open` resolves only sessions inside the same scope. The web view has a **Find** page that searches everything.
+`find` searches what you typed and what Claude answered, across every account on this machine. It only sees the folder you run it in: inside a pinned folder, that folder under the pinned account; in another project folder, that folder under every account; from your home folder, nothing. `--global` lifts those limits and works only at a terminal, never from an agent or a script. `--profile` and `--project` narrow a scope, never widen it. `open` resolves only sessions inside the same scope. The web view has a **Find** page that searches everything, with toggles to pick one or several accounts.
 
 The first search reads your session files once into `~/.claude-profiles/<profile>/.cchost-index/` (owner-only, one small file per conversation per account, about 1% of the history's size); later searches only re-read conversations that changed. Tool calls, tool output, attachments and hook output are never indexed. Deleting the index folders is always safe; `cchost remove` deletes a profile's index with it.
 

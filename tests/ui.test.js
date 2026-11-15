@@ -310,6 +310,11 @@ describe('cchost ui server', () => {
     expect((await request(port, { path: `/api/find?q=${SENT}`, headers: auth() })).json.total).toBe(0);
     const scoped = await request(port, { path: '/api/find?q=redis&profile=kimi', headers: auth() });
     expect(scoped.json.total).toBe(0);
+    const multi = await request(port, { path: '/api/find?q=redis&profile=kimi&profile=work', headers: auth() });
+    expect(multi.json.scope.accounts).toEqual(['kimi', 'work']);
+    expect(multi.json.total).toBe(1);
+    expect((await request(port, { path: '/api/find?q=redis&profile=kimi,work', headers: auth() })).json.total).toBe(1);
+    expect((await request(port, { path: '/api/find?q=redis&profile=ghost', headers: auth() })).status).toBeGreaterThanOrEqual(400);
     const bad = await request(port, { path: '/api/find?q=redis&since=soon', headers: auth() });
     expect(bad.status).toBeGreaterThanOrEqual(400);
     expect(JSON.stringify(bad.json)).not.toContain('at ');

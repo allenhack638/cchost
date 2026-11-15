@@ -217,6 +217,27 @@ describe('find — scope', () => {
     expect(all.data.results.map((x) => x.id.slice(0, 4)).sort()).toEqual(['bbbb']);
   });
 
+  it('--profile takes several accounts, all inside the scope', async () => {
+    cwd = projB;
+    const both = await json('find', 'redis', '--profile=p1,work', '--json');
+    expect(both.data.scope.accounts).toEqual(['p1', 'work']);
+    expect(both.data.results.map((x) => x.id.slice(0, 4))).toEqual(['bbbb']);
+    const dup = await json('find', 'redis', '--profile=p1, p1 ,work', '--json');
+    expect(dup.data.scope.accounts).toEqual(['p1', 'work']);
+    const ghost = await json('find', 'redis', '--profile=p1,ghost', '--json');
+    expect(ghost.code).toBe(1);
+    expect(ghost.data.error).toContain('No profile named "ghost"');
+    pins.pin('work', projA);
+    cwd = projA;
+    const mixed = await json('find', 'redis', '--profile=work,p1', '--json');
+    expect(mixed.code).toBe(1);
+    expect(mixed.data.error).toContain('"p1" is outside');
+    tty(true);
+    const g = await json('find', 'redis', '--global', '--profile=p1,work', '--json');
+    expect(g.data.results.map((x) => x.id.slice(0, 4)).sort()).toEqual(['aaaa', 'bbbb']);
+    expect(() => find.resolveOpen(pins.scope(projA), 'aaaa', { profile: 'work,p1' })).toThrow(/one --profile/);
+  });
+
   it('a sibling folder whose encoded name shares the prefix is not in scope', async () => {
     const lookalike = mk('src', 'proj-a-old');
     session({ id: 'dddd1111-0000-0000-0000-000000000005', cwd: lookalike, accounts: ['work'], prompts: ['redis in the old project'] });

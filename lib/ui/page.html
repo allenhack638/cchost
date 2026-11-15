@@ -404,6 +404,17 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   background: var(--surface); color: var(--text); font: inherit;
 }
 .input::placeholder { color: var(--text-3); }
+.select { position: relative; display: inline-flex; }
+.select select.input { appearance: none; -webkit-appearance: none; padding-right: 30px; min-width: 120px; cursor: pointer; }
+.select select.input:hover { border-color: var(--text-3); }
+.select .i { position: absolute; right: 9px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%); pointer-events: none; color: var(--text-3); }
+.acct-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: -6px 0 16px; align-items: center; }
+.acct-chips .lbl { font-size: 12.5px; color: var(--text-3); margin-right: 2px; }
+.acct { height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-2); font: inherit; font-size: 12.5px; font-weight: 550; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 140ms var(--ease), color 140ms var(--ease), border-color 140ms var(--ease); }
+.acct:hover { border-color: var(--text-3); color: var(--text); }
+.acct[aria-pressed="true"] { background: var(--shared-bg); border-color: var(--shared-bd); color: var(--shared-fg); }
+.acct .i { width: 12px; height: 12px; }
+.acct:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 .input:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; border-color: var(--focus); }
 .input[aria-invalid="true"] { border-color: var(--err); }
 .err { color: var(--err-fg); font-size: 12.5px; }
@@ -823,12 +834,12 @@ details.check-group[open]::details-content, details.entry[open]::details-content
         <button class="btn quiet" type="button" data-act="unpin" data-dir="${esc(p.dir)}">${icon('x')}Unpin…</button></div></td></tr>`).join('')}</tbody></table>` : '<p class="muted">No pins yet.</p>'}
       <form id="pin-form" class="pin-form" autocomplete="off">
         <input class="input" name="dir" type="text" placeholder="Folder to pin, e.g. ~/work/api" aria-label="Folder to pin" required>
-        <select class="input" name="profile" aria-label="Profile">${options}</select>
+        <span class="select"><select class="input" name="profile" aria-label="Profile">${options}</select><svg class="i"><use href="#i-updown"/></svg></span>
         <button class="btn" type="submit">${icon('pin')}Pin…</button>
       </form></section>`;
   }
 
-  let findState = { q: '', profile: '', loading: false, result: null, error: null };
+  let findState = { q: '', profiles: [], loading: false, result: null, error: null };
   async function loadFind() {
     const q = findState.q.trim();
     if (!q) return;
@@ -837,7 +848,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     render();
     try {
       const params = new URLSearchParams({ q });
-      if (findState.profile) params.set('profile', findState.profile);
+      for (const p of findState.profiles) params.append('profile', p);
       findState.result = await api(`/api/find?${params}`);
       announce(`${findState.result.total} match${findState.result.total === 1 ? '' : 'es'}`);
     } catch (err) {
@@ -845,14 +856,23 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     }
     findState.loading = false;
     render();
+    refocusAcct();
+  }
+  function refocusAcct() {
+    if (findState.focusAcct === undefined) return;
+    const el = document.querySelector(`.acct[data-name="${CSS.escape(findState.focusAcct)}"]`);
+    findState.focusAcct = undefined;
+    if (el) el.focus({ preventScroll: true });
   }
   function viewFind() {
     const r = findState.result;
-    const options = ['<option value="">every account</option>'].concat((data ? data.profiles : []).map((p) => `<option value="${esc(p.name)}"${findState.profile === p.name ? ' selected' : ''}>${esc(p.name)}</option>`)).join('');
+    const names = data ? data.profiles.map((p) => p.name) : [];
+    const sel = findState.profiles;
+    const chip = (name, label, pressed) => `<button class="acct" type="button" data-act="find-acct" data-name="${esc(name)}" aria-pressed="${pressed}">${pressed ? icon('check') : ''}${esc(label)}</button>`;
     const form = `<form id="find-form" class="find-form" role="search" autocomplete="off">
       <input class="input" name="q" type="search" value="${esc(findState.q)}" placeholder="Words from a conversation, &quot;quote a phrase&quot;" aria-label="Search your conversations" autofocus>
-      <select class="input" name="profile" aria-label="Account">${options}</select>
-      <button class="btn primary" type="submit"${findState.loading ? ' disabled' : ''}>${icon(findState.loading ? 'loader' : 'search')}Find</button></form>`;
+      <button class="btn primary" type="submit"${findState.loading ? ' disabled' : ''}>${icon(findState.loading ? 'loader' : 'search')}Find</button></form>
+      <div class="acct-chips" role="group" aria-label="Accounts to search"><span class="lbl">Accounts</span>${chip('', 'All', !sel.length)}${names.map((n) => chip(n, n, sel.includes(n))).join('')}</div>`;
     if (findState.error) return form + `<div class="callout"><p>${esc(findState.error)}</p></div>`;
     if (!r) {
       return form + `<div class="empty"><h2>Every conversation, every account</h2>
@@ -1427,6 +1447,17 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       openPanel({ type: 'simple', title: 'Unpin folder', sub: p ? `${esc(p.short)} → ${esc(p.profile)}` : esc(dir), note: 'The folder stops opening under this profile. Nothing on disk changes.' });
       preview({ action: 'unpin', dir }, 'Unpin folder');
     }
+    if (act === 'find-acct') {
+      const q = document.querySelector('#find-form [name="q"]');
+      if (q) findState.q = q.value;
+      const name = t.dataset.name;
+      if (!name) findState.profiles = [];
+      else if (findState.profiles.includes(name)) findState.profiles = findState.profiles.filter((p) => p !== name);
+      else findState.profiles = [...findState.profiles, name];
+      if (data && findState.profiles.length === data.profiles.length) findState.profiles = [];
+      findState.focusAcct = name;
+      if (findState.q.trim()) loadFind(); else { render(); refocusAcct(); }
+    }
     if (act === 'copy-text') {
       navigator.clipboard.writeText(t.dataset.text).then(() => announce('Copied'), () => announce('Could not copy'));
     }
@@ -1541,7 +1572,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     if (f.id === 'find-form') {
       ev.preventDefault();
       findState.q = f.elements.q.value;
-      findState.profile = f.elements.profile.value;
       loadFind();
     }
     if (f.id === 'pin-form') {

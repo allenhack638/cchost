@@ -200,6 +200,28 @@ describe('cc unknown action', () => {
     expect(out).not.toMatch(/████/);
   });
 
+  it('bare cchost is a short home screen; --help is the full reference', async () => {
+    let out = '';
+    const noop = process.stdout.write;
+    process.stdout.write = (s) => { out += s; return true; };
+    try {
+      await expect(cli.run([])).resolves.toBe(0);
+      const home = out;
+      out = '';
+      await expect(cli.run(['--help'])).resolves.toBe(0);
+      expect(home).toMatch(/████/);
+      expect(home).toMatch(/cchost \d+\.\d+\.\d+/);
+      expect(home).toContain('cchost --help');
+      expect(home).toContain('cchost find <words>');
+      expect(home).not.toContain('Shared resources');
+      expect(home.split('\n').length).toBeLessThan(25);
+      expect(out).toContain('Shared resources');
+      expect(out.split('\n').length).toBeGreaterThan(40);
+    } finally {
+      process.stdout.write = noop;
+    }
+  });
+
   it('bare help prints the banner with the package version', async () => {
     let out = '';
     const noop = process.stdout.write;
