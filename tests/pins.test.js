@@ -31,7 +31,7 @@ const mk = (...p) => {
 };
 
 beforeEach(() => {
-  home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'cc-pins-')));
+  home = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'cc-pins-')));
   realHomedir = os.homedir;
   os.homedir = () => home;
   realCwd = process.cwd;
@@ -183,5 +183,19 @@ describe('pins', () => {
       expect(r.out).toContain('cchost go [...claude args]');
     }
     expect((await run('--help')).out).toContain('cchost go');
+  });
+});
+
+describe('folder spellings', () => {
+  it('treats a folder and its resolved spellings as the same place', () => {
+    const d = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'cc-sp-')));
+    try {
+      expect(pins.spellings(d)).toContain(d);
+      expect(pins.isUnderReal(path.join(d, 'x'), d)).toBe(true);
+      expect(pins.isUnderReal(`${d}-old`, d)).toBe(false);
+      expect(pins.isUnderReal(path.join(d, '..', path.basename(d), 'y'), d)).toBe(true);
+    } finally {
+      fs.rmSync(d, { recursive: true, force: true });
+    }
   });
 });

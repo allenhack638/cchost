@@ -77,7 +77,7 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
   it('open resumes a found session in its own folder under its account', () => {
     const work = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(work, { recursive: true });
-    const repo = path.join(fs.realpathSync(tmpHome), 'src', 'api');
+    const repo = path.join(fs.realpathSync.native(tmpHome), 'src', 'api');
     fs.mkdirSync(path.join(repo, 'deep'), { recursive: true });
     const id = 'abcd1234-0000-0000-0000-000000000001';
     const projDir = path.join(tmpHome, '.claude', 'projects', repo.replace(/[^a-zA-Z0-9]/g, '-'));
@@ -98,7 +98,7 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
     expect(res.status).toBe(0);
     expect(res.stdout).toContain(`ARGS:["--resume","${id}","--fork-session"]`);
     expect(res.stdout).toContain(`CLAUDE_CONFIG_DIR:${work}`);
-    expect(res.stdout).toContain(`CWD:${fs.realpathSync(repo)}`);
+    expect(res.stdout).toContain(`CWD:${fs.realpathSync.native(repo)}`);
     expect(res.stderr).toContain("as 'work'");
 
     const elsewhere = runCc(['open', 'abcd1234'], { home: tmpHome, cwd: path.join(tmpHome, 'src') });

@@ -71,7 +71,7 @@ let B1;
 let U1;
 
 beforeEach(async () => {
-  home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'cc-find-')));
+  home = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'cc-find-')));
   clock = Date.parse('2026-11-01T00:00:00Z');
   realHomedir = os.homedir;
   os.homedir = () => home;
