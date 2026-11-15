@@ -3,6 +3,7 @@
 const argv = process.argv.slice(2);
 console.log('ARGS:' + JSON.stringify(argv));
 console.log('CLAUDE_CONFIG_DIR:' + (process.env.CLAUDE_CONFIG_DIR || ''));
+console.log('CWD:' + process.cwd());
 // Dump endpoint-related env vars so cc-env injection can be verified end-to-end.
 for (const k of [
   'ANTHROPIC_BASE_URL', 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_API_KEY',

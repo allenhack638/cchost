@@ -10,7 +10,7 @@ const repoRoot = path.resolve(__dirname, '..');
 const fixturesDir = path.join(repoRoot, 'test-fixtures');
 const ccBin = path.join(repoRoot, 'bin', 'cc.js');
 
-function runCc(args, { home, extraEnv = {} }) {
+function runCc(args, { home, extraEnv = {}, cwd }) {
   const pathSep = process.platform === 'win32' ? ';' : ':';
   const env = {
     ...process.env,
@@ -30,6 +30,7 @@ function runCc(args, { home, extraEnv = {} }) {
   // node strips undefined values from env
   return spawnSync(process.execPath, [ccBin, ...args], {
     env,
+    cwd,
     encoding: 'utf8',
     timeout: 20000,
   });
@@ -53,6 +54,35 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
 
   afterEach(() => {
     fs.rmSync(tmpHome, { recursive: true, force: true });
+  });
+
+  it('go launches the profile pinned to the folder, with args forwarded', () => {
+    const profileDir = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(profileDir, { recursive: true });
+    const repo = path.join(tmpHome, 'src', 'api');
+    fs.mkdirSync(path.join(repo, 'deep'), { recursive: true });
+    expect(runCc(['pin', 'work', `--path=${repo}`], { home: tmpHome }).status).toBe(0);
+
+    const res = runCc(['go', '--resume', 'abc'], { home: tmpHome, cwd: path.join(repo, 'deep') });
+    expect(res.status).toBe(0);
+    expect(res.stdout).toContain('ARGS:["--resume","abc"]');
+    expect(res.stdout).toContain(`CLAUDE_CONFIG_DIR:${profileDir}`);
+    expect(res.stderr).toContain("pinned to 'work'");
+
+    const outside = runCc(['go'], { home: tmpHome, cwd: tmpHome });
+    expect(outside.status).toBe(1);
+    expect(outside.stderr).toContain('No pin for this folder');
+  });
+
+  it('go refuses an unconfirmed .cchost suggestion without a terminal', () => {
+    fs.mkdirSync(path.join(tmpHome, '.claude-profiles', 'work'), { recursive: true });
+    const repo = path.join(tmpHome, 'clone');
+    fs.mkdirSync(repo);
+    fs.writeFileSync(path.join(repo, '.cchost'), 'work\n');
+    const res = runCc(['go'], { home: tmpHome, cwd: repo });
+    expect(res.status).toBe(2);
+    expect(res.stderr).toContain('has not been confirmed');
+    expect(res.stdout).not.toContain('CLAUDE_CONFIG_DIR');
   });
 
   it('forwards args verbatim and sets CLAUDE_CONFIG_DIR', () => {
