@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   glance, and next steps written for people ("Log in to work: …").
 - `cchost add` and `cchost remove` show `~/.claude-profiles/<name>` instead of
   the full absolute path.
+- Shorter messages after naming the existing account and after MCP changes,
+  so they fit on one line.
+
+### Fixed
+
+- `cchost list` showed custom-endpoint profiles as not logged in even after
+  their token was set.
 
 ## [0.8.2] - 2026-11-15
 

@@ -335,3 +335,17 @@ describe('friendly paths', () => {
     expect(added.out).not.toContain(home);
   });
 });
+
+describe('endpoint login state', () => {
+  it('list counts an endpoint profile as logged in once its token is set', async () => {
+    await run('add', 'kimi', '--custom', '--base-url=https://api.example.com');
+    let rows = JSON.parse((await run('list', '--json')).out);
+    expect(rows.find((r) => r.name === 'kimi')).toMatchObject({ loggedIn: false, credentialSource: 'none' });
+    const envFile = path.join(home, '.claude-profiles', 'kimi', '.cc-env.json');
+    fs.writeFileSync(envFile, JSON.stringify({ ...JSON.parse(fs.readFileSync(envFile, 'utf8')), auth_token: 'sk-x' }));
+    rows = JSON.parse((await run('list', '--json')).out);
+    expect(rows.find((r) => r.name === 'kimi')).toMatchObject({ loggedIn: true, credentialSource: 'token' });
+    expect((await run('list', 'kimi')).out).toContain('LoggedIn:  true');
+    expect(rows.find((r) => r.name === 'work').credentialSource).not.toBe('token');
+  });
+});
