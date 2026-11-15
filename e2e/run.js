@@ -39,8 +39,8 @@ function q(a) {
   return /[\s"&|<>^()]/.test(a) ? `"${a.replace(/"/g, '""')}"` : a;
 }
 
-function run(cmd, args = [], { input, extraEnv = {}, timeout = 120000 } = {}) {
-  const opts = { env: { ...env, ...extraEnv }, encoding: 'utf8', input: input ?? '', timeout, cwd: root };
+function run(cmd, args = [], { input, extraEnv = {}, timeout = 120000, cwd = root } = {}) {
+  const opts = { env: { ...env, ...extraEnv }, encoding: 'utf8', input: input ?? '', timeout, cwd };
   const res = WIN
     ? spawnSync([cmd, ...args].map(q).join(' '), { ...opts, shell: true })
     : spawnSync(cmd, args, opts);
@@ -50,6 +50,14 @@ function run(cmd, args = [], { input, extraEnv = {}, timeout = 120000 } = {}) {
 }
 
 const cchost = (...args) => run('cchost', args);
+const jsonIn = (cwd, ...args) => {
+  const r = run('cchost', [...args, '--json'], { cwd });
+  try {
+    return { ...r, data: JSON.parse(r.stdout) };
+  } catch {
+    return { ...r, data: null };
+  }
+};
 const json = (...args) => {
   const r = cchost(...args, '--json');
   try {
@@ -121,7 +129,7 @@ function uiCheck() {
         const signin = await get(`/?code=${m[2]}`);
         const cookie = String(signin.headers['set-cookie'] || '').split(';')[0];
         const results = {};
-        for (const p of ['/api/state', '/api/mcp', '/api/backups']) results[p] = await get(p, { cookie, 'x-cchost': '1' });
+        for (const p of ['/api/state', '/api/mcp', '/api/backups', '/api/find?q=redis']) results[p] = await get(p, { cookie, 'x-cchost': '1' });
         results.noCookie = await get('/api/state', { 'x-cchost': '1' });
         results.evilHost = await get('/api/state', { cookie, 'x-cchost': '1', host: 'evil.example:80' });
         done({ ok: true, results });
@@ -148,7 +156,7 @@ async function main() {
   check('cchost --version is 0.7.0', v.code === 0 && v.out.includes(require('../package.json').version), v.out);
   check('cc alias works', run('cc', ['--version']).code === 0);
   check('--help points agents at cchost agent', cchost('--help').out.includes('cchost agent'));
-  for (const t of ['', 'setup', 'profiles', 'sharing', 'mcp', 'doctor', 'backups']) {
+  for (const t of ['', 'setup', 'profiles', 'sharing', 'mcp', 'doctor', 'backups', 'pins', 'find']) {
     const r = cchost('agent', ...(t ? [t] : []));
     check(`agent ${t || 'overview'}`, r.code === 0 && r.out.length > 200, r.out);
   }
@@ -229,16 +237,19 @@ async function main() {
   check('endpoint use runs claude', ep.code === 0 && /Claude Code/.test(ep.out), ep.out);
   check('--reveal refused without terminal', cchost('list', 'api', '--reveal').code !== 0);
 
+  await pinsAndFind();
+
   // Destructive guardrails.
   check('remove without terminal refused', cchost('remove', 'solo').code !== 0 && fs.existsSync(path.join(home, '.claude-profiles', 'solo')));
   check('remove --yes', json('remove', 'solo', '--yes').data?.ok && !fs.existsSync(path.join(home, '.claude-profiles', 'solo')));
   check('remove alias only forgets the name', json('remove', 'personal', '--yes').data?.ok && fs.existsSync(path.join(home, '.claude.json')));
+  check('remove work drops its pin and index', json('remove', 'work', '--yes').data?.ok && json('pins').data?.length === 0 && !fs.existsSync(path.join(home, '.claude-profiles', 'work')));
 
   // Web view.
   const ui = await uiCheck();
   if (!ui.ok) check('ui starts', false, ui.why);
   else {
-    for (const p of ['/api/state', '/api/mcp', '/api/backups']) check(`ui ${p}`, ui.results[p].status === 200, ui.results[p].body);
+    for (const p of ['/api/state', '/api/mcp', '/api/backups', '/api/find?q=redis']) check(`ui ${p}`, ui.results[p].status === 200, ui.results[p].body);
     check('ui refuses without session', ui.results.noCookie.status === 401 || ui.results.noCookie.status === 403);
     check('ui refuses foreign Host', ui.results.evilHost.status === 403);
     outputs.push(...Object.values(ui.results).map((r) => r.body));
@@ -251,6 +262,109 @@ async function main() {
   const leaks = leaked.length;
   check('no secret in any output', leaks === 0, `${leaks} outputs leaked`);
   check('token stored outside output', fs.readFileSync(path.join(home, '.claude-profiles', 'api', '.cc-env.json'), 'utf8').includes(SECRET));
+}
+
+// Folder pins, search scope, and resume, against fixture sessions. The tool
+// output in every session carries SECRET, which must never be indexed or shown.
+async function pinsAndFind() {
+  const enc = (p) => p.replace(/[^a-zA-Z0-9]/g, '-');
+  const real = (p) => fs.realpathSync.native(p);
+  const projA = path.join(home, 'src', 'proj-a');
+  const projB = path.join(home, 'src', 'proj-b');
+  const lookalike = path.join(home, 'src', 'proj-a-old');
+  for (const d of [path.join(projA, 'sub'), projB, lookalike]) fs.mkdirSync(d, { recursive: true });
+  const A = real(projA);
+  const B = real(projB);
+  let clock = Date.parse('2026-11-01T00:00:00Z');
+  const sessions = {};
+  const make = (key, cwd, accounts, prompt, reply) => {
+    const id = `${key}-0000-4000-8000-000000000000`;
+    sessions[key] = id;
+    const dir = path.join(home, '.claude', 'projects', enc(cwd));
+    fs.mkdirSync(dir, { recursive: true });
+    const t = () => new Date((clock += 60000)).toISOString();
+    const lines = [
+      { type: 'user', cwd, sessionId: id, timestamp: t(), message: { role: 'user', content: prompt } },
+      { type: 'assistant', cwd, sessionId: id, timestamp: t(), message: { role: 'assistant', content: [{ type: 'tool_use', id: 'x', name: 'Bash', input: { command: `echo ${SECRET}` } }] } },
+      { type: 'user', cwd, sessionId: id, timestamp: t(), message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'x', content: `redis ${SECRET}` }] } },
+      { type: 'assistant', cwd, sessionId: id, timestamp: t(), message: { role: 'assistant', content: [{ type: 'text', text: reply }] } },
+    ];
+    fs.writeFileSync(path.join(dir, `${id}.jsonl`), `${lines.map((l) => JSON.stringify(l)).join('\n')}\n`);
+    accounts.forEach((a, i) => {
+      const hdir = a === 'personal' ? path.join(home, '.claude') : path.join(home, '.claude-profiles', a);
+      fs.appendFileSync(path.join(hdir, 'history.jsonl'), `${JSON.stringify({ display: prompt, timestamp: clock + i, project: cwd, sessionId: id })}\n`);
+    });
+  };
+  make('aaaa1111', A, ['work'], 'fix the redis cache bug', 'The TTL is in ms.');
+  make('aaaa2222', path.join(A, 'sub'), ['personal'], 'stripe webhook retries', 'Use idempotency keys.');
+  make('bbbb1111', B, ['personal', 'work'], 'presage launch plan redis', 'Here is the plan.');
+  make('cccc1111', B, [], 'orphan redis notes', 'ok');
+  make('dddd1111', real(lookalike), ['work'], 'redis in the old project', 'ok');
+  const ids = (r) => (r.data?.results || []).map((x) => x.id.slice(0, 4)).sort().join(',');
+
+  check('pin work on proj-a', jsonIn(A, 'pin', 'work').data?.ok);
+  check('pins lists it', json('pins').data?.[0]?.profile === 'work');
+  const w = jsonIn(path.join(A, 'sub'), 'which');
+  check('which in a subfolder: go=work, find=proj-a/work', w.data?.launch === 'work' && w.data?.scope?.profiles?.[0] === 'work', w.out);
+
+  const inA = jsonIn(path.join(A, 'sub'), 'find', 'redis');
+  check('find in pinned folder: only proj-a under work', inA.code === 0 && ids(inA) === 'aaaa', inA.out);
+  const idxDirs = () => {
+    const out = [];
+    for (const base of [path.join(home, '.claude-profiles'), path.join(home, '.claude')]) {
+      const walk = (d) => {
+        for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+          const p = path.join(d, e.name);
+          if (e.isDirectory() && e.name !== 'projects') walk(p);
+          else if (e.isFile() && p.includes('.cchost-index')) out.push(p);
+        }
+      };
+      if (fs.existsSync(base)) walk(base);
+    }
+    return out;
+  };
+  check('scoped find indexed only in-scope sessions', idxDirs().length === 1 && idxDirs()[0].includes('aaaa1111'), idxDirs().join('\n'));
+
+  const inB = jsonIn(B, 'find', 'redis');
+  check('find in unpinned folder: that folder, every account', ids(inB) === 'bbbb,cccc', inB.out);
+  const fromHome = jsonIn(home, 'find', 'redis');
+  check('find from home refused', fromHome.code === 1 && /No search scope/.test(fromHome.out), fromHome.out);
+  const fromAbove = jsonIn(root, 'find', 'redis');
+  check('find above home refused', fromAbove.code === 1, fromAbove.out);
+  const glob = run('cchost', ['find', 'redis', '--global'], { cwd: A });
+  check('--global refused without a terminal', glob.code === 2, glob.out);
+  const widen = jsonIn(A, 'find', 'redis', '--profile=personal');
+  check('--profile cannot widen a pinned scope', widen.code === 1, widen.out);
+  const proj = jsonIn(A, 'find', 'redis', `--project=${B}`);
+  check('--project cannot leave the scope', proj.code === 1, proj.out);
+  check('lookalike sibling folder stays out', !ids(jsonIn(A, 'find', 'old', 'project')).includes('dddd'));
+  check('tool output is not searchable', jsonIn(B, 'find', SECRET.slice(0, 20)).data?.total === 0);
+
+  fs.writeFileSync(path.join(projB, '.cchost'), 'personal\n');
+  const sug = jsonIn(B, 'find', 'redis');
+  check('.cchost suggestion narrows to its account', ids(sug) === 'bbbb' && sug.data?.scope?.source === 'file', sug.out);
+  const goSug = run('cchost', ['go', '--version'], { cwd: B });
+  check('go refuses an unconfirmed suggestion headless', goSug.code === 2 && !/Claude Code/.test(goSug.out), goSug.out);
+  fs.unlinkSync(path.join(projB, '.cchost'));
+
+  const goA = run('cchost', ['go', '--version'], { cwd: path.join(A, 'sub') });
+  check('go launches real claude under the pin', goA.code === 0 && /Claude Code/.test(goA.out) && /pinned to 'work'/.test(goA.out), goA.out);
+
+  const openOut = run('cchost', ['open', 'bbbb'], { cwd: A });
+  check('open refuses a session outside the scope', openOut.code === 1 && /in this scope/.test(openOut.out), openOut.out);
+  const openShort = run('cchost', ['open', 'aa'], { cwd: A });
+  check('open needs 4+ characters', openShort.code === 2, openShort.out);
+  const openFork = run('cchost', ['open', 'aaaa1111', '--fork', '--version'], { cwd: A });
+  check('open rejects unknown flags', openFork.code === 2, openFork.out);
+
+  const files = idxDirs();
+  check('index files never contain the secret', files.length > 0 && files.every((f) => !fs.readFileSync(f, 'utf8').includes(SECRET)));
+  if (!WIN) check('index files are 0600', files.every((f) => (fs.statSync(f).mode & 0o777) === 0o600));
+  check('index --json (scoped)', jsonIn(B, 'index').data?.ok);
+  check('help find', cchost('help', 'find').out.includes('--global'));
+  check('unpin', jsonIn(A, 'unpin').data?.ok && json('pins').data?.length === 0);
+  check('pin again for removal check', jsonIn(A, 'pin', 'work').data?.ok);
+  check('doctor still clean', json('doctor').data?.summary?.error === 0);
 }
 
 function safeReal(p) {

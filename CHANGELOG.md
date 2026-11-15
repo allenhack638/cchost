@@ -5,6 +5,22 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Pinned folders.** `cchost pin <profile>` ties a folder and its subfolders
+  to a profile; `cchost go` then launches that profile there. `cchost pins`,
+  `cchost unpin` and `cchost which` list, remove and explain pins. A repo's
+  one-line `.cchost` file is a suggestion that `go` confirms once. Pins are
+  in the web view's Profiles page.
+- **Find any conversation.** `cchost find <words>` searches what you typed and
+  what Claude answered, across every account, and `cchost open <id>` resumes
+  one in its folder under its account (`--fork` to branch). Searches are
+  scoped to the current folder (and to the pinned account); `--global` needs a
+  terminal. The web view gets a Find page. Tool output is never indexed.
+- Doctor checks the search index's permissions.
+
 ## [0.7.0] - 2026-11-13
 
 ### Added

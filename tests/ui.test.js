@@ -266,6 +266,55 @@ describe('cchost ui server', () => {
     expect(fs.existsSync(path.join(tmpHome, '.claude.json'))).toBe(true);
   });
 
+  it('pins and unpins folders through preview and apply, and lists them in state', async () => {
+    const repo = path.join(tmpHome, 'src', 'api');
+    fs.mkdirSync(repo, { recursive: true });
+    const pv = await post('/api/preview', { action: 'pin', profile: 'work', dir: '~/src/api' });
+    expect(pv.json.lines[0].text).toContain(`pin ${path.join('~', 'src', 'api')} and its subfolders to work`);
+    expect((await request(port, { path: '/api/state', headers: auth() })).json.pins).toEqual([]);
+    const ap = await post('/api/apply', { action: 'pin', profile: 'work', dir: '~/src/api' });
+    expect(ap.json.entry.ok).toBe(true);
+    const st = (await request(port, { path: '/api/state', headers: auth() })).json;
+    expect(st.pins).toMatchObject([{ profile: 'work', short: path.join('~', 'src', 'api'), exists: true }]);
+    const bad = await post('/api/preview', { action: 'pin', profile: 'ghost', dir: '~/src/api' });
+    expect(bad.status).toBeGreaterThanOrEqual(400);
+    expect((await post('/api/preview', { action: 'pin', profile: 'work', dir: 42 })).status).toBe(400);
+    const un = await post('/api/apply', { action: 'unpin', dir: st.pins[0].dir });
+    expect(un.json.entry.ok).toBe(true);
+    expect((await request(port, { path: '/api/state', headers: auth() })).json.pins).toEqual([]);
+  });
+
+  it('searches every account, never sends tool output, and needs the session', async () => {
+    const SENT = 'sk-TOOL-SENTINEL-998877';
+    const cwd = path.join(tmpHome, 'src', 'api');
+    fs.mkdirSync(cwd, { recursive: true });
+    const id = 'abcd1234-0000-0000-0000-000000000001';
+    const dir = path.join(tmpHome, '.claude', 'projects', cwd.replace(/[^a-zA-Z0-9]/g, '-'));
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, `${id}.jsonl`), [
+      { type: 'user', cwd, sessionId: id, timestamp: '2026-11-01T00:00:00Z', message: { role: 'user', content: 'why is the redis cache stale' } },
+      { type: 'user', cwd, sessionId: id, timestamp: '2026-11-01T00:00:01Z', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 't', content: `redis ${SENT}` }] } },
+      { type: 'assistant', cwd, sessionId: id, timestamp: '2026-11-01T00:00:02Z', message: { role: 'assistant', content: [{ type: 'text', text: 'TTL is in ms' }] } },
+    ].map((l) => JSON.stringify(l)).join('\n'));
+    fs.writeFileSync(path.join(tmpHome, '.claude-profiles', 'work', 'history.jsonl'), `${JSON.stringify({ display: 'x', timestamp: 1, project: cwd, sessionId: id })}\n`);
+
+    const noSession = await request(port, { path: '/api/find?q=redis', headers: { ...host(), 'X-CCHost': '1' } });
+    expect(noSession.status).toBe(401);
+    const empty = await request(port, { path: '/api/find?q=', headers: auth() });
+    expect(empty.json.results).toEqual([]);
+    const r = await request(port, { path: '/api/find?q=redis', headers: auth() });
+    expect(r.status).toBe(200);
+    expect(r.json.scope.source).toBe('global');
+    expect(r.json.results).toMatchObject([{ id, accounts: ['work'], where: 'prompt' }]);
+    expect(JSON.stringify(r.json)).not.toContain(SENT);
+    expect((await request(port, { path: `/api/find?q=${SENT}`, headers: auth() })).json.total).toBe(0);
+    const scoped = await request(port, { path: '/api/find?q=redis&profile=kimi', headers: auth() });
+    expect(scoped.json.total).toBe(0);
+    const bad = await request(port, { path: '/api/find?q=redis&since=soon', headers: auth() });
+    expect(bad.status).toBeGreaterThanOrEqual(400);
+    expect(JSON.stringify(bad.json)).not.toContain('at ');
+  });
+
   it('fixes one named doctor issue, and needs confirmation for unsafe fixes', async () => {
     // A missing resource link is a safe fix; a corrupt .claude.json needs --force.
     fs.rmSync(path.join(tmpHome, '.claude-profiles', 'work', 'skills'));

@@ -39,5 +39,7 @@ Run `cchost agent <topic>`:
 | `mcp` | MCP servers: list, copy between profiles, share with all, remove |
 | `doctor` | Something is broken, updating cchost, checking health |
 | `backups` | Undoing a change cchost made |
+| `pins` | Make a folder always open under one profile (`cchost go`) |
+| `find` | Search past conversations across accounts, and resume one |
 
 `cchost help <command>` gives the full flags of any command.

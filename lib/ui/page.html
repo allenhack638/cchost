@@ -181,6 +181,7 @@ main { min-width: 0; }
 }
 .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .pill.on { background: var(--ok-bg); color: var(--ok); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
 .pill.ep { background: var(--shared-bg); color: var(--shared-fg); }
 .groups { display: grid; gap: 8px; }
 .group { display: grid; grid-template-columns: 64px 1fr; align-items: start; gap: 8px; }
@@ -200,6 +201,22 @@ main { min-width: 0; }
 .badge.pool { background: var(--shared-bg); color: var(--shared-fg); border-color: var(--shared-bd); }
 .pill.me { background: var(--surface-2); color: var(--text-2); }
 .pill.me::before { display: none; }
+.pins { margin-top: 28px; }
+.pin-what { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.pins h2 { font-size: 15px; margin-bottom: 6px; }
+.pins > p { color: var(--text-2); margin-bottom: 12px; max-width: 70ch; }
+.pin-form, .find-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.pin-form .input[name="dir"], .find-form .input[name="q"] { flex: 1 1 260px; }
+.find-form { margin: 0 0 16px; }
+.hits { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
+.hit-head .pill { margin: 0; }
+.hit { padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; display: grid; gap: 6px; }
+.hit-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; }
+.hit-id { font-weight: 600; }
+.hit-title { font-weight: 550; }
+.hit-snip { color: var(--text-2); font-size: 13px; line-height: 1.45; }
+.hit-snip b { color: var(--text); font-weight: 600; }
+.hit-cmd { display: flex; align-items: center; gap: 8px; }
 .callout { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
 .callout p { flex: 1 1 320px; color: var(--text-2); }
 .callout p b { color: var(--text); font-weight: 600; }
@@ -503,6 +520,8 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
   <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
   <symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 3h6l-1 7 3 3H7l3-3Z"/></symbol>
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></symbol>
   <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></symbol>
 </svg>
@@ -517,6 +536,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       <a class="row" href="#profiles" data-view="profiles" data-tip="Profiles"><svg class="i"><use href="#i-users"/></svg><span class="fold">Profiles</span><span class="count fold" id="count-profiles"></span></a>
       <a class="row" href="#pool" data-view="pool" data-tip="Shared pool"><svg class="i"><use href="#i-folder"/></svg><span class="fold">Shared pool</span></a>
       <a class="row" href="#mcp" data-view="mcp" data-tip="MCP servers"><svg class="i"><use href="#i-plug"/></svg><span class="fold">MCP servers</span><span class="count fold" id="count-mcp"></span></a>
+      <a class="row" href="#find" data-view="find" data-tip="Find"><svg class="i"><use href="#i-search"/></svg><span class="fold">Find</span></a>
       <a class="row" href="#doctor" data-view="doctor" data-tip="Doctor"><svg class="i"><use href="#i-shield"/></svg><span class="fold">Doctor</span><span class="count fold" id="count-doctor"></span></a>
       <a class="row" href="#activity" data-view="activity" data-tip="Activity"><svg class="i"><use href="#i-history"/></svg><span class="fold">Activity</span><span class="count fold" id="count-activity"></span></a>
     </nav>
@@ -735,7 +755,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       render.t = setTimeout(() => el.classList.remove('enter'), 700);
       renderedView = view;
     }
-    const titles = { profiles: 'Profiles', pool: 'Shared pool', mcp: 'MCP servers', doctor: 'Doctor', activity: 'Activity' };
+    const titles = { profiles: 'Profiles', pool: 'Shared pool', mcp: 'MCP servers', find: 'Find', doctor: 'Doctor', activity: 'Activity' };
     $('#title').textContent = titles[view];
     $('#top-add').hidden = view !== 'profiles';
     document.title = `${titles[view]} · cchost`;
@@ -745,6 +765,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     if (view === 'profiles') el.innerHTML = viewProfiles();
     if (view === 'pool') el.innerHTML = viewPool();
     if (view === 'mcp') el.innerHTML = viewMcp();
+    if (view === 'find') el.innerHTML = viewFind();
     if (view === 'doctor') el.innerHTML = viewDoctor();
     if (view === 'activity') el.innerHTML = viewActivity();
   }
@@ -790,7 +811,60 @@ details.check-group[open]::details-content, details.entry[open]::details-content
           <button class="btn" type="button" data-act="manage" data-profile="${esc(p.name)}">${icon('sliders')}Manage sharing</button>
           <button class="btn quiet" type="button" data-act="remove" data-profile="${esc(p.name)}">${icon('trash')}Remove</button>
         </div>
-      </article>`).join('')}</div>`;
+      </article>`).join('')}</div>` + viewPins();
+  }
+
+  function viewPins() {
+    const pins = data.pins || [];
+    const options = data.profiles.map((p) => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
+    return `<section class="pins" aria-labelledby="pins-h"><h2 id="pins-h">Pinned folders</h2>
+      <p>A pinned folder always opens under one profile: <code>cchost go</code> there launches it, and <code>cchost find</code> there only sees that folder's conversations under that account. Subfolders inherit the pin; the deepest pin wins.</p>
+      ${pins.length ? `<table class="table"><tbody>${pins.map((p) => `<tr><td><div class="backup-row"><div class="pin-what"><code>${esc(p.short)}</code><span class="muted">→</span><b>${esc(p.profile)}</b>${p.exists ? '' : ' <span class="pill warn">folder missing</span>'}${p.profileExists ? '' : ' <span class="pill warn">profile missing</span>'}</div>
+        <button class="btn quiet" type="button" data-act="unpin" data-dir="${esc(p.dir)}">${icon('x')}Unpin…</button></div></td></tr>`).join('')}</tbody></table>` : '<p class="muted">No pins yet.</p>'}
+      <form id="pin-form" class="pin-form" autocomplete="off">
+        <input class="input" name="dir" type="text" placeholder="Folder to pin, e.g. ~/work/api" aria-label="Folder to pin" required>
+        <select class="input" name="profile" aria-label="Profile">${options}</select>
+        <button class="btn" type="submit">${icon('pin')}Pin…</button>
+      </form></section>`;
+  }
+
+  let findState = { q: '', profile: '', loading: false, result: null, error: null };
+  async function loadFind() {
+    const q = findState.q.trim();
+    if (!q) return;
+    findState.loading = true;
+    findState.error = null;
+    render();
+    try {
+      const params = new URLSearchParams({ q });
+      if (findState.profile) params.set('profile', findState.profile);
+      findState.result = await api(`/api/find?${params}`);
+      announce(`${findState.result.total} match${findState.result.total === 1 ? '' : 'es'}`);
+    } catch (err) {
+      findState.error = err.message;
+    }
+    findState.loading = false;
+    render();
+  }
+  function viewFind() {
+    const r = findState.result;
+    const options = ['<option value="">every account</option>'].concat((data ? data.profiles : []).map((p) => `<option value="${esc(p.name)}"${findState.profile === p.name ? ' selected' : ''}>${esc(p.name)}</option>`)).join('');
+    const form = `<form id="find-form" class="find-form" role="search" autocomplete="off">
+      <input class="input" name="q" type="search" value="${esc(findState.q)}" placeholder="Words from a conversation, &quot;quote a phrase&quot;" aria-label="Search your conversations" autofocus>
+      <select class="input" name="profile" aria-label="Account">${options}</select>
+      <button class="btn primary" type="submit"${findState.loading ? ' disabled' : ''}>${icon(findState.loading ? 'loader' : 'search')}Find</button></form>`;
+    if (findState.error) return form + `<div class="callout"><p>${esc(findState.error)}</p></div>`;
+    if (!r) {
+      return form + `<div class="empty"><h2>Every conversation, every account</h2>
+        <p>Searches what you typed and what Claude answered, across all your profiles, on this machine only. Tool output is never indexed. Resume a result with <code>cchost open &lt;id&gt;</code> in your terminal. The first search reads your session files once.</p></div>`;
+    }
+    const meta = `<div class="toolbar"><p>${r.total} match${r.total === 1 ? '' : 'es'} in ${r.sessions} session${r.sessions === 1 ? '' : 's'} · ${esc(r.scope.text)}${r.total > r.results.length ? ` · showing ${r.results.length}` : ''}</p></div>`;
+    if (!r.total) return form + meta + `<div class="empty"><h2>Nothing matched</h2><p>Every word has to appear in the same message. Try fewer words.</p></div>`;
+    return form + meta + `<ol class="hits">${r.results.map((h) => `<li class="hit">
+      <div class="hit-head"><code class="hit-id" title="${esc(h.id)}">${esc(h.id.slice(0, 8))}</code><span class="muted">${esc((h.lastSeen || '').slice(0, 10))}</span>${h.accounts.length ? h.accounts.map((a) => `<span class="pill">${esc(a)}</span>`).join('') : '<span class="pill warn">unknown account</span>'}<span class="muted">${esc(h.short || '')}</span>${h.branch ? `<span class="muted">(${esc(h.branch)})</span>` : ''}</div>
+      ${h.title && !h.snippet.startsWith(h.title.replace(/…$/, '')) ? `<div class="hit-title">${esc(h.title)}</div>` : ''}
+      <div class="hit-snip"><b>${h.where === 'prompt' ? 'you' : 'claude'}:</b> ${esc(h.snippet)}</div>
+      <div class="hit-cmd"><code>cchost open ${esc(h.id.slice(0, 8))}</code> <button class="btn quiet" type="button" data-act="copy-text" data-text="cchost open ${esc(h.id.slice(0, 8))}">${icon('copy')}Copy</button></div></li>`).join('')}</ol>`;
   }
 
   function viewPool() {
@@ -1347,6 +1421,15 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       openPanel({ type: 'simple', title: 'Restore backup', sub: b ? `${esc(backupTitle(b.op))} · ${esc(relTime(b.createdAt))}` : esc(id), note: 'Puts these files back as they were before that change. The files as they are now are backed up first, so this can be undone too.' });
       preview({ action: 'restore', id }, 'Restore backup');
     }
+    if (act === 'unpin') {
+      const dir = t.dataset.dir;
+      const p = (data.pins || []).find((x) => x.dir === dir);
+      openPanel({ type: 'simple', title: 'Unpin folder', sub: p ? `${esc(p.short)} → ${esc(p.profile)}` : esc(dir), note: 'The folder stops opening under this profile. Nothing on disk changes.' });
+      preview({ action: 'unpin', dir }, 'Unpin folder');
+    }
+    if (act === 'copy-text') {
+      navigator.clipboard.writeText(t.dataset.text).then(() => announce('Copied'), () => announce('Could not copy'));
+    }
     if (act === 'close') closePanel();
     if (act === 'set-group') {
       const p = profileByName(panelState.profile);
@@ -1451,6 +1534,23 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       const last = items[items.length - 1];
       if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
       else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+    }
+  });
+  document.addEventListener('submit', (ev) => {
+    const f = ev.target;
+    if (f.id === 'find-form') {
+      ev.preventDefault();
+      findState.q = f.elements.q.value;
+      findState.profile = f.elements.profile.value;
+      loadFind();
+    }
+    if (f.id === 'pin-form') {
+      ev.preventDefault();
+      const dir = f.elements.dir.value.trim();
+      const profile = f.elements.profile.value;
+      if (!dir) return;
+      openPanel({ type: 'simple', title: 'Pin folder', sub: `${esc(dir)} → ${esc(profile)}`, note: 'The folder and its subfolders open under this profile with cchost go, and cchost find there sees only this account.' });
+      preview({ action: 'pin', profile, dir }, 'Pin folder');
     }
   });
   scrim.addEventListener('click', () => { if (panelState && !panelState.busy) closePanel(); });
@@ -1585,7 +1685,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   // --- Routing & refresh ------------------------------------------------------
   function route() {
     const v = (location.hash || '#profiles').slice(1);
-    view = ['profiles', 'pool', 'mcp', 'doctor', 'activity'].includes(v) ? v : 'profiles';
+    view = ['profiles', 'pool', 'mcp', 'find', 'doctor', 'activity'].includes(v) ? v : 'profiles';
     render();
     if (view === 'mcp') loadMcp();
     if (view === 'activity') loadBackups();

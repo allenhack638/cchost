@@ -66,7 +66,7 @@ describe('pins', () => {
     expect(pins.list()).toEqual([]);
     const r = await json('pin', 'work', '--json');
     expect(r.data.ok).toBe(true);
-    expect(r.data.lines[0].text).toContain('pinned ~/src/api and its subfolders to work');
+    expect(r.data.lines[0].text).toContain(`pinned ${path.join('~', 'src', 'api')} and its subfolders to work`);
     expect((await json('pin', 'work', '--json')).data.lines[0].kind).toBe('same');
     const re = await json('pin', 'p1', '--json');
     expect(re.data.lines[0].text).toContain('(was work)');
@@ -74,7 +74,7 @@ describe('pins', () => {
     expect(list.data).toEqual([{ dir: repo, profile: 'p1', exists: true, profileExists: true }]);
     cwd = home;
     const un = await json('unpin', `--path=${repo}`, '--json');
-    expect(un.data.lines[0].text).toContain('unpinned ~/src/api (was p1)');
+    expect(un.data.lines[0].text).toContain(`unpinned ${path.join('~', 'src', 'api')} (was p1)`);
     expect((await json('unpin', `--path=${repo}`, '--json')).data.lines[0].kind).toBe('same');
   });
 
@@ -160,7 +160,7 @@ describe('pins', () => {
     pins.pin('p1', b);
     expect(actions.state().pins.map((p) => p.profile)).toEqual(['work', 'p1']);
     const dry = await json('remove', 'work', '--dry-run', '--json');
-    expect(dry.data.lines.some((l) => l.label === 'pin' && l.text === 'unpin ~/a')).toBe(true);
+    expect(dry.data.lines.some((l) => l.label === 'pin' && l.text === `unpin ${path.join('~', 'a')}`)).toBe(true);
     expect(pins.list()).toHaveLength(2);
     const r = await json('remove', 'work', '--yes', '--json');
     expect(r.data.ok).toBe(true);

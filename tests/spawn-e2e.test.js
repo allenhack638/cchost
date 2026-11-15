@@ -74,6 +74,47 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
     expect(outside.stderr).toContain('No pin for this folder');
   });
 
+  it('open resumes a found session in its own folder under its account', () => {
+    const work = path.join(tmpHome, '.claude-profiles', 'work');
+    fs.mkdirSync(work, { recursive: true });
+    const repo = path.join(fs.realpathSync(tmpHome), 'src', 'api');
+    fs.mkdirSync(path.join(repo, 'deep'), { recursive: true });
+    const id = 'abcd1234-0000-0000-0000-000000000001';
+    const projDir = path.join(tmpHome, '.claude', 'projects', repo.replace(/[^a-zA-Z0-9]/g, '-'));
+    fs.mkdirSync(projDir, { recursive: true });
+    fs.writeFileSync(path.join(projDir, `${id}.jsonl`), [
+      JSON.stringify({ type: 'user', cwd: repo, sessionId: id, timestamp: '2026-11-01T00:00:00Z', message: { role: 'user', content: 'resume me please' } }),
+      JSON.stringify({ type: 'assistant', cwd: repo, sessionId: id, timestamp: '2026-11-01T00:00:01Z', message: { role: 'assistant', content: [{ type: 'text', text: 'sure' }] } }),
+    ].join('\n') + '\n');
+    fs.writeFileSync(path.join(work, 'history.jsonl'), JSON.stringify({ display: 'resume me please', timestamp: 1, project: repo, sessionId: id }) + '\n');
+
+    const deep = runCc(['find', 'resume', '--json'], { home: tmpHome, cwd: path.join(repo, 'deep') });
+    expect(JSON.parse(deep.stdout).results).toEqual([]);
+    const found = runCc(['find', 'resume', '--json'], { home: tmpHome, cwd: repo });
+    expect(found.status).toBe(0);
+    expect(JSON.parse(found.stdout).results[0].id).toBe(id);
+
+    const res = runCc(['open', 'abcd1234', '--fork'], { home: tmpHome, cwd: repo });
+    expect(res.status).toBe(0);
+    expect(res.stdout).toContain(`ARGS:["--resume","${id}","--fork-session"]`);
+    expect(res.stdout).toContain(`CLAUDE_CONFIG_DIR:${work}`);
+    expect(res.stdout).toContain(`CWD:${fs.realpathSync(repo)}`);
+    expect(res.stderr).toContain("as 'work'");
+
+    const elsewhere = runCc(['open', 'abcd1234'], { home: tmpHome, cwd: path.join(tmpHome, 'src') });
+    expect(elsewhere.status).toBe(0);
+    expect(elsewhere.stdout).toContain('--resume');
+
+    fs.mkdirSync(path.join(tmpHome, 'other'));
+    const outside = runCc(['open', 'abcd1234'], { home: tmpHome, cwd: path.join(tmpHome, 'other') });
+    expect(outside.status).toBe(1);
+    expect(outside.stdout).not.toContain('CLAUDE_CONFIG_DIR');
+    expect(outside.stderr).toContain('in this scope');
+
+    const globalHeadless = runCc(['open', 'abcd1234', '--global'], { home: tmpHome, cwd: path.join(tmpHome, 'other') });
+    expect(globalHeadless.status).toBe(2);
+  });
+
   it('go refuses an unconfirmed .cchost suggestion without a terminal', () => {
     fs.mkdirSync(path.join(tmpHome, '.claude-profiles', 'work'), { recursive: true });
     const repo = path.join(tmpHome, 'clone');

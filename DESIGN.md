@@ -352,6 +352,12 @@ A signature component. An 8px bordered block on Recess with a section-weight hea
 ### MCP servers view
 A matrix table: one row per server (name in 600 ink, its masked command or URL in 12px mono tertiary, ellipsised), one column per target (Pool first, then every account; the existing account is starred with a footnote), and a right-aligned Copy… / Remove… pair. Each cell is a 12px/550 mark with an icon: **Has it** (green check), **From pool** (blue link: synced by cchost), **Shared** (blue folder, in the Pool column), **Differs** (amber alert: same name, different config, compared through a per-run keyed fingerprint so no values reach the page) and a tertiary dash when absent. The table scrolls sideways inside its rounded frame when there are many accounts. Project-only servers follow as a separate list: name, account and project path, command, Copy…. When profiles that share `mcp.json` are missing pool servers, a callout above the table names them and offers **Sync pool…**. Copy and Remove open the panel with a target list (radios for the source, checkboxes for destinations, each with its current mark) and the usual Plan preview.
 
+### Find view
+A search row (wide input, account select, primary **Find**) above a one-line count and scope in secondary text, then a list of result cards: Surface, hairline border, 10px radius. Each card heads with the short session id in 600 mono, the date in tertiary, account pills (amber "unknown account" when none is recorded), the folder and branch in tertiary; then the session title in 550 ink when it differs from the match, the snippet in secondary with **you:** or **claude:** in ink 600, and the `cchost open <id>` command with a quiet **Copy**. The browser can't open a terminal, so resuming is always a copied command.
+
+### Pinned folders
+Below the profile cards on Profiles: a 15px heading, one line of secondary help, a table of `folder → profile` rows (folder in mono, profile in ink 600, amber pills for a missing folder or profile) each with a quiet **Unpin…**, and an inline form (folder input, profile select, **Pin…**). Both actions open the panel with the usual Plan preview.
+
 ### Callout
 A Surface strip with a hairline border and 10px radius above a view's content, with secondary text (key words in ink 600) and one button on the right. Used for "name your existing account" on Profiles and for pool drift on MCP servers. At most one per view.
 

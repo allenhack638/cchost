@@ -179,7 +179,7 @@ describe('agent guides and skills', () => {
       expect(r.out.length).toBeGreaterThan(200);
     }
     await expect(run('agent', '../etc/passwd')).rejects.toThrow(/Unknown topic/);
-    expect(agent.topics()).toEqual(['backups', 'doctor', 'mcp', 'overview', 'profiles', 'setup', 'sharing']);
+    expect(agent.topics()).toEqual(['backups', 'doctor', 'find', 'mcp', 'overview', 'pins', 'profiles', 'setup', 'sharing']);
   });
 
   it('help points agents at cchost agent', async () => {
@@ -221,6 +221,9 @@ describe('agent guides and skills', () => {
       mcp: ['--server', '--scope', '--project', '--force', '--dry-run', '--json'], backups: ['--json'],
       restore: ['--dry-run', '--json'], agent: [], skill: ['--profile', '--dry-run', '--json'], token: ['--stdin'],
       ui: [], help: [],
+      pin: ['--path', '--dry-run', '--json'], unpin: ['--path', '--dry-run', '--json'], pins: ['--json'], which: ['--json'],
+      go: null, find: ['--since', '-n', '--profile', '--project', '--json', '--global'], open: ['--fork', '--global', '--profile', '--cwd'],
+      index: ['--global', '--json'],
     };
     const found = [];
     for (const f of files) {

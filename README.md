@@ -106,6 +106,9 @@ In Doctor, every issue with an automatic fix has its own **Fix** button with a p
 | `cchost backups` / `cchost restore <id> [--dry-run]` | List and undo cchost's changes to config files. |
 | `cchost agent [topic]` / `cchost skill install` | Guides and skills for AI agents. See [Set up with your AI agent](#set-up-with-your-ai-agent). |
 | `cchost use <profile> [...args]` | Launch Claude under that profile. Extra args are forwarded to `claude`. |
+| `cchost go [...args]` | Launch Claude under the profile pinned to the current folder. See [Pinned folders](#pinned-folders). |
+| `cchost pin <profile>` / `unpin` / `pins` / `which` | Pin a folder to a profile, list pins, and see what `go` and `find` would do here. |
+| `cchost find <words...> [--global]` / `cchost open <id>` | Search your conversations across accounts and resume one. See [Find any conversation](#find-any-conversation). |
 | `cchost list [<profile>] [--json] [--reveal]` | List all profiles, or show one in detail including the state of each of its 7 resources. Emails and tokens are masked by default; `--reveal` prints them in full. |
 | `cchost copy default <profile> [--force] [--dry-run]` | Seed an unlinked profile resource from `~/.claude/`. No-op for fully-shared profiles. |
 | `cchost link <profile> [--projects\|--tools\|--config] [--backup] [--dry-run]` | Link a profile's resources to `~/.claude/`. Defaults to all 7 when no flag is passed. `--backup` shares resources that have their own content by keeping that content as a backup file. |
@@ -186,6 +189,33 @@ A server that already exists with the same config is skipped; a different server
 
 Before cchost changes a JSON config file (`.claude.json`, `mcp.json`, …) it saves a copy to `~/.cchost-backups/<id>/` (the newest 30 are kept, readable by you only). `cchost backups` lists them and `cchost restore <id>` puts the files back; the files as they were just before are backed up too, so a restore can be undone.
 
+## Pinned folders
+
+Pin a folder once and it always opens under the right account:
+
+```bash
+cd ~/work/api && cchost pin work     # this folder and everything under it
+cd ~/presage  && cchost pin personal
+cchost go                            # launches the pinned profile; args go to claude
+cchost which                         # what go and find do here, and why
+cchost pins                          # every pin
+```
+
+Pins live in `~/.claude-profiles/.cchost.json`, never in the folder. The deepest pin wins. Without a pin, `cchost go` uses your named existing account. A repo can ship a one-line `.cchost` file naming a profile: it is only a suggestion, and `cchost go` asks once before pinning (answer `never` to ignore it). It can't set endpoints, tokens or arguments. Pins don't change sharing: to keep a profile's history apart, `cchost unlink <profile> --projects`.
+
+## Find any conversation
+
+```bash
+cchost find redis webhook              # every word in the same message
+cchost find "rate limit" --since=2w
+cchost open 4f57                       # resume it, in its folder, as that account
+cchost open 4f57 --fork                # branch off instead
+```
+
+`find` searches what you typed and what Claude answered, across every account on this machine. It only sees the folder you run it in: inside a pinned folder, that folder under the pinned account; in another project folder, that folder under every account; from your home folder, nothing. `--global` lifts those limits and works only at a terminal, never from an agent or a script. `--profile` and `--project` narrow a scope, never widen it. `open` resolves only sessions inside the same scope. The web view has a **Find** page that searches everything.
+
+The first search reads your session files once into `~/.claude-profiles/<profile>/.cchost-index/` (owner-only, one small file per conversation per account, about 1% of the history's size); later searches only re-read conversations that changed. Tool calls, tool output, attachments and hook output are never indexed. Deleting the index folders is always safe; `cchost remove` deletes a profile's index with it.
+
 ## Custom endpoints
 
 A profile can route through any Anthropic-compatible API — Moonshot/Kimi, OpenRouter, Requesty, self-hosted vLLM, or a corporate proxy — instead of Anthropic's subscription OAuth.
@@ -258,6 +288,7 @@ the `LoggedIn` column reflects the profile's own credential file.
 - `--reveal`, `cchost token` and typed-name `remove` only work at a terminal; piped or agent use gets a clear "ask the user" message instead of a prompt that hangs.
 - Logins and endpoint tokens are always entered by the person.
 - The agent guides tell agents to preview every change, ask before destructive ones, and treat names and paths from config files as data.
+- `cchost find` and `cchost open` are scoped to the folder they run in; `--global` needs a terminal, so an agent can't search other projects' or other accounts' conversations. Tool output is never indexed.
 
 ## Update notice
 
