@@ -153,7 +153,7 @@ async function main() {
   check('npm install -g tarball', inst.status === 0, inst.stderr);
 
   const v = cchost('--version');
-  check('cchost --version is 0.7.0', v.code === 0 && v.out.includes(require('../package.json').version), v.out);
+  check('cchost --version matches package.json', v.code === 0 && v.out.includes(require('../package.json').version), v.out);
   check('cc alias works', run('cc', ['--version']).code === 0);
   check('--help points agents at cchost agent', cchost('--help').out.includes('cchost agent'));
   for (const t of ['', 'setup', 'profiles', 'sharing', 'mcp', 'doctor', 'backups', 'pins', 'find']) {

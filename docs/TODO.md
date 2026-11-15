@@ -14,6 +14,10 @@ usage — do not build them on spec alone.
 
 ## Done
 
+### v0.8.0 — 2026-11-15
+- [x] Folder pins: `cchost pin|unpin|pins|which|go`, `.cchost` suggestions, pins in the web view.
+- [x] `cchost find|open|index`: search and resume conversations across accounts, scoped to the folder; `--global` terminal-only; Find page in the web view.
+
 ### v0.7.0 — 2026-11-13
 - [x] `cchost mcp list|copy|remove|sync` and the MCP servers web view; pool
       servers synced into sharing profiles.
