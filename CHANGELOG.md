@@ -5,6 +5,14 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- `cchost add`, `link`, `unlink`, `copy` and `remove` print the same aligned
+  per-resource lines as `--json` and the web view. `remove` shows what it will
+  delete before asking for the name.
+
 ## [0.8.3] - 2026-11-15
 
 ### Changed

@@ -42,7 +42,7 @@
     "CHANGELOG.md",
     "LICENSE"
   ],
-  "main": "lib/cli.js",
+  "main": "lib/cli/index.js",
   "scripts": {
     "start": "node bin/cc.js",
     "test": "vitest run",
