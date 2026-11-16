@@ -39,9 +39,7 @@ describe('compareVersion', () => {
 });
 
 describe('escapeArgWin', () => {
-  // Note: this returns args ready for cmd.exe through CreateProcess with
-  // windowsVerbatimArguments: the outer double-quotes get caret-escaped so
-  // cmd.exe doesn't interpret them as quote boundaries.
+  // Args for cmd.exe via windowsVerbatimArguments: outer quotes are caret-escaped.
 
   it('wraps and caret-escapes the wrapping quotes', () => {
     expect(spawnLib.escapeArgWin('hello')).toBe('^"hello^"');

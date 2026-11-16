@@ -17,8 +17,7 @@ afterEach(() => {
 import envLib from '../lib/env.js';
 import cli from '../lib/cli/index.js';
 
-// A scripted IO for the wizard. readLine and readHidden consume `inputs` in
-// the order they are called.
+// Scripted wizard IO: readLine and readHidden consume `inputs` in call order.
 function scriptIo(inputs) {
   const state = { i: 0, out: [] };
   return {
@@ -344,7 +343,6 @@ describe('env config — library', () => {
       ]);
       await envLib.runConfigure('endp', d, {}, { io });
       const raw = JSON.parse(fs.readFileSync(path.join(d, '.cc-env.json'), 'utf8'));
-      // Only the model changed; base_url and the token were kept.
       expect(raw).toEqual({ base_url: 'https://x', auth_token: 'sk-keep', model: 'new-model' });
     });
 
@@ -466,8 +464,7 @@ describe('cc add --custom — CLI surface', () => {
   });
 
   it('cc add --custom on an existing un-used plain profile configures it', async () => {
-    // A profile created with plain `cc add` but never logged in (no
-    // credentials) carries no OAuth state, so --custom may configure it.
+    // A plain `cc add` profile with no credentials has no OAuth state, so --custom may configure it.
     await cli.run(['add', 'plainp']);
     const code = await cli.run([
       'add', 'plainp', '--custom', '--base-url=https://x.test', '--token=sk-x',
@@ -584,7 +581,7 @@ describe('cc list — Endpoint column and detail view', () => {
   it('cc list --reveal without a profile name reveals emails in the table', async () => {
     asTerminal();
     await cli.run(['add', 'work']);
-    // Should not throw — --reveal is valid on the table too in v0.4.1.
+    // --reveal is valid on the table too.
     await expect(cli.run(['list', '--reveal'])).resolves.toBeDefined();
   });
 

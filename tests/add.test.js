@@ -97,13 +97,10 @@ describe('cc add — auto-link in v0.4', () => {
 
     await cli.run(['add', 'work']);
 
-    // Legacy content moved into ~/.claude/
     expect(
       fs.readFileSync(path.join(tmpHome, '.claude', 'skills', 'old-skill.md'), 'utf8'),
     ).toBe('from-legacy');
-    // Legacy dir removed
     expect(fs.existsSync(legacy)).toBe(false);
-    // New profile sees the migrated skill via its symlink
     expect(
       fs.readFileSync(path.join(tmpHome, '.claude-profiles', 'work', 'skills', 'old-skill.md'), 'utf8'),
     ).toBe('from-legacy');

@@ -40,9 +40,7 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
   let tmpHome;
 
   beforeAll(() => {
-    // `cc` spawns the fake `claude` by path; on POSIX the shim must carry the
-    // exec bit. Git records mode 100755, but a Windows clone or a zip download
-    // can drop it — set it explicitly so the suite runs on Linux/macOS too.
+    // Git records mode 100755, but Windows clones and zips can drop the exec bit.
     if (process.platform !== 'win32') {
       fs.chmodSync(path.join(fixturesDir, 'claude'), 0o755);
     }
@@ -127,7 +125,6 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
   });
 
   it('forwards args verbatim and sets CLAUDE_CONFIG_DIR', () => {
-    // Pre-create the profile so 'cc use' doesn't error
     const profileDir = path.join(tmpHome, '.claude-profiles', 'e2e');
     fs.mkdirSync(profileDir, { recursive: true });
 
@@ -136,14 +133,12 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
     expect(res.status).toBe(0);
     expect(res.stdout).toContain('ARGS:["--resume","-p","two words"]');
     expect(res.stdout).toContain(`CLAUDE_CONFIG_DIR:${profileDir}`);
-    // Crucially: the action ('use') and profile name ('e2e') must NOT appear in ARGS.
+    // The action ('use') and profile name ('e2e') must not appear in ARGS.
     expect(res.stdout).not.toMatch(/ARGS:\[[^\]]*"use"/);
     expect(res.stdout).not.toMatch(/ARGS:\[[^\]]*"e2e"/);
   });
 
-  // On macOS Claude Code names the Keychain entry after sha256 of this exact
-  // string. Any change in spelling (trailing slash, realpath of a symlinked
-  // home) silently looks like a logout, so pin it byte-for-byte.
+  // macOS names the Keychain entry after sha256 of this exact string, so pin it byte-for-byte.
   it('passes CLAUDE_CONFIG_DIR as the exact profile path (no realpath, no trailing slash)', () => {
     const profileDir = path.join(tmpHome, '.claude-profiles', 'e2e');
     fs.mkdirSync(profileDir, { recursive: true });
@@ -190,7 +185,6 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
 
     const res = runCc(['use', 'kimi'], { home: tmpHome });
     expect(res.status).toBe(0);
-    // Banner goes to stderr.
     expect(res.stderr).toContain("[cchost] Profile 'kimi' → api.moonshot.ai (custom endpoint billing applies)");
     // Both token vars set; all five model vars fall back to `model`.
     expect(res.stdout).toContain('ENV:ANTHROPIC_BASE_URL=https://api.moonshot.ai/anthropic');

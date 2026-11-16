@@ -214,7 +214,6 @@ async function main() {
   const fw = run('cchost', ['use', 'work', '--version']);
   check('cchost use forwards args to claude', fw.code === 0 && /Claude Code/.test(fw.out), fw.out);
 
-  // Backups.
   const bk = json('backups');
   check('backups --json lists the copy', JSON.stringify(bk.data || '').includes(backupId || '-none-'), bk.out);
   check('restore --dry-run', json('restore', backupId, '--dry-run').data?.ok);
@@ -223,12 +222,10 @@ async function main() {
   check('restore put work back', after === before || (!hasServer(profileJson('work'), 'fakesrv')), after);
   check('mcp remove', json('mcp', 'remove', 'solo', 'fakesrv').data?.ok && !hasServer(profileJson('solo'), 'fakesrv'));
 
-  // Skills.
   check('skill install', json('skill', 'install').data?.ok);
   check('skill files on disk', fs.existsSync(path.join(home, '.claude', 'skills', 'cchost-setup', 'SKILL.md')) && fs.existsSync(path.join(home, '.claude', 'skills', 'cchost-manage', 'SKILL.md')));
   check('skill status current', json('skill', 'status').data?.ok !== false);
 
-  // Endpoint profile and token handling.
   check('add endpoint without token', json('add', 'api', '--custom', '--base-url=https://api.example.com').data?.ok);
   check('use refuses until a token is set', run('cchost', ['use', 'api', '--version']).code !== 0);
   check('token without terminal refused', run('cchost', ['token', 'api']).code !== 0);
@@ -239,13 +236,11 @@ async function main() {
 
   await pinsAndFind();
 
-  // Destructive guardrails.
   check('remove without terminal refused', cchost('remove', 'solo').code !== 0 && fs.existsSync(path.join(home, '.claude-profiles', 'solo')));
   check('remove --yes', json('remove', 'solo', '--yes').data?.ok && !fs.existsSync(path.join(home, '.claude-profiles', 'solo')));
   check('remove alias only forgets the name', json('remove', 'personal', '--yes').data?.ok && fs.existsSync(path.join(home, '.claude.json')));
   check('remove work drops its pin and index', json('remove', 'work', '--yes').data?.ok && json('pins').data?.length === 0 && !fs.existsSync(path.join(home, '.claude-profiles', 'work')));
 
-  // Web view.
   const ui = await uiCheck();
   if (!ui.ok) check('ui starts', false, ui.why);
   else {

@@ -77,7 +77,6 @@ describe('cc link / cc unlink — --tools and --projects flags', () => {
 
   it('cc link <profile> --tools links only skills/agents/commands', async () => {
     await cli.run(['add', 'work']);
-    // Wipe all artifacts back to nothing to start clean
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     for (const sub of ['projects', 'skills', 'agents', 'commands']) {
       try { fs.unlinkSync(path.join(pdir, sub)); } catch { /* ignore */ }
@@ -320,8 +319,7 @@ describe('cc — v0.4.1 surface', () => {
   it('cc link --config links only mcp.json, settings.json, CLAUDE.md', async () => {
     await cli.run(['add', 'work']);
     await cli.run(['unlink', 'work']);
-    // Now everything is private. Re-link only --config.
-    // First clear the private config files so link doesn't refuse them.
+    // Clear the private config files first so link doesn't refuse them.
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     for (const f of ['mcp.json', 'settings.json', 'CLAUDE.md']) {
       try { fs.unlinkSync(path.join(pdir, f)); } catch { /* skip */ }
@@ -332,7 +330,6 @@ describe('cc — v0.4.1 surface', () => {
     for (const f of ['mcp.json', 'settings.json', 'CLAUDE.md']) {
       expect(share.isSharedResource(pdir, f)).toBe(true);
     }
-    // Tool dirs stay unlinked
     for (const sub of ['skills', 'agents', 'commands']) {
       expect(fs.lstatSync(path.join(pdir, sub)).isSymbolicLink()).toBe(false);
     }
@@ -341,16 +338,13 @@ describe('cc — v0.4.1 surface', () => {
   it('cc link refuses to overwrite private content (does not auto-merge)', async () => {
     await cli.run(['add', 'work']);
     await cli.run(['unlink', 'work', '--projects']);
-    // Add private content to projects/
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(path.join(pdir, 'projects', 'MyProject'), { recursive: true });
     fs.writeFileSync(path.join(pdir, 'projects', 'MyProject', 'note.txt'), 'private');
 
     const code = await cli.run(['link', 'work', '--projects']);
     expect(code).toBe(1);
-    // Private content stays where it was
     expect(fs.existsSync(path.join(pdir, 'projects', 'MyProject', 'note.txt'))).toBe(true);
-    // Still not a symlink
     expect(fs.lstatSync(path.join(pdir, 'projects')).isSymbolicLink()).toBe(false);
   });
 
@@ -362,17 +356,14 @@ describe('cc — v0.4.1 surface', () => {
     fs.writeFileSync(path.join(pdir, 'projects', 'X', 'priv.txt'), 'cant-lose');
 
     await expect(cli.run(['remove', 'work'])).rejects.toThrow(/private[\s\S]*--force/i);
-    // Profile still exists
     expect(fs.existsSync(pdir)).toBe(true);
   });
 
   it('cc migrate forwards to cc copy with a deprecation warning', async () => {
-    // Seed default with content the copy can act on
     const def = path.join(tmpHome, '.claude');
     fs.mkdirSync(path.join(def, 'projects', 'X'), { recursive: true });
     fs.writeFileSync(path.join(def, 'projects', 'X', 'p.txt'), 'pool');
 
-    // Create profile without auto-linking the projects dir
     await cli.run(['add', 'work']);
     await cli.run(['unlink', 'work', '--projects']);
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
@@ -384,7 +375,6 @@ describe('cc — v0.4.1 surface', () => {
     expect(code).toBe(0);
     expect(stderr).toMatch(/deprecated/i);
     expect(stderr).toMatch(/cchost copy/);
-    // Pool content reached the profile via the forwarded copy
     expect(fs.existsSync(path.join(pdir, 'projects', 'X', 'p.txt'))).toBe(true);
   });
 

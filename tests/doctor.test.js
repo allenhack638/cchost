@@ -5,8 +5,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import cli from '../lib/cli/index.js';
 import doctor from '../lib/doctor.js';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
 async function withTmpHome(fn) {
   const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-doctor-'));
   const originalHomedir = os.homedir;
@@ -18,8 +16,6 @@ async function withTmpHome(fn) {
     fs.rmSync(tmpHome, { recursive: true, force: true });
   }
 }
-
-// ── Flag parsing ──────────────────────────────────────────────────────────────
 
 describe('cc doctor — flag parsing', () => {
   let originalWrite;
@@ -55,8 +51,6 @@ describe('cc doctor — flag parsing', () => {
     expect([0, 1, 2]).toContain(code);
   });
 });
-
-// ── JSON output structure ─────────────────────────────────────────────────────
 
 describe('cc doctor --json', () => {
   it('emits valid JSON with summary.ok/warn/error and checks array', async () => {
@@ -112,17 +106,13 @@ describe('cc doctor --json', () => {
   });
 });
 
-// ── Exit codes ────────────────────────────────────────────────────────────────
-
 describe('cc doctor — exit codes', () => {
   let originalWrite;
   beforeEach(() => { originalWrite = process.stdout.write; process.stdout.write = () => true; });
   afterEach(() => { process.stdout.write = originalWrite; });
 
   it('exit code reflects the worst check status', async () => {
-    // Deterministic regardless of host: derive the expected code from the
-    // checks doctor actually runs, then confirm the exit code matches.
-    // (CI has no `claude` installed, so the real environment is not "clean".)
+    // CI has no `claude` installed, so derive the expected code from the checks doctor runs.
     await withTmpHome(async (home) => {
       fs.mkdirSync(path.join(home, '.claude-profiles'));
       const results = doctor.runChecks();
@@ -135,8 +125,6 @@ describe('cc doctor — exit codes', () => {
   });
 
   it('returns 2 when there is an error check', async () => {
-    // Make ~/.claude-profiles/ NOT writable to force a Storage error
-    // Easier: inject a corrupt .claude.json via a real profile dir
     const code = await withTmpHome(async (home) => {
       const profDir = path.join(home, '.claude-profiles', 'broken');
       fs.mkdirSync(profDir, { recursive: true });
@@ -146,8 +134,6 @@ describe('cc doctor — exit codes', () => {
     expect(code).toBe(2);
   });
 });
-
-// ── --fix applies safe fixes ──────────────────────────────────────────────────
 
 describe('cc doctor --fix', () => {
   let originalWrite;
@@ -208,8 +194,6 @@ describe('cc doctor --fix', () => {
     }
   });
 });
-
-// ── Individual check functions ────────────────────────────────────────────────
 
 describe('doctor.runChecks — individual checks', () => {
   it('Node.js version check is ok (this process is >= 18)', () => {

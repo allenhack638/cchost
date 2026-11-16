@@ -38,7 +38,6 @@ describe('cc copy default <profile>', () => {
 
   it('default → <profile> on a fresh profile with no symlinks: copies dir content', () => {
     seedDefault();
-    // Create profile dir manually without auto-linking (simulate "unlinked" state)
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(pdir, { recursive: true });
 
@@ -46,7 +45,7 @@ describe('cc copy default <profile>', () => {
 
     expect(fs.existsSync(path.join(pdir, 'projects', 'ProjectA', 'sess1.jsonl'))).toBe(true);
     expect(fs.existsSync(path.join(pdir, 'projects', 'ProjectB', 'sess2.jsonl'))).toBe(true);
-    // EXCLUDED_FILES are NOT copied into profile root or into any subdir
+    // Excluded files are never copied, at the root or in any subdir.
     expect(fs.existsSync(path.join(pdir, '.credentials.json'))).toBe(false);
     expect(fs.existsSync(path.join(pdir, 'projects', '.credentials.json'))).toBe(false);
   });
@@ -82,18 +81,15 @@ describe('cc copy default <profile>', () => {
   });
 
   it('skips resources that resolve to the same on-disk path via symlink', () => {
-    // Seed pool content
     const pool = path.join(tmpHome, '.claude');
     fs.mkdirSync(path.join(pool, 'projects', 'X'), { recursive: true });
     fs.writeFileSync(path.join(pool, 'projects', 'X', 'p.txt'), 'pool');
 
-    // Create profile with auto-linking (all 7 shared via symlink)
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(pdir, { recursive: true });
     share.shareLink('work');
 
     const result = copyLib.copy('default', 'work');
-    // All resources should be 'shared' status; nothing copied
     expect(result.copied).toBe(0);
     expect(result.shared).toBe(share.SHARED_RESOURCES.length);
   });
@@ -105,7 +101,6 @@ describe('cc copy default <profile>', () => {
     fs.writeFileSync(path.join(d, 'settings.json'), '{"theme":"dark"}');
     fs.writeFileSync(path.join(d, 'CLAUDE.md'), '# project guide');
 
-    // Profile exists with NO links — fully private
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
     fs.mkdirSync(pdir, { recursive: true });
 

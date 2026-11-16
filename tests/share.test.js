@@ -34,11 +34,10 @@ describe('shareLink — v0.4.1 (7 resources)', () => {
     for (const r of results) {
       expect(['linked', 'already-linked']).toContain(r.status);
     }
-    // 4 dir links
     for (const sub of ['projects', 'skills', 'agents', 'commands']) {
       expect(fs.lstatSync(path.join(pdir, sub)).isSymbolicLink()).toBe(true);
     }
-    // 3 file links — symlink OR hardlink (Windows fallback)
+    // File links may be hardlinks (Windows fallback).
     for (const f of ['mcp.json', 'settings.json', 'CLAUDE.md']) {
       expect(share.isSharedResource(pdir, f)).toBe(true);
     }
@@ -74,9 +73,7 @@ describe('shareLink — v0.4.1 (7 resources)', () => {
     const projects = results.find((r) => r.resource === 'projects');
     expect(projects.status).toBe('refused');
     expect(projects.message).toMatch(/private content/i);
-    // Private content stays where it was
     expect(fs.existsSync(path.join(pdir, 'projects', 'MyProject', 'note.txt'))).toBe(true);
-    // Other resources still get linked
     const skills = results.find((r) => r.resource === 'skills');
     expect(skills.status).toBe('linked');
   });
@@ -89,7 +86,6 @@ describe('shareLink — v0.4.1 (7 resources)', () => {
     const results = share.shareLink('work', { config: true });
     const mcp = results.find((r) => r.resource === 'mcp.json');
     expect(mcp.status).toBe('refused');
-    // File stays untouched
     expect(fs.readFileSync(path.join(pdir, 'mcp.json'), 'utf8')).toBe('{"private":1}');
   });
 
@@ -151,7 +147,7 @@ describe('shareLink — v0.4.1 (7 resources)', () => {
 
   it('empty private dir is safely replaced by a symlink', () => {
     const pdir = path.join(tmpHome, '.claude-profiles', 'work');
-    fs.mkdirSync(path.join(pdir, 'projects'), { recursive: true }); // empty
+    fs.mkdirSync(path.join(pdir, 'projects'), { recursive: true });
     const results = share.shareLink('work');
     const projects = results.find((r) => r.resource === 'projects');
     expect(projects.status).toBe('linked');
@@ -186,15 +182,13 @@ describe('shareLink — v0.4.1 (7 resources)', () => {
   it('per-resource failure does not abort the rest', () => {
     const pdir = path.join(tmpHome, '.claude-profiles', 'partial');
     fs.mkdirSync(pdir, { recursive: true });
-    // mcp.json as a directory (where a file is expected) — forces a failure or refusal
+    // mcp.json as a directory forces a refusal or failure.
     fs.mkdirSync(path.join(pdir, 'mcp.json'));
     fs.writeFileSync(path.join(pdir, 'mcp.json', 'sub.txt'), 'x');
 
     const results = share.shareLink('partial');
     const byName = Object.fromEntries(results.map((r) => [r.resource, r.status]));
-    // mcp.json should be refused or failed (private content)
     expect(['refused', 'failed']).toContain(byName['mcp.json']);
-    // Other resources link
     expect(byName.projects).toBe('linked');
     expect(byName.skills).toBe('linked');
   });
@@ -229,7 +223,6 @@ describe('shareLink — v0.4.1 (7 resources)', () => {
     for (const f of ['mcp.json', 'settings.json', 'CLAUDE.md']) {
       expect(share.isSharedResource(pdir, f)).toBe(true);
     }
-    // Dirs untouched
     expect(fs.existsSync(path.join(pdir, 'projects'))).toBe(false);
   });
 

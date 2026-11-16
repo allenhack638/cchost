@@ -130,7 +130,6 @@ main { min-width: 0; }
 .top .sync { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--text-3); font-size: 12.5px; }
 .content { padding: 24px 32px 64px; max-width: 1280px; }
 
-/* Buttons */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   height: 32px; padding: 0 12px; border-radius: 6px;
@@ -153,7 +152,6 @@ main { min-width: 0; }
 .btn .spin { animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Profiles */
 .toolbar { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
 .toolbar p { color: var(--text-2); }
 .legend { flex-basis: 100%; display: grid; grid-template-columns: repeat(2, max-content); gap: 8px 40px; margin: 0; font-size: 12.5px; }
@@ -269,7 +267,6 @@ a.btn { text-decoration: none; }
 .empty h2 { font-size: 15px; }
 .empty p { color: var(--text-2); max-width: 60ch; }
 
-/* Tables (pool, doctor) */
 .table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .table th { text-align: left; font-size: 12px; font-weight: 550; color: var(--text-3); padding: 10px 16px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
 .table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
@@ -297,7 +294,6 @@ a.btn { text-decoration: none; }
 .confirm-note { display: flex; gap: 8px; padding: 10px 12px; border: 1px solid var(--private-bd); border-radius: 8px; background: var(--private-bg); color: var(--private-fg); font-size: 13px; margin-bottom: 4px; }
 .check .hint { display: block; margin-top: 4px; color: var(--text-3); font-size: 12.5px; }
 
-/* Activity */
 .entries { display: grid; gap: 12px; }
 .entry { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .entry summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; }
@@ -307,7 +303,6 @@ a.btn { text-decoration: none; }
 .entry .lines { padding: 8px 16px 12px; }
 .entry > .muted { padding: 8px 16px 12px; }
 
-/* Change lines (preview + result) */
 .lines { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .lines li {
   display: grid; grid-template-columns: 18px 110px 1fr; gap: 8px; align-items: start;
@@ -325,7 +320,6 @@ a.btn { text-decoration: none; }
 .lines.reveal li { animation: rise 420ms var(--ease) both; animation-delay: calc(var(--i) * 70ms); }
 @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-/* Panel */
 .scrim { position: fixed; inset: 0; background: var(--overlay); opacity: 0; pointer-events: none; transition: opacity 200ms; z-index: 20; }
 .scrim.open { opacity: 1; pointer-events: auto; }
 .panel {
@@ -627,7 +621,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   let view = 'profiles';
   let changedBadges = new Set();
 
-  // --- API ---------------------------------------------------------------
   async function api(path, body) {
     const res = await fetch(path, {
       method: body ? 'POST' : 'GET',
@@ -657,8 +650,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       const next = await api('/api/state');
       lastSync = Date.now();
       renderSync();
-      // Re-render only when the disk actually changed, so polling never
-      // steals focus, hover or scroll from what the user is doing.
+      // Re-render only when the disk changed, so polling never steals focus, hover or scroll.
       const changed = JSON.stringify(next) !== JSON.stringify(data);
       data = next;
       if (!changed) return;
@@ -721,7 +713,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     $('#sync-text').textContent = s < 5 ? 'Read from disk just now' : `Read from disk ${s}s ago`;
   }
 
-  // --- Rendering helpers --------------------------------------------------
   function badge(profile, r) {
     const st = profile.resources[r.id];
     const key = `${profile.name}:${r.id}`;
@@ -759,7 +750,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
   }
 
-  // --- Views --------------------------------------------------------------
   let renderedView = null;
   function render() {
     const el = $('#view');
@@ -1024,7 +1014,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
       </details>`).join('')}</div>` + viewBackups();
   }
 
-  // --- Panel --------------------------------------------------------------
   const panel = $('#panel');
   const scrim = $('#scrim');
   let panelState = null; // { type, profile, plan }
@@ -1192,8 +1181,7 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     setTimeout(() => { changedBadges = new Set(); }, 1800);
   }
 
-  // Identify the focused control so a re-render can put focus back on its
-  // replacement (WCAG 2.4.3): by id, or by its data-act/group/to/profile.
+  // Identify the focused control so a re-render can refocus its replacement (WCAG 2.4.3).
   function focusKey(el) {
     if (!el || !panel.contains(el)) return null;
     if (el.id) return `#${CSS.escape(el.id)}`;
@@ -1332,7 +1320,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     return head(title, sub) + `<div class="panel-body"><div class="section">${note}${planBox()}</div></div>`;
   }
 
-  // --- MCP panels ---------------------------------------------------------------
   function openMcpCopy(server, from, project) {
     const scope = project ? 'local' : 'user';
     const has = (t) => (scope === 'local' ? t.servers.some((s) => s.scope === 'local' && s.name === server && s.project === project) : Boolean(serverIn(t, server)));
@@ -1427,7 +1414,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   }
   const renderPanelKeepFocus = () => renderPanel();
 
-  // --- Events -------------------------------------------------------------
   document.addEventListener('click', (ev) => {
     const t = ev.target.closest('[data-act], [data-theme-set]');
     if (!t) return;
@@ -1607,7 +1593,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
   scrim.addEventListener('click', () => { if (panelState && !panelState.busy) closePanel(); });
   $('#refresh').addEventListener('click', () => { loadState(); if (view === 'doctor') loadDoctor(); });
 
-  // --- Sidebar ----------------------------------------------------------------
   const desktop = matchMedia('(min-width: 861px)');
   function setCollapsed(on, save = true) {
     $('.app').classList.toggle('collapsed', on);
@@ -1706,7 +1691,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     } catch { /* api() already handles sign-out */ }
   }
 
-  // --- Theme ----------------------------------------------------------------
   function setTheme(mode) {
     try { localStorage.setItem('cchost-theme', mode); } catch { /* storage blocked */ }
     if (mode === 'system') document.documentElement.removeAttribute('data-theme');
@@ -1723,7 +1707,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     setTimeout(() => { el.textContent = msg; }, 30);
   }
 
-  // --- Toast ----------------------------------------------------------------
   let toastTimer = null;
   function toast(msg, withLink = true) {
     const el = $('#toast');
@@ -1733,7 +1716,6 @@ details.check-group[open]::details-content, details.entry[open]::details-content
     toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
   }
 
-  // --- Routing & refresh ------------------------------------------------------
   function route() {
     const v = (location.hash || '#profiles').slice(1);
     view = ['profiles', 'pool', 'mcp', 'find', 'doctor', 'activity'].includes(v) ? v : 'profiles';

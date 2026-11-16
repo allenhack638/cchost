@@ -44,8 +44,7 @@ describe.runIf(posix)('cc forwarding — finding and running the compiler', () =
     return p;
   }
 
-  // Layout: <tmp>/self/cc -> fake cchost; <tmp>/other/cc -> another cchost
-  // install; <tmp>/sys/cc -> the "compiler".
+  // <tmp>/self/cc is this cchost, <tmp>/other/cc another install, <tmp>/sys/cc the "compiler".
   function layout() {
     const selfTarget = script(path.join(tmp, 'a', 'node_modules', 'cchost', 'bin'), 'cc.js', 'exit 0');
     const otherTarget = script(path.join(tmp, 'b', 'node_modules', 'cchost', 'bin'), 'cc.js', 'exit 0');
