@@ -40,7 +40,10 @@ yarn-error.log*
 .env
 .env.*
 
-# impeccable local state
-.impeccable/hook.cache.json
-.impeccable/questions/
-.impeccable/config.local.json
+# local design + planning notes
+.impeccable/
+PRODUCT.md
+DESIGN.md
+docs/*
+!docs/demo.png
+.playwright-mcp/
