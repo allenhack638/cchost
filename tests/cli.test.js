@@ -469,7 +469,7 @@ describe('cchost list <profile> resources, --dry-run, help sharing', () => {
 
   it('add --private rejects unknown or empty groups', async () => {
     await expect(cli.run(['add', 'x', '--private=foo'])).rejects.toThrow(/Unknown --private group "foo"/);
-    await expect(cli.run(['add', 'x', '--private='])).rejects.toThrow(/needs at least one/);
+    await expect(cli.run(['add', 'x', '--private='])).rejects.toThrow(/needs a value/);
     expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', 'x'))).toBe(false);
   });
 
@@ -493,6 +493,43 @@ describe('cchost list <profile> resources, --dry-run, help sharing', () => {
     }
     expect(fs.lstatSync(path.join(tmpHome, '.claude-profiles', 'work', 'skills')).isSymbolicLink())
       .toBe(true);
+  });
+
+  it('link, unlink, copy and add print the same lines as --json', async () => {
+    await cli.run(['add', 'work', '--private=config']);
+    fs.writeFileSync(path.join(tmpHome, '.claude-profiles', 'work', 'settings.json'), '{"own":true}');
+    for (const argv of [['link', 'work', '--dry-run'], ['unlink', 'work', '--tools', '--dry-run'], ['copy', 'default', 'work', '--dry-run']]) {
+      out = '';
+      await cli.run(argv);
+      const text = out;
+      out = '';
+      await cli.run([...argv, '--json']);
+      for (const l of JSON.parse(out).lines) expect(text).toContain(l.text);
+    }
+  });
+
+  it('link names the --backup way out and fails when a profile keeps its own copy', async () => {
+    await cli.run(['add', 'work', '--private=config']);
+    fs.writeFileSync(path.join(tmpHome, '.claude-profiles', 'work', 'settings.json'), '{"own":true}');
+    out = '';
+    await expect(cli.run(['link', 'work', '--config'])).resolves.toBe(1);
+    expect(out).toMatch(/settings\.json\s+has its own content/);
+    expect(out).toMatch(/add --backup/);
+  });
+
+  it('link over several profiles reports a missing one and keeps going', async () => {
+    await cli.run(['add', 'work']);
+    out = '';
+    await expect(cli.run(['link', 'nope', 'work'])).resolves.toBe(1);
+    expect(out).toMatch(/\[work\][\s\S]*already shared/);
+  });
+
+  it('remove --yes deletes the profile and lists what happened', async () => {
+    await cli.run(['add', 'gone']);
+    out = '';
+    await expect(cli.run(['remove', 'gone', '--yes'])).resolves.toBe(0);
+    expect(out).toMatch(/removed ~\/\.claude-profiles\/gone/);
+    expect(fs.existsSync(path.join(tmpHome, '.claude-profiles', 'gone'))).toBe(false);
   });
 
   it('help sharing prints the task guide', async () => {

@@ -332,7 +332,7 @@ describe('interactive go and open', () => {
 describe('friendly paths', () => {
   it('add and remove print ~ paths, not absolute ones', async () => {
     const added = await run('add', 'newp');
-    expect(added.out).toContain(`Created profile "newp" at ${path.join('~', '.claude-profiles', 'newp')}.`);
+    expect(added.out).toContain('created ~/.claude-profiles/newp');
     expect(added.out).not.toContain(home);
   });
 });
