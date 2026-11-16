@@ -15,7 +15,7 @@ afterEach(() => {
   else process.env.NO_COLOR = noColor;
 });
 import envLib from '../lib/env.js';
-import cli from '../lib/cli.js';
+import cli from '../lib/cli/index.js';
 
 // A scripted IO for the wizard. readLine and readHidden consume `inputs` in
 // the order they are called.

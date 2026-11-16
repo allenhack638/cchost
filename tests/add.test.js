@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import profiles from '../lib/profiles.js';
-import cli from '../lib/cli.js';
+import cli from '../lib/cli/index.js';
 
 describe('addProfile', () => {
   let tmpHome;

@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import cli from '../lib/cli.js';
+import cli from '../lib/cli/index.js';
 import profiles from '../lib/profiles.js';
 import agent from '../lib/agent.js';
-import commands from '../lib/commands.js';
+import statusCli from '../lib/cli/status.js';
 
 const SECRET = 'sk-SENTINEL-5e4d3c2b1a0987654321';
 const OAUTH = 'oauth-SENTINEL-refresh-abcdef0123456789';
@@ -275,7 +275,7 @@ describe('secrets never leave cchost', () => {
   it('the web view state and MCP data carry no secrets', async () => {
     const actions = (await import('../lib/actions.js')).default;
     const mcp = (await import('../lib/mcp.js')).default;
-    const text = JSON.stringify([actions.state(), mcp.listAll(), mcp.drift(), commands.status()]);
+    const text = JSON.stringify([actions.state(), mcp.listAll(), mcp.drift(), statusCli.status()]);
     expect(text).not.toContain('SENTINEL');
   });
 });

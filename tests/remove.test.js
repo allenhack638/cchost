@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import cli from '../lib/cli.js';
+import { removeRecursivelyPreservingLinks } from '../lib/fsutil.js';
 import share from '../lib/share.js';
 
 describe('removeRecursivelyPreservingLinks — junction safety', () => {
@@ -43,7 +43,7 @@ describe('removeRecursivelyPreservingLinks — junction safety', () => {
     expect(fs.readFileSync(path.join(pdir, 'projects', 'SENTINEL.txt'), 'utf8')).toBe('do not delete me');
 
     // Remove the profile dir.
-    cli.removeRecursivelyPreservingLinks(pdir);
+    removeRecursivelyPreservingLinks(pdir);
 
     // The profile dir is gone.
     expect(fs.existsSync(pdir)).toBe(false);
@@ -58,14 +58,14 @@ describe('removeRecursivelyPreservingLinks — junction safety', () => {
     fs.writeFileSync(path.join(pdir, 'projects', 'sub', 'a.txt'), 'private');
     fs.writeFileSync(path.join(pdir, '.credentials.json'), '{}');
 
-    cli.removeRecursivelyPreservingLinks(pdir);
+    removeRecursivelyPreservingLinks(pdir);
 
     expect(fs.existsSync(pdir)).toBe(false);
   });
 
   it('is a no-op on a missing path', () => {
     expect(() =>
-      cli.removeRecursivelyPreservingLinks(path.join(tmpHome, 'no-such-thing')),
+      removeRecursivelyPreservingLinks(path.join(tmpHome, 'no-such-thing')),
     ).not.toThrow();
   });
 
@@ -84,7 +84,7 @@ describe('removeRecursivelyPreservingLinks — junction safety', () => {
     const linkType = process.platform === 'win32' ? 'junction' : 'dir';
     fs.symlinkSync(sharedProjects, path.join(pdir, 'projects'), linkType);
 
-    cli.removeRecursivelyPreservingLinks(pdir);
+    removeRecursivelyPreservingLinks(pdir);
 
     expect(fs.existsSync(pdir)).toBe(false);
     expect(fs.readFileSync(path.join(sharedProjects, 'KEEP.txt'), 'utf8')).toBe('must-survive');

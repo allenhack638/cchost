@@ -4,7 +4,7 @@ import path from 'node:path';
 import http from 'node:http';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import uiServer from '../lib/ui/server.js';
-import cli from '../lib/cli.js';
+import cli from '../lib/cli/index.js';
 import update from '../lib/update.js';
 
 // Raw http.request so tests control the Host header (fetch forbids it).

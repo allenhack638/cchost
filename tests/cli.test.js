@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import cli from '../lib/cli.js';
+import cli from '../lib/cli/index.js';
 
 describe('cc list — strict flag parsing', () => {
   let tmpHome;
