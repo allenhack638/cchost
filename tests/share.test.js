@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import share from '../lib/share.js';
+import legacyLib from '../lib/legacy.js';
 
 describe('shareLink — v0.4.1 (7 resources)', () => {
   let tmpHome;
@@ -354,7 +355,7 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
   });
 
   it('is a no-op when ~/.claude-shared/ does not exist', () => {
-    const result = share.migrateLegacyPool();
+    const result = legacyLib.migrateLegacyPool();
     expect(result.migrated).toBe(false);
     expect(result.moves).toEqual([]);
   });
@@ -366,7 +367,7 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
     fs.mkdirSync(path.join(legacy, 'projects', 'D--myapp'), { recursive: true });
     fs.writeFileSync(path.join(legacy, 'projects', 'D--myapp', 'conv.jsonl'), 'log');
 
-    const result = share.migrateLegacyPool();
+    const result = legacyLib.migrateLegacyPool();
 
     expect(result.migrated).toBe(true);
     expect(result.moves.length).toBe(2);
@@ -384,7 +385,7 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
     fs.mkdirSync(path.join(legacy, 'skills', 'context7-mcp'), { recursive: true });
     fs.writeFileSync(path.join(legacy, 'skills', 'context7-mcp', 'skill.md'), 'LEGACY');
 
-    share.migrateLegacyPool();
+    legacyLib.migrateLegacyPool();
 
     expect(fs.readFileSync(path.join(pool, 'skills', 'context7-mcp', 'skill.md'), 'utf8')).toBe('NEW');
     expect(
@@ -405,7 +406,7 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
       process.platform === 'win32' ? 'junction' : 'dir',
     );
 
-    const result = share.migrateLegacyPool();
+    const result = legacyLib.migrateLegacyPool();
 
     expect(result.relinked).toContainEqual({ profile: 'p1', sub: 'projects' });
     const newTarget = path.resolve(pdir, fs.readlinkSync(path.join(pdir, 'projects')));
@@ -425,7 +426,7 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
       process.platform === 'win32' ? 'junction' : 'dir',
     );
 
-    const result = share.migrateLegacyPool();
+    const result = legacyLib.migrateLegacyPool();
 
     expect(result.selfReferencing).toBe(true);
     expect(result.migrated).toBe(false);
@@ -438,8 +439,8 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
     const legacy = path.join(tmpHome, '.claude-shared');
     fs.mkdirSync(path.join(legacy, 'skills'), { recursive: true });
     fs.writeFileSync(path.join(legacy, 'skills', 'sentinel.md'), 'x');
-    share.migrateLegacyPool();
-    const result = share.migrateLegacyPool();
+    legacyLib.migrateLegacyPool();
+    const result = legacyLib.migrateLegacyPool();
     expect(result.migrated).toBe(false);
   });
 
@@ -451,7 +452,7 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
     fs.mkdirSync(path.join(legacy, 'projects', 'D--myapp'), { recursive: true });
     fs.writeFileSync(path.join(legacy, 'projects', 'D--myapp', 'old.jsonl'), 'OLD');
 
-    share.migrateLegacyPool();
+    legacyLib.migrateLegacyPool();
 
     expect(fs.existsSync(path.join(pool, 'projects', 'D--myapp__legacy'))).toBe(false);
     expect(fs.readFileSync(path.join(pool, 'projects', 'D--myapp', 'new.jsonl'), 'utf8')).toBe('NEW');
@@ -467,7 +468,7 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
     fs.mkdirSync(path.join(legacy, 'projects', 'D--myapp'), { recursive: true });
     fs.writeFileSync(path.join(legacy, 'projects', 'D--myapp', `${uuid}.jsonl`), 'OLD');
 
-    share.migrateLegacyPool();
+    legacyLib.migrateLegacyPool();
 
     expect(fs.readFileSync(path.join(pool, 'projects', 'D--myapp', `${uuid}.jsonl`), 'utf8')).toBe('NEW');
     // Old file should still be present under a *different* UUID, not __legacy-suffixed.
@@ -491,7 +492,7 @@ describe('migrateLegacyPool — v0.3 → v0.4', () => {
     fs.mkdirSync(path.join(legacy, 'projects', 'D--myapp', uuid), { recursive: true });
     fs.writeFileSync(path.join(legacy, 'projects', 'D--myapp', uuid, 'todo.json'), 'OLD-todo');
 
-    share.migrateLegacyPool();
+    legacyLib.migrateLegacyPool();
 
     const dst = fs.readdirSync(path.join(pool, 'projects', 'D--myapp'));
     const reissuedFile = dst.find((n) => n !== `${uuid}.jsonl` && n.endsWith('.jsonl'));
@@ -526,7 +527,7 @@ describe('repairProjectFilenames', () => {
     fs.mkdirSync(folder, { recursive: true });
     fs.writeFileSync(path.join(folder, `${uuid}__legacy.jsonl`), 'X');
 
-    const result = share.repairProjectFilenames();
+    const result = legacyLib.repairProjectFilenames();
 
     expect(result.repaired.length).toBe(1);
     expect(fs.readFileSync(path.join(folder, `${uuid}.jsonl`), 'utf8')).toBe('X');
@@ -540,7 +541,7 @@ describe('repairProjectFilenames', () => {
     fs.writeFileSync(path.join(folder, `${uuid}.jsonl`), 'CANONICAL');
     fs.writeFileSync(path.join(folder, `${uuid}__legacy.jsonl`), 'DAMAGED');
 
-    share.repairProjectFilenames();
+    legacyLib.repairProjectFilenames();
 
     expect(fs.readFileSync(path.join(folder, `${uuid}.jsonl`), 'utf8')).toBe('CANONICAL');
     const children = fs.readdirSync(folder);
@@ -557,7 +558,7 @@ describe('repairProjectFilenames', () => {
     fs.writeFileSync(path.join(folder, `${uuid}__legacy__legacy.jsonl`), 'A');
     fs.writeFileSync(path.join(folder, `${uuid}__legacy_2.jsonl`), 'B');
 
-    share.repairProjectFilenames();
+    legacyLib.repairProjectFilenames();
 
     const children = fs.readdirSync(folder).filter((n) => n.endsWith('.jsonl'));
     expect(children.length).toBe(2);
@@ -575,7 +576,7 @@ describe('repairProjectFilenames', () => {
     fs.mkdirSync(path.join(folder, `${uuid}__legacy`));
     fs.writeFileSync(path.join(folder, `${uuid}__legacy`, 'todo.json'), 'T');
 
-    share.repairProjectFilenames();
+    legacyLib.repairProjectFilenames();
 
     // canonical was free, so both restore to <uuid>.jsonl and <uuid>/.
     expect(fs.readFileSync(path.join(folder, `${uuid}.jsonl`), 'utf8')).toBe('F');
@@ -589,7 +590,7 @@ describe('repairProjectFilenames', () => {
     fs.writeFileSync(path.join(folder, 'memory__legacy', 'k.md'), 'mem');
     fs.writeFileSync(path.join(folder, 'sessions-index__legacy.json'), '{}');
 
-    share.repairProjectFilenames();
+    legacyLib.repairProjectFilenames();
 
     expect(fs.existsSync(path.join(folder, 'memory'))).toBe(true);
     expect(fs.readFileSync(path.join(folder, 'memory', 'k.md'), 'utf8')).toBe('mem');
@@ -600,7 +601,7 @@ describe('repairProjectFilenames', () => {
     const folder = path.join(tmpHome, '.claude', 'projects', 'D--myapp');
     fs.mkdirSync(folder, { recursive: true });
     fs.writeFileSync(path.join(folder, '2a4c2afb-6cc0-4496-b0fe-09cd2f1b2f04.jsonl'), 'x');
-    const result = share.repairProjectFilenames();
+    const result = legacyLib.repairProjectFilenames();
     expect(result.repaired).toEqual([]);
   });
 });
@@ -622,7 +623,7 @@ describe('healProjectsLegacy', () => {
 
   it('is a no-op when projects/ has no __legacy folders', () => {
     fs.mkdirSync(path.join(tmpHome, '.claude', 'projects', 'D--myapp'), { recursive: true });
-    const result = share.healProjectsLegacy();
+    const result = legacyLib.healProjectsLegacy();
     expect(result.healed).toEqual([]);
     expect(result.failures).toEqual([]);
   });
@@ -634,7 +635,7 @@ describe('healProjectsLegacy', () => {
     fs.mkdirSync(path.join(projects, 'D--myapp__legacy'), { recursive: true });
     fs.writeFileSync(path.join(projects, 'D--myapp__legacy', 'old.jsonl'), 'OLD');
 
-    const result = share.healProjectsLegacy();
+    const result = legacyLib.healProjectsLegacy();
 
     expect(result.healed.length).toBe(1);
     expect(result.healed[0]).toMatchObject({ from: 'D--myapp__legacy', to: 'D--myapp', renamed: false });
@@ -648,7 +649,7 @@ describe('healProjectsLegacy', () => {
     fs.mkdirSync(path.join(projects, 'D--orphan__legacy'), { recursive: true });
     fs.writeFileSync(path.join(projects, 'D--orphan__legacy', 's.jsonl'), 'x');
 
-    const result = share.healProjectsLegacy();
+    const result = legacyLib.healProjectsLegacy();
 
     expect(result.healed.length).toBe(1);
     expect(result.healed[0]).toMatchObject({ from: 'D--orphan__legacy', to: 'D--orphan', renamed: true });
@@ -665,7 +666,7 @@ describe('healProjectsLegacy', () => {
     fs.mkdirSync(path.join(projects, 'D--app__legacy_2'), { recursive: true });
     fs.writeFileSync(path.join(projects, 'D--app__legacy_2', 'c.jsonl'), 'C');
 
-    share.healProjectsLegacy();
+    legacyLib.healProjectsLegacy();
 
     expect(fs.readFileSync(path.join(projects, 'D--app', 'a.jsonl'), 'utf8')).toBe('A');
     expect(fs.readFileSync(path.join(projects, 'D--app', 'b.jsonl'), 'utf8')).toBe('B');
@@ -682,7 +683,7 @@ describe('healProjectsLegacy', () => {
     fs.mkdirSync(path.join(projects, 'd--myapp__legacy'), { recursive: true });
     fs.writeFileSync(path.join(projects, 'd--myapp__legacy', 'l.jsonl'), 'L');
 
-    const result = share.healProjectsLegacy();
+    const result = legacyLib.healProjectsLegacy();
 
     expect(result.healed[0]).toMatchObject({ to: 'D--myapp' });
     expect(fs.readFileSync(path.join(projects, 'D--myapp', 'u.jsonl'), 'utf8')).toBe('U');
