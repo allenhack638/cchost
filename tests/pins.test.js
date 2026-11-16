@@ -4,6 +4,7 @@ import path from 'node:path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import cli from '../lib/cli.js';
 import pins from '../lib/pins.js';
+import paths from '../lib/paths.js';
 import actions from '../lib/actions.js';
 
 let home;
@@ -190,10 +191,10 @@ describe('folder spellings', () => {
   it('treats a folder and its resolved spellings as the same place', () => {
     const d = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'cc-sp-')));
     try {
-      expect(pins.spellings(d)).toContain(d);
-      expect(pins.isUnderReal(path.join(d, 'x'), d)).toBe(true);
-      expect(pins.isUnderReal(`${d}-old`, d)).toBe(false);
-      expect(pins.isUnderReal(path.join(d, '..', path.basename(d), 'y'), d)).toBe(true);
+      expect(paths.spellings(d)).toContain(d);
+      expect(paths.isUnderReal(path.join(d, 'x'), d)).toBe(true);
+      expect(paths.isUnderReal(`${d}-old`, d)).toBe(false);
+      expect(paths.isUnderReal(path.join(d, '..', path.basename(d), 'y'), d)).toBe(true);
     } finally {
       fs.rmSync(d, { recursive: true, force: true });
     }
