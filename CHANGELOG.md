@@ -5,13 +5,17 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.8.4] - 2026-11-16
 
 ### Changed
 
 - `cchost add`, `link`, `unlink`, `copy` and `remove` print the same aligned
   per-resource lines as `--json` and the web view. `remove` shows what it will
   delete before asking for the name.
+- `cchost link` over several profiles keeps going past a missing one and says
+  how to share a profile's own copy (`--backup`).
+- Internal cleanup: one code path per command for the terminal, `--json` and
+  the web view; the CLI is split into `lib/cli/`; leaner comments.
 
 ## [0.8.3] - 2026-11-15
 
