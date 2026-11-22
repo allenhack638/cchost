@@ -9,13 +9,7 @@ const color = require('../lib/color');
 function showUpdateNotice(args) {
   if (update.disabled() || !process.stderr.isTTY) return;
   if (args.includes('--json') || ['-v', '--version', 'ui'].includes(args[0])) return;
-  let claude = null;
-  try {
-    const spawn = require('../lib/spawn');
-    const bin = spawn.findClaude();
-    const v = bin && spawn.cachedClaudeVersion(bin);
-    claude = v ? v.raw : null;
-  } catch { /* notice only */ }
+  const claude = update.readCache().claudeLatest ? require('../lib/spawn').lastKnownVersion() : null;
   const msg = update.notice(undefined, claude);
   if (msg) process.stderr.write('\n' + color.stderr.yellow(msg) + '\n');
 }
