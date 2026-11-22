@@ -140,6 +140,13 @@ describe('Claude Code install repair', () => {
     expect(fs.existsSync(install.lockFile())).toBe(false);
   });
 
+  it('releases its own lock even while a crashed process left the guard behind', () => {
+    expect(install.acquireLock()).toBe(true);
+    fs.writeFileSync(`${install.lockFile()}.guard`, '1');
+    install.releaseLock();
+    expect(fs.existsSync(install.lockFile())).toBe(false);
+  });
+
   it('treats a lock still being written as held', () => {
     fs.mkdirSync(path.dirname(install.lockFile()), { recursive: true });
     fs.writeFileSync(install.lockFile(), '');
