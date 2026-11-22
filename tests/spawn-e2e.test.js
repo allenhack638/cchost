@@ -138,6 +138,14 @@ describe('cc use — end-to-end argv + env forwarding through fake-claude', () =
     expect(res.stdout).not.toMatch(/ARGS:\[[^\]]*"e2e"/);
   });
 
+  it('turns off Claude Code self-update unless asked to keep it', () => {
+    fs.mkdirSync(path.join(tmpHome, '.claude-profiles', 'e2e'), { recursive: true });
+    const off = runCc(['use', 'e2e'], { home: tmpHome, extraEnv: { DISABLE_AUTOUPDATER: undefined, CCHOST_CLAUDE_AUTOUPDATE: undefined } });
+    expect(off.stdout).toContain('ENV:DISABLE_AUTOUPDATER=1');
+    const kept = runCc(['use', 'e2e'], { home: tmpHome, extraEnv: { DISABLE_AUTOUPDATER: undefined, CCHOST_CLAUDE_AUTOUPDATE: '1' } });
+    expect(kept.stdout).toContain('ENV:DISABLE_AUTOUPDATER=\n');
+  });
+
   // macOS names the Keychain entry after sha256 of this exact string, so pin it byte-for-byte.
   it('passes CLAUDE_CONFIG_DIR as the exact profile path (no realpath, no trailing slash)', () => {
     const profileDir = path.join(tmpHome, '.claude-profiles', 'e2e');

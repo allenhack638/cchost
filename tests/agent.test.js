@@ -219,7 +219,7 @@ describe('agent guides and skills', () => {
       unlink: ['--projects', '--tools', '--config', '--dry-run', '--json'], copy: ['--force', '--dry-run', '--json'],
       remove: ['--yes', '--force', '--dry-run', '--json'], doctor: ['--fix', '--force', '--dry-run', '--json'],
       mcp: ['--server', '--scope', '--project', '--force', '--dry-run', '--json'], backups: ['--json'],
-      restore: ['--dry-run', '--json'], agent: [], skill: ['--profile', '--dry-run', '--json'], token: ['--stdin'],
+      restore: ['--dry-run', '--json'], update: ['--dry-run', '--json'], agent: [], skill: ['--profile', '--dry-run', '--json'], token: ['--stdin'],
       ui: [], help: [],
       pin: ['--path', '--dry-run', '--json'], unpin: ['--path', '--dry-run', '--json'], pins: ['--json'], which: ['--json'],
       go: null, find: ['--since', '-n', '--profile', '--project', '--json', '--global'], open: ['--fork', '--global', '--profile', '--cwd'],

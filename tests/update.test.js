@@ -36,6 +36,13 @@ describe('update notice', () => {
     expect(update.notice('0.7.0')).toBe(null);
   });
 
+  it('tells you when a newer Claude Code is out', () => {
+    update.writeCache({ checkedAt: Date.now(), latest: '0.6.1', claudeLatest: '2.1.400' });
+    expect(update.notice('0.6.1', '2.1.330')).toMatch(/Claude Code 2\.1\.400 is available \(you have 2\.1\.330\)\. Update: cchost update claude/);
+    expect(update.notice('0.6.1', '2.1.400')).toBe(null);
+    expect(update.notice('0.6.1', null)).toBe(null);
+  });
+
   it('checks at most once a day', () => {
     expect(update.due()).toBe(true);
     update.writeCache({ checkedAt: Date.now() });
