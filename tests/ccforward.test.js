@@ -1,10 +1,12 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import url from 'node:url';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import ccforward from '../lib/ccforward.js';
 
 const posix = process.platform !== 'win32';
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 
 describe('cc forwarding — which calls go to the compiler', () => {
   it('only applies when invoked through a file named cc', () => {
@@ -12,6 +14,13 @@ describe('cc forwarding — which calls go to the compiler', () => {
     expect(ccforward.invokedAsCc('/usr/local/bin/cchost')).toBe(false);
     expect(ccforward.invokedAsCc('/x/node_modules/cchost/bin/cc.js')).toBe(false);
     expect(ccforward.invokedAsCc(undefined)).toBe(false);
+  });
+
+  it('keeps every command the dispatcher knows, so cc <command> never reaches the compiler', () => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'cli', 'index.js'), 'utf8');
+    const cmds = [...src.matchAll(/case '([^']+)':/g)].map((m) => m[1]);
+    expect(cmds).toContain('update');
+    for (const cmd of cmds) expect(ccforward.shouldForward([cmd, 'x']), cmd).toBe(false);
   });
 
   it('keeps cchost commands and bare cc, forwards compiler-style calls', () => {

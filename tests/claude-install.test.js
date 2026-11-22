@@ -45,6 +45,7 @@ describe('Claude Code install repair', () => {
     os.homedir = () => tmp;
     for (const k of ['CCHOST_NPM_ROOT', 'PATH']) saved[k] = process.env[k];
     process.env.CCHOST_NPM_ROOT = root;
+    process.env.PATH = binDir;
   });
 
   afterEach(() => {
@@ -79,6 +80,25 @@ describe('Claude Code install repair', () => {
     expect(install.inspect().leftovers).toEqual([]);
   });
 
+  it.skipIf(isWin)('sees a claude link that points at nothing as broken', () => {
+    healthy();
+    fs.rmSync(path.join(binDir, 'claude'));
+    fs.symlinkSync(path.join(root, 'gone', 'claude.exe'), path.join(binDir, 'claude'));
+    expect(install.inspect().broken).toBe(true);
+  });
+
+  it.skipIf(isWin)('updates the claude that runs, not another npm copy', () => {
+    healthy();
+    const native = path.join(tmp, 'local', 'bin');
+    touch(path.join(native, 'claude'), '#!/bin/sh\n');
+    fs.chmodSync(path.join(native, 'claude'), 0o755);
+    process.env.PATH = native + path.delimiter + binDir;
+    expect(install.plan().how).toBe('native');
+    process.env.PATH = binDir + path.delimiter + native;
+    fs.chmodSync(path.join(binDir, 'claude'), 0o755);
+    expect(install.plan().how).toBe('npm');
+  });
+
   it('lets one update run at a time and reclaims a dead lock', () => {
     expect(install.acquireLock()).toBe(true);
     expect(install.acquireLock()).toBe(false);
@@ -91,27 +111,49 @@ describe('Claude Code install repair', () => {
     install.releaseLock();
   });
 
-  it('refuses to update while another update holds the lock', () => {
+  it('refuses to update while another process holds the lock', async () => {
     interrupted();
-    install.acquireLock();
-    expect(() => install.update({ write: () => {}, run: () => ({ status: 0 }) })).toThrow(/Another Claude Code update is running/);
-    install.releaseLock();
+    fs.mkdirSync(path.dirname(install.lockFile()), { recursive: true });
+    fs.writeFileSync(install.lockFile(), JSON.stringify({ pid: process.pid, at: Date.now(), token: 'other' }));
+    await expect(install.update({ write: () => {}, npm: async () => ({ status: 0 }) })).rejects.toThrow(/Another Claude Code update is running/);
+    expect(JSON.parse(fs.readFileSync(install.lockFile(), 'utf8')).token).toBe('other');
   });
 
-  it('dry run names the command and the leftovers, and changes nothing', () => {
+  it('keeps a long update\'s lock while its owner is alive, and only releases its own', () => {
+    fs.mkdirSync(path.dirname(install.lockFile()), { recursive: true });
+    fs.writeFileSync(install.lockFile(), JSON.stringify({ pid: process.pid, at: Date.now() - 20 * 60 * 1000, token: 'other' }));
+    expect(install.acquireLock()).toBe(false);
+    install.releaseLock();
+    expect(fs.existsSync(install.lockFile())).toBe(true);
+  });
+
+  it('treats a lock still being written as held', () => {
+    fs.mkdirSync(path.dirname(install.lockFile()), { recursive: true });
+    fs.writeFileSync(install.lockFile(), '');
+    expect(install.acquireLock()).toBe(false);
+  });
+
+  it('a release after losing the lock leaves the new owner\'s lock alone', () => {
+    expect(install.acquireLock()).toBe(true);
+    fs.writeFileSync(install.lockFile(), JSON.stringify({ pid: process.pid, at: Date.now(), token: 'newer' }));
+    install.releaseLock();
+    expect(JSON.parse(fs.readFileSync(install.lockFile(), 'utf8')).token).toBe('newer');
+  });
+
+  it('dry run names the command and the leftovers, and changes nothing', async () => {
     interrupted();
     let out = '';
-    install.update({ write: (t) => { out += t; }, dryRun: true, run: () => { throw new Error('ran'); } });
+    await install.update({ write: (t) => { out += t; }, dryRun: true, npm: () => { throw new Error('ran'); } });
     expect(out).toMatch(/Would run: npm install -g --allow-scripts=@anthropic-ai\/claude-code @anthropic-ai\/claude-code@latest/);
     expect(out).toMatch(/Would remove: .*\.claude-code-e12Jc3WF/);
     expect(install.inspect().broken).toBe(true);
   });
 
-  it.skipIf(isWin)('reinstalls, clears the leftovers and releases the lock', () => {
+  it.skipIf(isWin)('reinstalls, clears the leftovers and releases the lock', async () => {
     interrupted();
     process.env.PATH = binDir;
     const calls = [];
-    const run = (args) => {
+    const npm = async (args) => {
       calls.push(args.join(' '));
       fs.writeFileSync(path.join(root, '@anthropic-ai', 'claude-code', 'bin', 'claude.exe'), '#!/bin/sh\necho "2.1.400 (Claude Code)"\n' + '#'.repeat(5000));
       fs.chmodSync(path.join(root, '@anthropic-ai', 'claude-code', 'bin', 'claude.exe'), 0o755);
@@ -119,7 +161,7 @@ describe('Claude Code install repair', () => {
       return { status: 0 };
     };
     let out = '';
-    const res = install.update({ write: (t) => { out += t; }, run });
+    const res = await install.update({ write: (t) => { out += t; }, npm });
     expect(calls).toEqual(['install -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code@latest']);
     expect(res.after).toBe('2.1.400');
     expect(out).toMatch(/removed .*\.claude-KkVpuBou/);
@@ -129,28 +171,28 @@ describe('Claude Code install repair', () => {
     expect(fs.existsSync(install.lockFile())).toBe(false);
   });
 
-  it.skipIf(isWin)('unpacks the program itself when npm blocked the install script', () => {
+  it.skipIf(isWin)('unpacks the program itself when npm blocked the install script', async () => {
     interrupted();
     process.env.PATH = binDir;
     const exe = path.join(root, '@anthropic-ai', 'claude-code', 'bin', 'claude.exe');
-    const run = () => {
+    const npm = async () => {
       fs.symlinkSync(exe, path.join(binDir, 'claude'));
       return { status: 0 };
     };
-    const setup = (dir) => {
+    const setup = async (dir) => {
       expect(dir).toBe(path.join(root, '@anthropic-ai', 'claude-code'));
       fs.writeFileSync(exe, '#!/bin/sh\necho "2.1.400 (Claude Code)"\n' + '#'.repeat(5000));
       fs.chmodSync(exe, 0o755);
       return { status: 0 };
     };
     let out = '';
-    expect(install.update({ write: (t) => { out += t; }, run, setup }).after).toBe('2.1.400');
+    expect((await install.update({ write: (t) => { out += t; }, npm, setup })).after).toBe('2.1.400');
     expect(out).toMatch(/Unpacking the claude program/);
   });
 
-  it('stops without touching leftovers when npm fails', () => {
+  it('stops without touching leftovers when npm fails', async () => {
     interrupted();
-    expect(() => install.update({ write: () => {}, run: () => ({ status: 1 }) })).toThrow(/failed\. Nothing else was changed/);
+    await expect(install.update({ write: () => {}, npm: async () => ({ status: 1 }) })).rejects.toThrow(/failed\. Nothing else was changed/);
     expect(install.inspect().leftovers).toHaveLength(2);
     expect(fs.existsSync(install.lockFile())).toBe(false);
   });
