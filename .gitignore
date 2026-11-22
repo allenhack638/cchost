@@ -47,3 +47,6 @@ DESIGN.md
 docs/*
 !docs/demo.png
 .playwright-mcp/
+
+# other local agent tooling
+.commandcode/
