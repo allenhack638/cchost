@@ -9,7 +9,14 @@ const color = require('../lib/color');
 function showUpdateNotice(args) {
   if (update.disabled() || !process.stderr.isTTY) return;
   if (args.includes('--json') || ['-v', '--version', 'ui'].includes(args[0])) return;
-  const msg = update.notice();
+  let claude = null;
+  try {
+    const spawn = require('../lib/spawn');
+    const bin = spawn.findClaude();
+    const v = bin && spawn.cachedClaudeVersion(bin);
+    claude = v ? v.raw : null;
+  } catch { /* notice only */ }
+  const msg = update.notice(undefined, claude);
   if (msg) process.stderr.write('\n' + color.stderr.yellow(msg) + '\n');
 }
 
