@@ -190,6 +190,39 @@ describe('Claude Code install repair', () => {
     expect(out).toMatch(/Unpacking the claude program/);
   });
 
+  it.skipIf(isWin)('doctor repairs the broken npm copy even when another claude runs first', async () => {
+    interrupted();
+    const native = path.join(tmp, 'local', 'bin');
+    touch(path.join(native, 'claude'), '#!/bin/sh\necho "2.1.300 (Claude Code)"\n');
+    fs.chmodSync(path.join(native, 'claude'), 0o755);
+    process.env.PATH = native + path.delimiter + binDir;
+    expect(install.plan().how).toBe('native');
+    const exe = path.join(root, '@anthropic-ai', 'claude-code', 'bin', 'claude.exe');
+    const npm = async () => {
+      fs.writeFileSync(exe, '#!/bin/sh\necho "2.1.400 (Claude Code)"\n' + '#'.repeat(5000));
+      fs.chmodSync(exe, 0o755);
+      fs.symlinkSync(exe, path.join(binDir, 'claude'));
+      return { status: 0 };
+    };
+    const res = await install.update({ write: () => {}, target: 'npm', npm, claude: () => { throw new Error('updated the other claude'); } });
+    expect(res.after).toBe('2.1.400');
+    expect(install.inspect().broken).toBe(false);
+  });
+
+  it.skipIf(isWin)('the update notice forgets a version once claude changes', async () => {
+    const spawnLib = (await import('../lib/spawn.js')).default;
+    const exe = path.join(binDir, 'claude');
+    touch(exe, '#!/bin/sh\necho "2.1.300 (Claude Code)"\n');
+    fs.chmodSync(exe, 0o755);
+    spawnLib.cachedClaudeVersion(exe);
+    expect(spawnLib.lastKnownVersion()).toBe('2.1.300');
+    fs.writeFileSync(exe, '#!/bin/sh\necho "2.1.400 (Claude Code)"\n');
+    fs.utimesSync(exe, new Date(), new Date(Date.now() + 5000));
+    expect(spawnLib.lastKnownVersion()).toBe(null);
+    spawnLib.cachedClaudeVersion(exe);
+    expect(spawnLib.lastKnownVersion()).toBe('2.1.400');
+  });
+
   it('stops without touching leftovers when npm fails', async () => {
     interrupted();
     await expect(install.update({ write: () => {}, npm: async () => ({ status: 1 }) })).rejects.toThrow(/failed\. Nothing else was changed/);
