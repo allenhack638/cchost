@@ -5,6 +5,22 @@ All notable changes to `cchost` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- Claude Code going missing (`claude not found in PATH`) after its own update
+  ran in several profiles at once. Claude Code started by cchost no longer
+  updates itself; set `CCHOST_CLAUDE_AUTOUPDATE=1` to keep the old behaviour.
+
+### Added
+
+- `cchost update claude`: updates Claude Code once for every profile, one
+  update at a time, and clears what an interrupted update left behind.
+- `cchost doctor` spots an npm update of Claude Code that stopped halfway;
+  `--fix` reinstalls it.
+- The update notice also says when a newer Claude Code is out.
+
 ## [0.8.4] - 2026-11-16
 
 ### Changed

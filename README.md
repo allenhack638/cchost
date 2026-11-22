@@ -116,6 +116,7 @@ In Doctor, every issue with an automatic fix has its own **Fix** button with a p
 | `cchost remove <profile> [--force] [--yes]` | Delete a profile. Requires typing the profile name, or `--yes` (required without a terminal). `--force` required when private resources exist. |
 | `cchost ui [--port=N] [--no-open] [--session=8h]` | Open the local web view: see every profile and change sharing, profiles and doctor fixes with a preview first. See [Web view](#web-view). |
 | `cchost doctor [--fix [--force]] [--dry-run] [--json]` | Diagnose environment, storage, MCP and platform issues. `--fix` applies safe auto-fixes; `--force` is required for destructive ones. |
+| `cchost update claude [--dry-run]` | Update Claude Code once for every profile. See [Updating Claude Code](#updating-claude-code). |
 | `cchost help [command]` | Print usage. `cchost help sharing` is a task guide to linking, unlinking, and copying. |
 
 Every command that changes something takes `--dry-run` (preview, change nothing) and `--json` (machine-readable). Exit codes: 0 ok, 1 refused or failed, 2 bad usage.
@@ -296,13 +297,25 @@ the `LoggedIn` column reflects the profile's own credential file.
 
 Once a day, cchost checks npm for a newer version in the background (it never delays a command). When one exists, the CLI prints one line after a command and the web view shows **Update to x.y.z** in the sidebar. Turn it off with `CCHOST_NO_UPDATE_CHECK=1`; it is also off when `CI` or `NO_UPDATE_NOTIFIER` is set.
 
+## Updating Claude Code
+
+Claude Code updates itself in the background, once per running session. With several profiles open, those sessions all update the same install at the same moment, and an npm update that is cut off leaves `claude` missing (`claude not found in PATH`) or printing `claude native binary not installed`.
+
+So Claude Code started by cchost does not update itself (cchost sets `DISABLE_AUTOUPDATER=1`). Instead:
+
+- After a command, cchost tells you when a newer Claude Code is out (the same daily check as the update notice above).
+- `cchost update claude` updates it once, holding a lock so two updates never overlap, and removes what an earlier interrupted update left behind.
+- `cchost doctor` spots an update that stopped halfway, and `cchost doctor --fix` repairs it.
+
+To let Claude Code update itself anyway, set `CCHOST_CLAUDE_AUTOUPDATE=1`. Plain `claude` started outside cchost still updates itself as usual.
+
 ## Troubleshooting
 
 Run `cchost doctor` first — it checks Node, Claude Code version, profile integrity, symlinks, and the shared pool.
 
-**`Claude Code does not appear to be installed`** — install with `npm install -g @anthropic-ai/claude-code` and verify `claude --version` runs in a fresh terminal.
+**`Claude Code does not appear to be installed`** — run `cchost doctor`: if an update stopped halfway, `cchost doctor --fix` repairs it. Otherwise install with `cchost update claude` and verify `claude --version` runs in a fresh terminal.
 
-**`warning: Claude Code <version> is older than 2.1.140`** — earlier versions on Windows read `.claude.json` from `%USERPROFILE%` regardless of `CLAUDE_CONFIG_DIR`, breaking isolation. Run `claude update`.
+**`warning: Claude Code <version> is older than 2.1.140`** — earlier versions on Windows read `.claude.json` from `%USERPROFILE%` regardless of `CLAUDE_CONFIG_DIR`, breaking isolation. Run `cchost update claude`.
 
 **`warning: ANTHROPIC_API_KEY ... may override the subscription login`** — a globally exported API key takes precedence over a profile's OAuth login. Unset it in that shell (`unset ANTHROPIC_API_KEY`, and the same for `ANTHROPIC_AUTH_TOKEN` / `CLAUDE_CODE_OAUTH_TOKEN`) or use a custom-endpoint profile.
 

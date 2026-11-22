@@ -20,8 +20,9 @@ Some fixes need confirmation (`--force`, e.g. resetting a corrupt
 | Custom endpoint "has no token" | Person runs `! cchost token <p>` |
 | MCP server missing in a profile | `cchost mcp list`, then `cchost agent mcp` |
 | A resource is "missing" or "broken" | `cchost doctor --fix` relinks it |
-| `claude` not found | Install Claude Code: `curl -fsSL https://claude.ai/install.sh \| bash` |
-| Update available | `npm install -g cchost@latest` (ask first) |
+| `claude` not found, or "Claude Code install" error | `cchost doctor --fix`, or `cchost update claude` (ask first) |
+| Claude Code update available | `cchost update claude` (ask first) |
+| cchost update available | `npm install -g cchost@latest` (ask first) |
 | Skills outdated | `cchost skill install` |
 
 The web view (`cchost ui`) shows the same checks with Fix buttons.
